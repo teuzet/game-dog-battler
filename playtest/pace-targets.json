@@ -1,0 +1,17 @@
+{
+  "corridors": {
+    "decisions_per_min": [6, 30],
+    "weighty_share": [0.5, 1],
+    "crisis_interval_s": [10, 40],
+    "longest_lull_s": [0, 10],
+    "rewards_per_min": [2, 12],
+    "late_swing_share": [0.3, 1],
+    "close_share": [0.3, 0.8],
+    "novel_per_min": [1, 10]
+  },
+  "gate": { "smart_minus_random": 0.2, "max_archetype_winrate": 0.7 },
+  "archetypes": { "smart": "smart", "random": "random", "idle": "idle" },
+  "why": {
+    "_": "Пример шаблона. Коридоры этой игры ставит геймдизайнер из карты темпа в design/overview.md, причина каждого — ссылка на юзерстори."
+  }
+}

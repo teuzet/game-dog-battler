@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "game": "game-dog-battler",
+  "features": [
+    {
+      "id": "F-000",
+      "title": "Design doc: main loop, pace map and bot archetypes",
+      "layer": "design",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "design/F-000.md answers: what the player does every 10 seconds, what decision they face, what threatens them; cites US-xx",
+        "has a table of numbers marked «тюнить» and the bot archetypes with reaction/hold"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "gamedesigner-feature",
+      "touches": [
+        "design/F-000.md"
+      ],
+      "priority": 5,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-001",
+      "title": "Contract: modules, tagged events, inputs, hash",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "MODULES.md lists the game's modules; GameSetup builds them in that order; the example game is removed",
+        "contract tests in Game.Core.Tests/Contract pass"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/",
+        "Game.Core.Tests/",
+        "MODULES.md"
+      ],
+      "priority": 10,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-002",
+      "title": "Thinnest main loop",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-000",
+        "F-001"
+      ],
+      "acceptance": [
+        "a session runs from start to an outcome with the rules quoted from design/F-000.md",
+        "events carry pace tags"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/"
+      ],
+      "priority": 20,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-003",
+      "title": "Bots idle/random/smart and Game.Sim",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-001"
+      ],
+      "acceptance": [
+        "archetypes.json has idle, random, smart with about, reaction_ms, hold_ms",
+        "factory tool run sim writes metrics.json, chronicles and sessions.jsonl"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Bots/",
+        "Game.Core/Data/bots/",
+        "Game.Sim/"
+      ],
+      "priority": 30,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-004",
+      "title": "Unity shell and primitives view",
+      "layer": "unity",
+      "milestone": "M1",
+      "depends_on": [
+        "F-002"
+      ],
+      "acceptance": [
+        "UnityShell copied; Game.Core referenced as a local package; FactoryBuild.Demo builds",
+        "a session is playable with the keyboard; the survey appears at the end"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-unity",
+      "touches": [
+        "Unity/"
+      ],
+      "priority": 40,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-005",
+      "title": "Breaker: find what breaks the fun",
+      "layer": "playtest",
+      "milestone": "M1",
+      "depends_on": [
+        "F-002",
+        "F-003"
+      ],
+      "acceptance": [
+        "a breaker archetype tries to win without playing; finding goes into its report"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "gamedesigner-breaker",
+      "touches": [
+        "Game.Core/Bots/",
+        "Game.Core/Data/bots/",
+        "Game.Core.Tests/"
+      ],
+      "priority": 80,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-006",
+      "title": "Playtest: sprint 1",
+      "layer": "playtest",
+      "milestone": "M1",
+      "depends_on": [
+        "F-000",
+        "F-001",
+        "F-002",
+        "F-003",
+        "F-004",
+        "F-005"
+      ],
+      "acceptance": [
+        "sim on 40 seeds and judge on chronicles; report playtest/sprint-1.md starts with «Гейт: …»",
+        "every hypothesis from design/overview.md has a verdict with a number"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "gamedesigner-playtest",
+      "touches": [
+        "playtest/",
+        "Game.Core/Data/",
+        "Game.Core.Tests/"
+      ],
+      "priority": 90,
+      "iteration": 1,
+      "modules": []
+    }
+  ]
+}

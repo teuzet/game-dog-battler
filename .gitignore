@@ -1,0 +1,9 @@
+.factory/
+.build/
+bin/
+obj/
+Unity/Library/
+Unity/Temp/
+Unity/Logs/
+Unity/Builds/
+Unity/UserSettings/

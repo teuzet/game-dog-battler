@@ -1,0 +1,5 @@
+{
+  "command": ["dotnet", "run", "--project", "Game.Sim", "-c", "Release", "--", "--seeds", "{seeds}", "--first-seed", "{first_seed}", "--out", "{out}"],
+  "seeds": 40,
+  "timeout_s": 900
+}

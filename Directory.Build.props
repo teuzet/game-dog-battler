@@ -1,0 +1,8 @@
+<Project>
+  <!-- Build output lives in .build/, not next to the sources: Unity imports
+       Game.Core as a local package and must not see obj/*.cs. -->
+  <PropertyGroup>
+    <BaseOutputPath>$(MSBuildThisFileDirectory).build/bin/$(MSBuildProjectName)/</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory).build/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>

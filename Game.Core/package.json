@@ -1,0 +1,7 @@
+{
+  "name": "com.factory.game-core",
+  "displayName": "Game.Core",
+  "version": "0.1.0",
+  "unity": "6000.0",
+  "description": "Deterministic game core (pure C#). Unity references it via Packages/manifest.json: \"com.factory.game-core\": \"file:../../Game.Core\"."
+}

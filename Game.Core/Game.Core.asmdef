@@ -1,0 +1,10 @@
+{
+  "name": "Game.Core",
+  "rootNamespace": "Game.Core",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "autoReferenced": true,
+  "noEngineReferences": true
+}
