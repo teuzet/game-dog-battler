@@ -44,7 +44,7 @@ namespace Game.Core.Modules.Hits
         public Fixed StrongThreshold { get; }
 
         private readonly Fixed _knockbackMin, _knockbackMax, _strengthMin, _strengthFull;
-        private readonly Fixed _stunBase, _stunPerMps, _stunMax, _threatBase, _nearGap, _nearThreatMax, _slideEnd, _recoilShare;
+        private readonly Fixed _stunBase, _stunPerMps, _stunMax, _threatBase, _rewardBase, _nearGap, _nearThreatMax, _slideEnd, _recoilShare;
 
         private readonly int _players;
         private readonly List<Hit> _tick = new List<Hit>();
@@ -54,6 +54,8 @@ namespace Game.Core.Modules.Hits
         private readonly bool[] _struckStrong; // the player has already landed a strong blow: the first is the novelty
         // per (owner p, dog q) pair at index p * players + q: the pass of an owner by a foreign dog
         private readonly bool[] _near, _nearTouched;
+        // per (owner, dog) pair: in contact in the previous tick / in this one; a blow needs a fresh touch
+        private bool[] _touchPrev, _touchNow;
         private readonly Fixed[] _nearPeak;
 
         public HitsModule(GameData data, int players)
@@ -70,6 +72,7 @@ namespace Game.Core.Modules.Hits
             _stunMax = data.Num("hits.stun_max_s");
             _recoilShare = data.Num("hits.owner_recoil_share");
             _threatBase = data.Num("hits.threat_base");
+            _rewardBase = data.Num("hits.reward_base");
             _nearGap = data.Num("hits.near_miss_gap_m");
             _nearThreatMax = data.Num("hits.near_miss_threat_max");
             _slideEnd = data.Num("hits.slide_end_mps");
@@ -80,6 +83,8 @@ namespace Game.Core.Modules.Hits
             _struckStrong = new bool[players];
             _near = new bool[players * players];
             _nearTouched = new bool[players * players];
+            _touchPrev = new bool[players * players];
+            _touchNow = new bool[players * players];
             _nearPeak = new Fixed[players * players];
         }
 
@@ -97,6 +102,7 @@ namespace Game.Core.Modules.Hits
             _stunMax = src._stunMax;
             _recoilShare = src._recoilShare;
             _threatBase = src._threatBase;
+            _rewardBase = src._rewardBase;
             _nearGap = src._nearGap;
             _nearThreatMax = src._nearThreatMax;
             _slideEnd = src._slideEnd;
@@ -107,6 +113,8 @@ namespace Game.Core.Modules.Hits
             _struckStrong = (bool[])src._struckStrong.Clone();
             _near = (bool[])src._near.Clone();
             _nearTouched = (bool[])src._nearTouched.Clone();
+            _touchPrev = (bool[])src._touchPrev.Clone();
+            _touchNow = (bool[])src._touchNow.Clone();
             _nearPeak = (Fixed[])src._nearPeak.Clone();
         }
 
@@ -137,6 +145,7 @@ namespace Game.Core.Modules.Hits
             var owners = sim.Need<OwnersModule>(this, OwnersModule.ModuleName);
             for (int p = 0; p < _players; p++)
                 if (_thrown[p] && bodies.Velocity(_dogBody[p]).Length < _slideEnd) _thrown[p] = false;
+            System.Array.Clear(_touchNow, 0, _touchNow.Length);
             foreach (var c in bodies.Contacts)
             {
                 if (c.IsStatic) continue;
@@ -145,6 +154,7 @@ namespace Game.Core.Modules.Hits
                 if (ownerA >= 0 && dogB >= 0 && ownerA != dogB) Touch(sim, bodies, owners, ownerA, dogB, c.Normal, c.RelSpeed);
                 else if (ownerB >= 0 && dogA >= 0 && ownerB != dogA) Touch(sim, bodies, owners, ownerB, dogA, -c.Normal, c.RelSpeed);
             }
+            var swap = _touchPrev; _touchPrev = _touchNow; _touchNow = swap;
             WatchPasses(sim, bodies, owners);
         }
 
@@ -164,9 +174,11 @@ namespace Game.Core.Modules.Hits
         /// <paramref name="toDog"/> points from the owner to the dog.</summary>
         private void Touch(Simulation sim, BodiesModule bodies, OwnersModule owners, int attacker, int victim, Vec2 toDog, Fixed relSpeed)
         {
-            _nearTouched[attacker * _players + victim] = true;
-            // one touch is one blow: a dog still stunned or sliding from a blow is not struck again while the owner keeps pressing on
-            if (relSpeed < Threshold || IsHelpless(victim)) return;
+            int pair = attacker * _players + victim;
+            _nearTouched[pair] = true;
+            _touchNow[pair] = true;
+            // one touch is one blow: the pair must have been apart in the previous tick (a second player's owner can still hit a sliding dog)
+            if (relSpeed < Threshold || _touchPrev[pair]) return;
             var strength = bodies.Mass(owners.BodyOf(attacker)) * relSpeed * relSpeed;
             bool strong = relSpeed >= StrongThreshold;
             var power = Fixed.Clamp01((strength - _strengthMin) / (_strengthFull - _strengthMin));
@@ -188,7 +200,8 @@ namespace Game.Core.Modules.Hits
             string kind = strong ? "strong_hit" : "hit";
             string what = strong ? "сильный удар" : "удар";
             var win = sim.Events.Add(kind, attacker, $"участник {attacker} нанёс {what} собаке участника {victim}: {relSpeed} м/с");
-            win.Reward = strong ? power * 2 : power;
+            var reward = _rewardBase + (Fixed.One - _rewardBase) * power;
+            win.Reward = strong ? reward * 2 : reward;
             if (strong && !_struckStrong[attacker]) { win.Novel = "strong_hit"; _struckStrong[attacker] = true; }
             var lose = sim.Events.Add(kind, victim, $"собака участника {victim} получила {what} от участника {attacker}: оглушена на {stun} с");
             lose.Threat = _threatBase + (Fixed.One - _threatBase) * power;
@@ -247,6 +260,7 @@ namespace Game.Core.Modules.Hits
             foreach (var x in _tick) { h.Add(x.Attacker); h.Add(x.Victim); h.Add(x.Strength); h.Add(x.Strong); }
             for (int p = 0; p < _players; p++) { h.Add(_dogBody[p]); h.Add(_stunLeft[p]); h.Add(_thrown[p]); h.Add(_struckStrong[p]); }
             for (int i = 0; i < _near.Length; i++) { h.Add(_near[i]); h.Add(_nearTouched[i]); h.Add(_nearPeak[i]); }
+            for (int i = 0; i < _touchPrev.Length; i++) h.Add(_touchPrev[i]);
         }
 
         public IModule Clone() => new HitsModule(this);

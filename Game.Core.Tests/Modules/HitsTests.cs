@@ -363,8 +363,34 @@ namespace Game.Core.Tests.Modules
             Assert.Equal(a.Sim.StateHash(), b.Sim.StateHash());
             var fork = a.Sim.Fork();
             Assert.Equal(a.Sim.StateHash(), fork.StateHash());
+            var before = a.Sim.StateHash();
             fork.Step(TickInputs.Empty(fork.Players));
-            Assert.NotEqual(a.Sim.StateHash(), fork.StateHash());
+            Assert.NotEqual(before, fork.StateHash());
+            Assert.Equal(before, a.Sim.StateHash());
+        }
+
+        [Fact]
+        public void ASecondPlayersOwnerCanHitADogStillSlidingFromAnotherBlow()
+        {
+            var s = Swing("teen", "6");
+            Assert.True(s.Hits.IsHelpless(1), "the dog slides from the first blow");
+            var dogAt = s.Bodies.Position(s.Dog(1));
+            var from = dogAt + P("0", "-1.2");
+            s.Put(s.Owner(2), from.X.ToString(), from.Y.ToString());
+            s.Put(s.Dog(2), from.X.ToString(), (from.Y - F("2.5")).ToString());
+            var v = new Vec2(Fixed.Zero, F("8"));
+            s.Shove.Velocities[s.Owner(2)] = v;
+            s.Shove.Velocities[s.Dog(2)] = v;
+            s.Tick(8);
+            Assert.Contains(s.Events("hit"), e => e.Actor == 2);
+            Assert.Contains(s.Events("hit"), e => e.Actor == 1 && e.Threat > Fixed.Zero);
+        }
+
+        [Fact]
+        public void AHitAtTheThresholdStillCarriesAPositiveReward()
+        {
+            var s = Swing("teen", "5.5");
+            Assert.True(s.Events("hit").Single(e => e.Actor == 0).Reward >= F("0.2"));
         }
     }
 }
