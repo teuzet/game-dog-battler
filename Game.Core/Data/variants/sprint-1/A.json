@@ -3,6 +3,7 @@
   "hits": { "owner_speed_min_mps": 0 },
   "rules": {
     "king_of_lawn": {
+      "rent": "each",
       "period_s": 20,
       "announce_s": 5,
       "knockout_points": 5,

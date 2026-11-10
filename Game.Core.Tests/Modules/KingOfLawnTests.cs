@@ -83,9 +83,11 @@ namespace Game.Core.Tests.Modules
         }
 
         /// <summary>The game's own modules (same order as GameSetup) with the scripted blows before Rules; park arena.</summary>
-        private static Scene Park(int seed = 1)
+        private static Scene Park(int seed = 1, string rent = "each", string pointsPerS = null!)
         {
-            var data = Repo.Data();
+            // the scoring tests below state the old rule (each dog inside gets the whole rent); the rent tests choose their own
+            var over = "{\"rules\":{\"king_of_lawn\":{\"rent\":\"" + rent + "\"" + (pointsPerS == null ? "" : ",\"points_per_s\":" + pointsPerS) + "}}}";
+            var data = new GameData(Repo.Data().Root.MergedWith(Json.Parse(over)));
             int players = data.Int("game.players");
             var hits = new ScriptedHits();
             var modules = new List<IModule>
@@ -132,6 +134,80 @@ namespace Game.Core.Tests.Modules
             Assert.Equal(new[] { 1, 1, 0, 0 }, s.Match.Scores);
             s.RunTo(90);
             Assert.Equal(new[] { 3, 3, 0, 0 }, s.Match.Scores);
+        }
+
+        [Fact]
+        public void DataDefaultRentIsSplitAndVariantsOfSprint1KeepEach()
+        {
+            Assert.Equal("split", Repo.Data().Str("rules.king_of_lawn.rent"));
+            foreach (var name in new[] { "A", "B" })
+                Assert.Equal("each", Repo.Data().WithVariant(Repo.DataDir, "sprint-1", name).Str("rules.king_of_lawn.rent"));
+        }
+
+        [Fact]
+        public void UnknownRentModeThrows()
+        {
+            Assert.ThrowsAny<System.Exception>(() => Park(1, "bogus"));
+        }
+
+        [Fact]
+        public void SplitRentIsSharedEquallyAmongDogsInside()
+        {
+            var s = Park(1, "split");
+            s.Place(0, "0", "0");
+            s.Place(1, "1", "0");
+            s.RunTo(120); // 4 s, two inside: half a point a second each
+            Assert.Equal(new[] { 2, 2, 0, 0 }, s.Match.Scores);
+            s.Place(1, "9", "-5");
+            s.RunTo(240); // 4 s alone: the whole rent
+            Assert.Equal(new[] { 6, 2, 0, 0 }, s.Match.Scores);
+            Assert.All(s.Match.LastTickAwards.Concat(new PointsAward[0]), a => Assert.Equal("zone", a.Reason));
+        }
+
+        [Fact]
+        public void SoleRentPaysOnlyADogAloneAndTheSurvivorOfAKnockoutEarns()
+        {
+            var s = Park(1, "sole");
+            s.Place(0, "-5", "0");
+            s.Place(1, "0", "0");
+            s.Place(2, "1", "1");
+            s.Hits.Blows[101] = new Hit(0, 1, Fixed.FromInt(100), false);
+            s.RunTo(90); // 3 s with two inside: nothing
+            Assert.All(s.Match.Scores, x => Assert.Equal(0, x));
+            s.RunTo(105);
+            s.Place(1, "6", "0"); // knocked out: Ko for the attacker, player 2 is left alone in the circle
+            s.RunTo(190); // alone at 120, 150 and 180 s-ticks
+            Assert.Equal(new[] { Ko, 0, 3, 0 }, s.Match.Scores);
+        }
+
+        [Fact]
+        public void FractionalPointsAccrueUntilWhole()
+        {
+            var s = Park(1, "each", "0.5");
+            s.Place(0, "0", "0");
+            s.RunTo(30);
+            Assert.Equal(0, s.Match.Scores[0]);
+            Assert.Empty(s.Match.LastTickAwards);
+            s.RunTo(60);
+            Assert.Equal(1, s.Match.Scores[0]);
+            var award = Assert.Single(s.Match.LastTickAwards);
+            Assert.Equal("zone", award.Reason);
+            s.RunTo(120);
+            Assert.Equal(2, s.Match.Scores[0]);
+        }
+
+        [Fact]
+        public void RentAccumulatorIsInTheHashAndTheFork()
+        {
+            Scene Run() { var s = Park(3, "split"); s.Place(0, "0", "0"); s.Place(1, "1", "0"); s.RunTo(45); return s; }
+            var a = Run();
+            Assert.Equal(Run().Sim.StateHash(), a.Sim.StateHash());
+            var fork = a.Sim.Fork();
+            Assert.Equal(a.Sim.StateHash(), fork.StateHash());
+            a.Tick(15); // the original goes on: a second half point at 60 pays out a whole one
+            Assert.Equal(new[] { 1, 1, 0, 0 }, a.Match.Scores);
+            Assert.Equal(new[] { 0, 0, 0, 0 }, fork.Get<MatchModule>("Match").Scores);
+            Assert.NotEqual(a.Sim.StateHash(), fork.StateHash());
         }
 
         [Fact]

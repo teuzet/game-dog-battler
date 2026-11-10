@@ -21,8 +21,12 @@ namespace Game.Core.Modules.Rules.KingOfLawn
         public ZoneInfo? Zone => new ZoneInfo(_center, _radius);
         public ZoneInfo? NextZone => _announced ? new ZoneInfo(_next, _radius) : (ZoneInfo?)null;
 
-        private readonly Fixed _radius, _moveMin, _moveMax, _clearance;
-        private readonly int _periodTicks, _announceTicks, _pointsPerSecond, _knockoutPoints, _leaderKnockoutPoints, _windowTicks, _decisionTicks;
+        private enum Rent { Split, Sole, Each }
+
+        private readonly Fixed _radius, _moveMin, _moveMax, _clearance, _pointsPerSecond;
+        private readonly Rent _rent;
+        private readonly Fixed[] _rentAcc; // rent earned and not yet paid out in whole points
+        private readonly int _periodTicks, _announceTicks, _knockoutPoints, _leaderKnockoutPoints, _windowTicks, _decisionTicks;
 
         private Vec2 _center, _next;
         private bool _announced;
@@ -41,7 +45,9 @@ namespace Game.Core.Modules.Rules.KingOfLawn
             _clearance = d["clearance_m"]!.AsFixed();
             _periodTicks = d["period_s"]!.AsInt() * Simulation.TicksPerSecond;
             _announceTicks = d["announce_s"]!.AsInt() * Simulation.TicksPerSecond;
-            _pointsPerSecond = d["points_per_s"]!.AsInt();
+            _pointsPerSecond = d["points_per_s"]!.AsFixed();
+            _rent = ParseRent(d["rent"]!.AsString());
+            _rentAcc = new Fixed[players];
             _knockoutPoints = d["knockout_points"]!.AsInt();
             _leaderKnockoutPoints = d["leader_knockout_points"]!.AsInt();
             _windowTicks = d["knockout_window_s"]!.AsInt() * Simulation.TicksPerSecond;
@@ -64,6 +70,8 @@ namespace Game.Core.Modules.Rules.KingOfLawn
             _periodTicks = src._periodTicks;
             _announceTicks = src._announceTicks;
             _pointsPerSecond = src._pointsPerSecond;
+            _rent = src._rent;
+            _rentAcc = (Fixed[])src._rentAcc.Clone();
             _knockoutPoints = src._knockoutPoints;
             _leaderKnockoutPoints = src._leaderKnockoutPoints;
             _windowTicks = src._windowTicks;
@@ -185,16 +193,32 @@ namespace Game.Core.Modules.Rules.KingOfLawn
             return true;
         }
 
+        private static Rent ParseRent(string mode) => mode switch
+        {
+            "split" => Rent.Split,
+            "sole" => Rent.Sole,
+            "each" => Rent.Each,
+            _ => throw new System.ArgumentException($"rules.king_of_lawn.rent: unknown mode '{mode}' (split, sole, each)"),
+        };
+
         private void ScoreSecond(MatchModule match, bool[] inside)
         {
-            bool any = false;
+            int count = 0;
+            for (int p = 0; p < inside.Length; p++) if (inside[p]) count++;
+            // the rent of this second per dog inside
+            var share = _rent == Rent.Split ? _pointsPerSecond / System.Math.Max(count, 1)
+                : _rent == Rent.Sole && count != 1 ? Fixed.Zero
+                : _pointsPerSecond;
             for (int p = 0; p < inside.Length; p++)
             {
                 if (!inside[p]) continue;
-                match.Award(p, _pointsPerSecond, "zone");
-                any = true;
+                _rentAcc[p] += share;
+                int whole = _rentAcc[p].FloorToInt();
+                if (whole == 0) continue;
+                _rentAcc[p] -= Fixed.FromInt(whole);
+                match.Award(p, whole, "zone");
             }
-            _stretch = any ? _stretch + 1 : 0;
+            _stretch = count > 0 ? _stretch + 1 : 0;
             if (_stretch > _longestStretch) _longestStretch = _stretch;
         }
 
@@ -228,6 +252,7 @@ namespace Game.Core.Modules.Rules.KingOfLawn
                 h.Add(_pendingUntil[p]);
                 h.Add(_knockoutPointsOf[p]);
                 h.Add(_hits[p]);
+                h.Add(_rentAcc[p]);
             }
         }
 
