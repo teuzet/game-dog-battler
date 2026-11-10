@@ -208,6 +208,30 @@ namespace Game.Core.Tests.Modules
         }
 
         [Fact]
+        public void MatchKeepsTheAwardsOfTheLastTickWithTheirReason()
+        {
+            foreach (bool leader in new[] { false, true })
+            {
+                var s = Park();
+                s.Place(0, "-5", "0");
+                s.Place(1, "0", "0");
+                if (leader) { s.Match.Award(1, 3, "test"); s.Match.Award(2, 2, "test"); }
+                s.RunTo(10);
+                s.Hits.Blows[11] = new Hit(0, 1, Fixed.FromInt(100), false);
+                s.RunTo(15);
+                s.Place(1, "5", "0");
+                s.Tick();
+                var koAwards = s.Match.LastTickAwards.Where(a => a.Reason != "zone").ToList();
+                var ko = Assert.Single(koAwards);
+                Assert.Equal(0, ko.Player);
+                Assert.Equal(leader ? 8 : 5, ko.Points);
+                Assert.Equal(leader ? "leader_knockout" : "knockout", ko.Reason);
+                s.Tick();
+                Assert.DoesNotContain(s.Match.LastTickAwards, a => a.Reason.EndsWith("knockout"));
+            }
+        }
+
+        [Fact]
         public void TiedForTheLeadIsNotALeader()
         {
             var s = Park();

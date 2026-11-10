@@ -184,7 +184,7 @@ namespace Game.Core.Tests.Modules
             var data = WithHumanOwner("jock");
             var game = new DogBattlerGame();
             var sim = game.Create(7, data);
-            var log = new InputLog(7, sim.Players, data.Variant);
+            var log = new InputLog(7, sim.Players, data.Variant, "jock");
             for (int i = 0; i < 120; i++)
             {
                 var t = Inputs(sim, new PlayerInput(i % 40 < 20 ? 8 : -8, 3, PlayerInput.PushBit));
@@ -193,13 +193,16 @@ namespace Game.Core.Tests.Modules
             }
             Assert.Equal("jock", sim.Get<OwnersModule>("Owners").TypeOf(0).Name);
             var replayed = InputLog.Parse(log.Serialize());
-            var again = game.Create(replayed.Seed, data);
+            Assert.Equal("jock", replayed.Owner);
+            // a replay starts from the base data and takes the owner from the log, as Game.Sim --replay does
+            var again = game.Create(replayed.Seed, Repo.Data().WithHumanOwner(replayed.Owner));
             foreach (var t in replayed.Ticks) again.Step(t);
             Assert.Equal(sim.StateHash(), again.StateHash());
             // and the default pick (teen) is another session
             var teen = game.Create(7, Repo.Data());
             foreach (var t in replayed.Ticks) teen.Step(t);
             Assert.NotEqual(sim.StateHash(), teen.StateHash());
+            Assert.Contains("хозяин jock", Runner.Replay(game, Repo.Data(), replayed));
         }
 
         [Fact]

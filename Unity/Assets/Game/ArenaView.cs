@@ -59,6 +59,8 @@ namespace DogBattler.View
         /// <summary>Each leash is a bar from the dog's collar to the owner's hand: length = distance, thickness = tension.</summary>
         public IReadOnlyList<Transform> Leashes => _leashLines;
         public Camera ViewCamera => _camera;
+        /// <summary>Where the player's dog is drawn: the anchor for things that follow the player (popups).</summary>
+        public Transform DogOf(int player) => _dogs[player].Root;
         public float FlashOf(int player) => _dogs[player].Flash;
         public int TreeCount { get; private set; }
         public int BenchCount { get; private set; }
@@ -115,7 +117,7 @@ namespace DogBattler.View
             BuildGround((float)arena.Width.ToDouble(), (float)arena.Height.ToDouble());
             BuildObstacles(arena);
             _zone = Prim(PrimitiveType.Cylinder, _root, "Zone", Vector3.zero, new Vector3(1, 0.01f, 1), new Color(0.80f, 0.92f, 0.58f)).transform;
-            _nextZone = Prim(PrimitiveType.Cylinder, _root, "NextZone", Vector3.zero, new Vector3(1, 0.008f, 1), new Color(0.50f, 0.68f, 0.36f)).transform;
+            _nextZone = Prim(PrimitiveType.Cylinder, _root, "NextZone", Vector3.zero, new Vector3(1, 0.008f, 1), new Color(0.60f, 0.76f, 0.44f)).transform;
             _zone.gameObject.SetActive(false);
             _nextZone.gameObject.SetActive(false);
 
@@ -335,40 +337,7 @@ namespace DogBattler.View
             t.localScale = new Vector3(r * 2, t.localScale.y, r * 2);
         }
 
-        // ---------------------------------------------------------------- HUD
-
-        private void OnGUI()
-        {
-            if (_sim == null) return;
-            float k = Screen.height / 720f;
-            var label = new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(20 * k), fontStyle = FontStyle.Bold };
-            label.normal.textColor = Color.white;
-            string mode = InputReader.PushMode ? "ТОЛЧОК (курсор скрыт, двигай мышь)" : "КУРСОР (собака бежит к точке)";
-            Outlined(new Rect(12 * k, 8 * k, Screen.width, 30 * k), $"Режим мыши: {mode}   [Tab — переключить]", label);
-            Outlined(new Rect(12 * k, 34 * k, Screen.width, 30 * k), "ЛКМ/Q — абилка собаки   ПКМ/E — абилка хозяина   R — заново", label);
-            var match = _sim.Get<MatchModule>(MatchModule.ModuleName);
-            var big = new GUIStyle(label) { fontSize = Mathf.RoundToInt(26 * k), alignment = TextAnchor.UpperCenter };
-            int secs = Mathf.CeilToInt((float)match.TimeLeft.ToDouble());
-            Outlined(new Rect(0, Screen.height - 44 * k, Screen.width, 40 * k), $"{secs / 60}:{secs % 60:00}", big);
-            for (int p = 0; p < match.Scores.Count; p++)
-            {
-                var style = new GUIStyle(big) { alignment = TextAnchor.UpperLeft };
-                style.normal.textColor = ViewMath.PlayerColor(p);
-                GUI.Label(new Rect(12 * k + p * 110 * k, Screen.height - 44 * k, 110 * k, 40 * k), match.Scores[p].ToString(), style);
-            }
-        }
-
         // ---------------------------------------------------------------- helpers
-
-        private static void Outlined(Rect r, string text, GUIStyle style)
-        {
-            var color = style.normal.textColor;
-            style.normal.textColor = new Color(0f, 0f, 0f, 0.8f);
-            foreach (var o in new[] { new Vector2(-1.5f, 0), new Vector2(1.5f, 0), new Vector2(0, -1.5f), new Vector2(0, 1.5f) })
-                GUI.Label(new Rect(r.x + o.x, r.y + o.y, r.width, r.height), text, style);
-            style.normal.textColor = color;
-            GUI.Label(r, text, style);
-        }
 
         // Matte flat colour: Diffuse is lit (Lambert); both shaders are in GraphicsSettings → Always Included,
         // so a build keeps them (Standard of the default primitive material is stripped from the demo build).

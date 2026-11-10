@@ -60,7 +60,7 @@ foreach (var name in tracked)
 foreach (var owner in ownerTypes.Count == 0 ? new List<string> { "" } : ownerTypes)
 {
     var runData = owner.Length == 0 ? data
-        : new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"human_owner\":\"" + owner + "\"}}")), data.Variant);
+        : data.WithHumanOwner(owner);
     var key = owner.Length == 0 ? name : name + "/" + owner;
     int wins = 0, n = 0;
     double seconds = 0;
@@ -196,8 +196,9 @@ static class Runner
     /// <summary>Nick's session from the demo build, played again: the same chronicle a bot session gets.</summary>
     public static string Replay(IGame game, GameData data, InputLog log)
     {
+        if (log.Owner.Length > 0) data = data.WithHumanOwner(log.Owner);
         var sim = game.Create(log.Seed, data);
-        var sb = new StringBuilder($"# Повтор сессии Nick (сид {log.Seed}, вариант {log.Variant})\n\n");
+        var sb = new StringBuilder($"# Повтор сессии Nick (сид {log.Seed}, вариант {log.Variant}, хозяин {(log.Owner.Length > 0 ? log.Owner : "по умолчанию")})\n\n");
         int seen = 0;
         foreach (var t in log.Ticks)
         {
