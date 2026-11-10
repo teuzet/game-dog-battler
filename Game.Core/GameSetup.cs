@@ -31,6 +31,8 @@ namespace Game.Core
         public string Name => "dog-battler";
         public int Players => 4;
 
+        /// <summary>The session setup lives in data: the human's owner pick is "game.human_owner" (the shell
+        /// or a variant sets it; the variant name is in the input log), bots' picks are "bots.session.owner_picks".</summary>
         public Simulation Create(int seed, GameData data)
         {
             int players = data.Has("game.players") ? data.Int("game.players") : Players;

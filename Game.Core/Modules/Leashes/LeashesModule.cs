@@ -51,6 +51,14 @@ namespace Game.Core.Modules.Leashes
         public int DogBody(int player) => _dog[player];
         public int OwnerBody(int player) => _owner[player];
 
+        /// <summary>For the view: 0 when the ends are at the same spot, 1 when the rope is straight and taut.</summary>
+        public Fixed Tension(Simulation sim, int player)
+        {
+            var bodies = sim.Need<BodiesModule>(this, BodiesModule.ModuleName);
+            var dist = bodies.Position(_dog[player]).DistanceTo(bodies.Position(_owner[player]));
+            return Fixed.Clamp01(dist / _length[player]);
+        }
+
         public void AttachDog(int player, int body, Fixed length)
         {
             _dog[player] = body;

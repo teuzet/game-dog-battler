@@ -10,9 +10,8 @@ using Game.Core.Sim;
 
 namespace Game.Core.Modules.Owners
 {
-    /// <summary>The owners: one per player, a type each (pairs in "game.pairs"). Stub of
-    /// F-001: an owner is a plain body the leash will pull; behaviours and abilities
-    /// of the types come with F-003.</summary>
+    /// <summary>The owners: one per player, the type he picked. Sprint 1: an owner is a plain
+    /// body with no abilities and no health; it moves only by the leash.</summary>
     public sealed class OwnersModule : IModule
     {
         public const string ModuleName = "Owners";
@@ -25,12 +24,18 @@ namespace Game.Core.Modules.Owners
         private readonly OwnerType[] _types;
         private readonly int[] _body;
 
+        /// <summary>The session picks live in data, so a logged session replays: the human (player 0)
+        /// has "game.human_owner", bots take "bots.session.owner_picks" in turn.</summary>
         public OwnersModule(GameData data, int players)
         {
             _types = new OwnerType[players];
             _body = new int[players];
-            var pairs = data.Get("game.pairs").Items;
-            for (int p = 0; p < players; p++) _types[p] = OwnerTypeRegistry.Create(pairs[p % pairs.Count]["owner"]!.AsString(), data);
+            var botPicks = data.Get("bots.session.owner_picks").Items;
+            for (int p = 0; p < players; p++)
+            {
+                string pick = p == 0 ? data.Str("game.human_owner") : botPicks[(p - 1) % botPicks.Count].AsString();
+                _types[p] = OwnerTypeRegistry.Create(pick, data);
+            }
         }
 
         private OwnersModule(OwnersModule src)

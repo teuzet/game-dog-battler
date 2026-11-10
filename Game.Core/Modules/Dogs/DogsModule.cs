@@ -12,9 +12,9 @@ using Game.Core.Sim;
 
 namespace Game.Core.Modules.Dogs
 {
-    /// <summary>The dogs: one per player, a breed each (pairs in "game.pairs"). Stub of
-    /// F-001: the dog accelerates to the intent's velocity within the breed's speed;
-    /// stun, abilities and prop pulls come with F-003 and later.</summary>
+    /// <summary>The dogs: one per player, a breed each (pairs in "game.pairs"). The dog
+    /// accelerates to the intent's velocity within the breed's speed; no abilities in
+    /// sprint 1; stun and prop pulls come later.</summary>
     public sealed class DogsModule : IModule
     {
         public const string ModuleName = "Dogs";
@@ -74,7 +74,11 @@ namespace Game.Core.Modules.Dogs
             for (int p = 0; p < _breeds.Length; p++)
             {
                 var b = _breeds[p];
-                bodies.Drive(_body[p], control.Of(p).Velocity.ClampLength(b.Speed), b.Speed / b.AccelTime);
+                var want = control.Of(p).Velocity.ClampLength(b.Speed);
+                var vel = bodies.Velocity(_body[p]);
+                var steered = b.SteerVelocity(vel, want);
+                if (steered != vel) bodies.SetVelocity(_body[p], steered);
+                bodies.Drive(_body[p], want, b.Speed / b.AccelTime);
             }
         }
 

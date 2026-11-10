@@ -2,6 +2,5 @@
   "title": "Подросток в телефоне",
   "mass": 60,
   "radius": 0.4,
-  "friction": 5,
-  "ability": { "name": "selfie", "cooldown_s": 10 }
+  "friction": 5
 }
