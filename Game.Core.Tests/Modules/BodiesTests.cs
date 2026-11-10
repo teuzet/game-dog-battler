@@ -52,11 +52,37 @@ namespace Game.Core.Tests.Modules
             Assert.True(bodies.Velocity(owner).X > Fixed.FromInt(2), "the owner is dragged along");
             Assert.True(bodies.Position(owner).X > Fixed.FromInt(3), "the owner moved with the dog");
             Assert.True(maxStretch <= length + F("0.1"), $"stretch {maxStretch}");
-            // the dog stops (friction), the owner slides on, then stops too
-            Tick(sim, 150);
+            // the dog stops the way Dogs stops it (driven to zero, not released); the owner has momentum and slides on
+            var ownerAtStop = bodies.Position(owner);
+            Fixed slid = Fixed.Zero;
+            for (int t = 0; t < 30; t++)
+            {
+                bodies.Drive(dog, Vec2.Zero, Fixed.FromInt(35));
+                Tick(sim);
+                var s = bodies.Position(owner).DistanceTo(ownerAtStop);
+                if (s > slid) slid = s;
+            }
+            Assert.True(slid > Fixed.One, $"owner slid only {slid}");
+            for (int t = 0; t < 150; t++) { bodies.Drive(dog, Vec2.Zero, Fixed.FromInt(35)); Tick(sim); }
             Assert.Equal(Vec2.Zero, bodies.Velocity(owner));
             Assert.Equal(Vec2.Zero, bodies.Velocity(dog));
             Assert.True(bodies.Position(dog).DistanceTo(bodies.Position(owner)) <= length + F("0.1"));
+        }
+
+        [Fact]
+        public void HeavierOwnerLagsBehindTheSameDog()
+        {
+            Fixed Run(string owner)
+            {
+                var sim = Session(out var bodies);
+                var data = Repo.Data();
+                int dog = bodies.AddCircle(P("0", "0"), data.Num("dogs.collie.mass"), data.Num("dogs.collie.radius"), data.Num("dogs.collie.friction"));
+                int o = bodies.AddCircle(P("-2", "0"), data.Num("owners." + owner + ".mass"), data.Num("owners." + owner + ".radius"), data.Num("owners." + owner + ".friction"));
+                bodies.AddRope(dog, o, data.Num("dogs.collie.leash_m"), data.Num("leash.stiffness"));
+                for (int t = 0; t < 60; t++) { bodies.Drive(dog, P("7", "0"), Fixed.FromInt(35)); Tick(sim); }
+                return bodies.Position(o).X;
+            }
+            Assert.True(Run("jock") < Run("teen"));
         }
 
         [Fact]

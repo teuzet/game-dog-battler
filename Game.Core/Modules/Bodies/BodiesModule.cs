@@ -63,19 +63,21 @@ namespace Game.Core.Modules.Bodies
         private readonly List<Rope> _ropes = new List<Rope>();
         private readonly List<Contact> _contacts = new List<Contact>();
 
-        private readonly Fixed _restitution;
+        private readonly Fixed _restitution, _driveMassFactor;
         private ArenaModule _arena = null!; // immutable, shared with forks
 
         public BodiesModule(GameData data)
         {
             _substeps = data.Int("bodies.substeps");
             _restitution = data.Num("bodies.restitution");
+            _driveMassFactor = data.Num("bodies.drive_mass_factor");
         }
 
         private BodiesModule(BodiesModule src)
         {
             _substeps = src._substeps;
             _restitution = src._restitution;
+            _driveMassFactor = src._driveMassFactor;
             _arena = src._arena;
             _bodies.AddRange(src._bodies);
             _ropes.AddRange(src._ropes);
@@ -173,16 +175,17 @@ namespace Game.Core.Modules.Bodies
             else { wa = Fixed.Zero; wb = Fixed.Zero; }
         }
 
-        /// <summary>Like <see cref="Shares"/>, but a driven body is an engine: against an undriven
-        /// dynamic body it pulls on the rope as if of infinite mass, so a light driven body drags a
-        /// heavy one at its own speed instead of being held back by it. Two driven bodies share by mass.</summary>
-        private static void RopeShares(Body a, Body b, out Fixed wa, out Fixed wb)
+        /// <summary>Like <see cref="Shares"/>, but a driven body is an engine: on the rope it
+        /// counts as <c>bodies.drive_mass_factor</c> times its mass, so a driven dog pulls with a
+        /// bounded weight that grows with its mass, and the owner's mass and momentum still count.
+        /// A stopped dog (driven to zero speed) resists the same way; nobody becomes a fixed axis.</summary>
+        private void RopeShares(Body a, Body b, out Fixed wa, out Fixed wb)
         {
-            bool ae = a.Kind == BodyKind.Dynamic && a.Driven, be = b.Kind == BodyKind.Dynamic && b.Driven;
-            bool am = a.Kind == BodyKind.Dynamic, bm = b.Kind == BodyKind.Dynamic;
-            if (ae && bm && !be) { wa = Fixed.Zero; wb = Fixed.One; }
-            else if (be && am && !ae) { wa = Fixed.One; wb = Fixed.Zero; }
-            else Shares(a, b, out wa, out wb);
+            if (a.Kind != BodyKind.Dynamic || b.Kind != BodyKind.Dynamic) { Shares(a, b, out wa, out wb); return; }
+            var ma = a.Driven ? a.Mass * _driveMassFactor : a.Mass;
+            var mb = b.Driven ? b.Mass * _driveMassFactor : b.Mass;
+            wa = mb / (ma + mb);
+            wb = Fixed.One - wa;
         }
 
         private void SolveRope(Rope r, Fixed dt)
@@ -315,7 +318,7 @@ namespace Game.Core.Modules.Bodies
         public void Hash(ref StateHasher h)
         {
             h.Add(_bodies.Count);
-            foreach (var b in _bodies) { h.Add((int)b.Kind); h.Add(b.Pos); h.Add(b.Vel); h.Add(b.Mass); h.Add(b.Radius); h.Add(b.Friction); }
+            foreach (var b in _bodies) { h.Add((int)b.Kind); h.Add(b.Pos); h.Add(b.Vel); h.Add(b.Mass); h.Add(b.Radius); h.Add(b.Friction); h.Add(b.Driven); h.Add(b.DriveVel); h.Add(b.DriveAccel); }
             h.Add(_ropes.Count);
             foreach (var r in _ropes) { h.Add(r.A); h.Add(r.B); h.Add(r.Length); h.Add(r.Stiffness); }
         }
