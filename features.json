@@ -509,7 +509,7 @@
         "tests in Game.Core.Tests/Modules/KingOfLawnTests.cs with scripted positions: two dogs inside for 4 s under `split` earn 2 points each and one alone earns 4; under `sole` two inside earn nothing and the one left alone after a knockout earns; `points_per_s: 0.5` under `each` gives 1 point every 2 s; the existing scoring tests run under `each` through a variant or state the split numbers; same seed and inputs → same StateHash, Fork independent",
         "no new link in MODULES.md; `dotnet test` green"
       ],
-      "status": "unity_check",
+      "status": "done",
       "attempts": 0,
       "budget_tokens": 300000,
       "owner_role": "developer-core",
