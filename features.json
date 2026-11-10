@@ -295,7 +295,7 @@
         "the sandbox arena is playable: screenshot of the collie swinging the teen into a dummy"
       ],
       "status": "running",
-      "attempts": 0,
+      "attempts": 1,
       "budget_tokens": 600000,
       "owner_role": "developer-unity",
       "touches": [
