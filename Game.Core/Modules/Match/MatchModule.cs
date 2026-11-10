@@ -16,6 +16,7 @@ namespace Game.Core.Modules.Match
         private readonly int _finalTicks;
         private readonly int[] _scores;
         private int _ticksLeft;
+        private int _leader = -1; // the last sole top scorer, -1 = nobody yet
 
         public MatchModule(GameData data, int players)
         {
@@ -28,6 +29,7 @@ namespace Game.Core.Modules.Match
         {
             _finalTicks = src._finalTicks;
             _ticksLeft = src._ticksLeft;
+            _leader = src._leader;
             _scores = (int[])src._scores.Clone();
         }
 
@@ -41,8 +43,27 @@ namespace Game.Core.Modules.Match
         public void Step(Simulation sim, TickInputs inputs)
         {
             _ticksLeft--;
+            CheckLead(sim);
             if (_ticksLeft == _finalTicks) AnnounceFinal(sim);
             if (_ticksLeft <= 0) sim.End(Result());
+        }
+
+        /// <summary>A new sole top scorer is a lead change: Reward to him, Threat to the one who lost the lead.</summary>
+        private void CheckLead(Simulation sim)
+        {
+            int top = Top(), who = -1, second = 0;
+            for (int p = 0; p < _scores.Length; p++)
+                if (_scores[p] == top && top > 0) who = who == -1 ? p : -2;
+            if (who < 0 || who == _leader) return;
+            for (int p = 0; p < _scores.Length; p++)
+                if (p != who && _scores[p] > second) second = _scores[p];
+            int old = _leader;
+            _leader = who;
+            var e = sim.Events.Add("lead_change", who, $"участник {who} вышел вперёд: {top} против {second}");
+            e.Reward = Fixed.Ratio(top - second, top);
+            if (old < 0) return;
+            var lost = sim.Events.Add("lead_change", old, $"участник {old} потерял лидерство: {_scores[old]} против {top}");
+            lost.Threat = Fixed.One - Fixed.Ratio(top - _scores[old], top);
         }
 
         /// <summary>The last seconds: threat to each player by how far he trails the leader.</summary>
@@ -74,12 +95,15 @@ namespace Game.Core.Modules.Match
             for (int p = 0; p < outcomes.Length; p++)
                 outcomes[p] = _scores[p] != top ? Outcome.Loss : tied > 1 ? Outcome.Draw : Outcome.Win;
             var margin = tied > 1 || top == 0 ? Fixed.Zero : Fixed.Ratio(top - second, top);
-            return new SessionResult(outcomes, margin, tied > 1 ? "матч закончен вничью" : "матч закончен по таймеру");
+            return new SessionResult(outcomes, margin, tied > 1
+                ? $"матч закончен вничью: {top} очков"
+                : $"матч закончен по таймеру: победил участник {System.Array.IndexOf(_scores, top)}, {top} против {second}");
         }
 
         public void Hash(ref StateHasher h)
         {
             h.Add(_ticksLeft);
+            h.Add(_leader);
             foreach (var s in _scores) h.Add(s);
         }
 

@@ -219,20 +219,33 @@ namespace Game.Core.Tests.Skeleton
             Assert.True(match.TimeLeft < Fixed.FromInt(120));
         }
 
+        /// <summary>Every dog keeps to its place (cursor on itself), so nobody earns points in the circle.</summary>
+        private static TickInputs Stay(Simulation sim)
+        {
+            var dogs = sim.Get<DogsModule>("Dogs");
+            var t = TickInputs.Empty(sim.Players);
+            for (int p = 0; p < sim.Players; p++)
+            {
+                var at = dogs.Position(sim, p);
+                t[p] = new PlayerInput((at.X * 100).FloorToInt(), (at.Y * 100).FloorToInt());
+            }
+            return t;
+        }
+
         [Fact]
         public void MatchEndsWithTheLeaderWinningAndTiesDrawn()
         {
             var data = Repo.Data();
             var sim = GameSetup.Game.Create(1, data);
-            sim.Get<MatchModule>("Match").Award(1, 4, "test");
-            while (!sim.IsOver) sim.Step(TickInputs.Empty(sim.Players));
+            sim.Get<MatchModule>("Match").Award(1, 400, "test"); // far above what a circle that lands on a spawn can give
+            while (!sim.IsOver) sim.Step(Stay(sim));
             Assert.Equal(new[] { Outcome.Loss, Outcome.Win, Outcome.Loss, Outcome.Loss }, sim.Result!.Outcomes);
             Assert.Equal(120 * Simulation.TicksPerSecond, sim.Tick);
 
             var tie = GameSetup.Game.Create(1, data);
-            tie.Get<MatchModule>("Match").Award(0, 1, "test");
-            tie.Get<MatchModule>("Match").Award(3, 1, "test");
-            while (!tie.IsOver) tie.Step(TickInputs.Empty(tie.Players));
+            tie.Get<MatchModule>("Match").Award(0, 400, "test");
+            tie.Get<MatchModule>("Match").Award(3, 400, "test");
+            while (!tie.IsOver) tie.Step(Stay(tie));
             Assert.Equal(new[] { Outcome.Draw, Outcome.Loss, Outcome.Loss, Outcome.Draw }, tie.Result!.Outcomes);
         }
 

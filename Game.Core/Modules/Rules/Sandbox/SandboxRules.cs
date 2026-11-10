@@ -9,6 +9,10 @@ namespace Game.Core.Modules.Rules.Sandbox
     {
         public string Name => "Sandbox";
         public ZoneInfo? Zone => null;
+        public ZoneInfo? NextZone => null;
+        public bool ZoneJustAnnounced(Simulation sim) => false;
+        public System.Collections.Generic.IReadOnlyDictionary<string, double> Metrics(Simulation sim, int player) =>
+            new System.Collections.Generic.Dictionary<string, double>();
         public void Step(Simulation sim, RulesModule host, TickInputs inputs) { }
         public void Hash(ref StateHasher h) { }
         public IRuleSet Clone() => this; // no state
