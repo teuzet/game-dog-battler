@@ -351,7 +351,7 @@
         "the connecting swing is proven by an EditMode test, not by a screenshot (no attempt can start the built player, ARCHITECTURE.md → «Как Unity подключена к ядру»): stepping a sandbox simulation with the scripted input for player 0 yields a hit by player 0 in `HitsModule.ThisTick` with a mannequin's dog as victim no later than the capture tick, the leash of player 0 is taut at that tick, and 0.5 s later the victim's body still moves (the slide); the screenshots art/previews/f023-sandbox-mannequin-hit.png and f023-sandbox-mannequin-slide.png (the teen in flight at the end of a taut leash, the mannequin's dog flashing; then the dog sliding away, the owner landing) are taken by a person from the sprint demo build and are not committed by this feature; no stand-in png or .gitkeep in art/previews/",
         "`factory tool run unity --set mode=test` and `mode=execute --set method=FactoryBuild.Demo` stay green, one run each, logs searched for `error CS`, `Build Failed` and the test summary, not read whole; no new link in MODULES.md; commits on feat/F-023 before the result is written; result.json validates (`decisions` empty or entries `{question, chosen, why}`)"
       ],
-      "status": "review",
+      "status": "unity_check",
       "attempts": 0,
       "budget_tokens": 300000,
       "owner_role": "developer-unity",
