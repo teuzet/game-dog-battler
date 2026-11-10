@@ -1,0 +1,10 @@
+{
+  "title": "Бордер-колли",
+  "speed": 7,
+  "accel_time_s": 0.2,
+  "mass": 2,
+  "radius": 0.35,
+  "friction": 6,
+  "leash_m": 3,
+  "ability": { "name": "dash", "cooldown_s": 5 }
+}

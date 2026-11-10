@@ -1,7 +1,5 @@
 [
-  { "name": "idle", "strategy": "idle", "about": "Ничего не делает: бежит трусцой по безопасной дорожке.", "reaction_ms": 0, "hold_ms": 1000 },
-  { "name": "random", "strategy": "random", "about": "Жмёт что попало.", "reaction_ms": 250, "hold_ms": 500 },
-  { "name": "smart", "strategy": "runner", "about": "Спринтует, пока есть силы, отдыхает до трети; рискует на развилке, когда отстаёт или полон сил; на финише выжимает всё.", "reaction_ms": 250, "hold_ms": 300, "params": { "risk": 0.5 } },
-  { "name": "cautious", "strategy": "runner", "about": "Как умный, но всегда безопасная дорожка.", "reaction_ms": 300, "hold_ms": 400, "params": { "risk": 0 } },
-  { "name": "greedy", "strategy": "runner", "about": "Как умный, но всегда верхняя дорожка за монетой.", "reaction_ms": 250, "hold_ms": 300, "params": { "risk": 1 } }
+  { "name": "idle", "strategy": "idle", "about": "Стоит на спавне и ничего не нажимает.", "reaction_ms": 0, "hold_ms": 1000 },
+  { "name": "random", "strategy": "random", "about": "Бегает к случайным точкам арены, не замечая круга.", "reaction_ms": 250, "hold_ms": 500 },
+  { "name": "smart", "strategy": "smart", "about": "Бежит в курсорном режиме к кругу и стоит в нём, пока круг не переедет.", "reaction_ms": 250, "hold_ms": 300 }
 ]

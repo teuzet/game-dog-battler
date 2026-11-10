@@ -41,7 +41,7 @@ namespace Game.Core.Sim
                     if (v.Equals(last[p])) continue;
                     last[p] = v;
                     sb.Append(t.ToString(CultureInfo.InvariantCulture)).Append(' ').Append(p.ToString(CultureInfo.InvariantCulture))
-                      .Append(' ').Append(v.X.ToString(CultureInfo.InvariantCulture)).Append(' ').Append(v.Y.ToString(CultureInfo.InvariantCulture))
+                      .Append(' ').Append(v.AimX.ToString(CultureInfo.InvariantCulture)).Append(' ').Append(v.AimY.ToString(CultureInfo.InvariantCulture))
                       .Append(' ').Append(v.Buttons.ToString(CultureInfo.InvariantCulture)).Append('\n');
                 }
             return sb.ToString();

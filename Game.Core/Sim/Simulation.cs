@@ -45,6 +45,7 @@ namespace Game.Core.Sim
             foreach (var m in _modules)
                 foreach (var dep in m.DependsOn)
                     if (!_byName.ContainsKey(dep)) throw new ArgumentException($"{m.Name} depends on unknown module {dep}");
+            foreach (var m in _modules) m.Init(this);
         }
 
         private Simulation(Simulation src)

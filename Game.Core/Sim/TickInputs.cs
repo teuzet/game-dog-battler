@@ -3,27 +3,46 @@ using Game.Core.Math;
 
 namespace Game.Core.Sim
 {
-    /// <summary>One participant's input for one tick: a stick and buttons.
-    /// Unity maps keys to it, bots produce it, the input log stores it.</summary>
+    /// <summary>One player's input for one tick: the mouse and the ability buttons.
+    /// Unity maps the mouse to it, bots produce it, the input log stores it.
+    /// Cursor mode (<see cref="Push"/> clear): Aim is the point on the arena the
+    /// dog runs to, in centimetres from the arena centre. Push mode: Aim is the
+    /// mouse shift accumulated over this tick, in centimetres.</summary>
     public readonly struct PlayerInput : IEquatable<PlayerInput>
     {
-        public readonly sbyte X; // -1..1
-        public readonly sbyte Y; // -1..1
-        public readonly uint Buttons; // bit i = button i held
+        /// <summary>Mode bit: set = push, clear = cursor.</summary>
+        public const uint PushBit = 1u << 0;
+        /// <summary>LMB / Q: the dog's ability.</summary>
+        public const uint DogAbilityBit = 1u << 1;
+        /// <summary>RMB / E: the owner's ability.</summary>
+        public const uint OwnerAbilityBit = 1u << 2;
 
-        public PlayerInput(int x, int y, uint buttons = 0)
+        public readonly short AimX; // centimetres
+        public readonly short AimY; // centimetres
+        public readonly uint Buttons; // PushBit | DogAbilityBit | OwnerAbilityBit
+
+        public PlayerInput(int aimX, int aimY, uint buttons = 0)
         {
-            X = (sbyte)System.Math.Max(-1, System.Math.Min(1, x));
-            Y = (sbyte)System.Math.Max(-1, System.Math.Min(1, y));
+            AimX = (short)System.Math.Max(short.MinValue, System.Math.Min(short.MaxValue, aimX));
+            AimY = (short)System.Math.Max(short.MinValue, System.Math.Min(short.MaxValue, aimY));
             Buttons = buttons;
         }
 
         public static readonly PlayerInput None = default;
+
+        /// <summary>Same as AimX / AimY: the generic names the factory's bots and contract tests use.</summary>
+        public short X => AimX;
+        public short Y => AimY;
+
+        public bool Push => (Buttons & PushBit) != 0;
+        public bool DogAbility => (Buttons & DogAbilityBit) != 0;
+        public bool OwnerAbility => (Buttons & OwnerAbilityBit) != 0;
+
         public bool Held(int button) => (Buttons & (1u << button)) != 0;
-        public bool Equals(PlayerInput o) => X == o.X && Y == o.Y && Buttons == o.Buttons;
+        public bool Equals(PlayerInput o) => AimX == o.AimX && AimY == o.AimY && Buttons == o.Buttons;
         public override bool Equals(object? obj) => obj is PlayerInput p && Equals(p);
-        public override int GetHashCode() => (X + 2) | ((Y + 2) << 4) | (int)(Buttons << 8);
-        public override string ToString() => $"{X},{Y},{Buttons}";
+        public override int GetHashCode() => (AimX & 0xFFFF) | ((AimY & 0xFFFF) << 16) ^ (int)(Buttons << 5);
+        public override string ToString() => $"{AimX},{AimY},{Buttons}";
     }
 
     /// <summary>Everyone's input for one tick, by player index.</summary>
@@ -52,7 +71,7 @@ namespace Game.Core.Sim
 
         public void Hash(ref StateHasher h)
         {
-            foreach (var p in _players) { h.Add(p.X); h.Add(p.Y); h.Add((long)p.Buttons); }
+            foreach (var p in _players) { h.Add((int)p.AimX); h.Add((int)p.AimY); h.Add((long)p.Buttons); }
         }
     }
 }

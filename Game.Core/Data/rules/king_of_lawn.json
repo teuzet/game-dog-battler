@@ -1,0 +1,5 @@
+{
+  "zone_radius_m": 3.5,
+  "period_s": 20,
+  "points_per_s": 1
+}

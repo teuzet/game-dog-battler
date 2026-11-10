@@ -1,0 +1,7 @@
+{
+  "title": "Качок с шейкером",
+  "mass": 110,
+  "radius": 0.5,
+  "friction": 3,
+  "ability": { "name": "pull", "cooldown_s": 10 }
+}

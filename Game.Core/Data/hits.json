@@ -1,0 +1,9 @@
+{
+  "threshold_mps": 5,
+  "strong_threshold_mps": 9,
+  "knockback_min_m": 2,
+  "knockback_max_m": 7,
+  "stun_base_s": 0.4,
+  "stun_per_mps_s": 0.05,
+  "stun_max_s": 1.2
+}

@@ -1,1 +1,1 @@
-{ "opponents": ["smart", "cautious", "random"], "tracked": ["idle", "random", "smart", "cautious", "greedy"] }
+{ "opponents": ["smart", "random", "idle"], "tracked": ["idle", "random", "smart"] }

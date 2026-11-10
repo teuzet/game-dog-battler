@@ -1,0 +1,6 @@
+{
+  "max_speed_mps": 10,
+  "cursor_gain_per_s": 4,
+  "cursor_deadzone_m": 0.15,
+  "push_gain": 1
+}

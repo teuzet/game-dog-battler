@@ -42,6 +42,19 @@ namespace Game.Core.Math
         public static Fixed Clamp01(Fixed v) => Clamp(v, Zero, One);
         public Fixed Abs() => Raw < 0 ? new Fixed(-Raw) : this;
 
+        /// <summary>Square root, rounded down, by integer Newton iteration: the same on every machine.</summary>
+        public static Fixed Sqrt(Fixed v)
+        {
+            if (v.Raw < 0) throw new ArgumentOutOfRangeException(nameof(v), "square root of a negative number");
+            if (v.Raw == 0) return Zero;
+            // sqrt(raw / 2^16) * 2^16 = sqrt(raw * 2^16)
+            ulong n = (ulong)v.Raw << Shift;
+            ulong x = n;
+            ulong y = (x + 1) >> 1;
+            while (y < x) { x = y; y = (x + n / x) >> 1; }
+            return new Fixed((long)x);
+        }
+
         /// <summary>Whole part, rounded down.</summary>
         public int FloorToInt() => (int)(Raw >> Shift);
 
