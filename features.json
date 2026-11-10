@@ -477,7 +477,7 @@
         "design/roster.md → «Удар», first bullet, gets the clause «…и сам движется к ней не медленнее 5 м/с: припаркованный хозяин — препятствие, а не оружие» (one line; the decision is the techlead's, decisions.md); Data/variants/sprint-1/A.json and B.json get `hits.owner_speed_min_mps: 0`, so they keep playing exactly as the playtest measured them (variants compare, Data is the new default)",
         "no change in Unity/ (the F-023 EditMode swing hits a standing mannequin, where RelSpeed equals the owner's speed) and no new link in MODULES.md; `dotnet test` green; the review note has `Game.Sim --bench swing` hits per minute of smart and random before and after (random is expected to lose his «standing» hits)"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 1,
       "budget_tokens": 300000,
       "owner_role": "developer-core",
