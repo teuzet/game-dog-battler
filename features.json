@@ -296,7 +296,7 @@
         "the sandbox arena is playable with the collie in both mouse modes: the demo build started with `-arena sandbox` runs, the teen swings around the running dog on a taut leash and visibly lifts; screenshot art/previews/f007-sandbox-swing.png of the owner in flight at the end of a taut leash, taken by the build with `-capture <png>` and the scripted swing (the draft has one; retake it if the view changes). The blow on a mannequin is F-023"
       ],
       "status": "running",
-      "attempts": 1,
+      "attempts": 2,
       "budget_tokens": 600000,
       "owner_role": "developer-unity",
       "touches": [
