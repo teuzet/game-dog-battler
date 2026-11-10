@@ -1,0 +1,10 @@
+{
+  "name": "Game.View",
+  "rootNamespace": "DogBattler.View",
+  "references": [ "Game.Core", "Factory.Runtime" ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "autoReferenced": true
+}
