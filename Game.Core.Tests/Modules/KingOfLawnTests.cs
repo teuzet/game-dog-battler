@@ -85,7 +85,7 @@ namespace Game.Core.Tests.Modules
             var modules = new List<IModule>
             {
                 new ArenaModule(data), new ControlModule(data, players), new OwnersModule(data, players), new DogsModule(data, players),
-                new PropsModule(), new LeashesModule(data, players), new BodiesModule(data), new HitsModule(data),
+                new PropsModule(), new LeashesModule(data, players), new BodiesModule(data), new HitsModule(data, players),
                 hits, new RulesModule(data, players), new MatchModule(data, players),
             };
             var sim = new Simulation(seed, players, data, modules);

@@ -45,7 +45,7 @@ namespace Game.Core
                 new PropsModule(),
                 new LeashesModule(data, players),
                 new BodiesModule(data),
-                new HitsModule(data),
+                new HitsModule(data, players),
                 new RulesModule(data, players),
                 new MatchModule(data, players),
             };
