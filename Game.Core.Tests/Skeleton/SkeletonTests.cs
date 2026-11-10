@@ -149,8 +149,8 @@ namespace Game.Core.Tests.Skeleton
             inputs[0] = new PlayerInput(1000, 0, PlayerInput.PushBit); // way over the ceiling
             for (int i = 0; i < 30; i++) sim.Step(inputs);
             var moved = (dogs.Position(sim, 0) - start).X.ToDouble();
-            Assert.InRange(moved, 4.5, 7.1); // collie: 7 m/s, 0.2 s to get there, minus the owner it drags on the leash
-            Assert.InRange((dogs.Position(sim, 0) - start).Y.ToDouble(), -1, 0); // only the leash pulls it toward its owner, who stands lower
+            Assert.InRange(moved, 5.5, 7.1); // collie: 7 m/s, 0.2 s to get there
+            Assert.Equal(0, (dogs.Position(sim, 0) - start).Y.ToDouble(), 3);
         }
 
         [Fact]

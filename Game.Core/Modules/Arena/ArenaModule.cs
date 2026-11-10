@@ -66,15 +66,13 @@ namespace Game.Core.Modules.Arena
             Height = root["height"]!.AsFixed();
             RulesName = root["rules"]!.AsString();
             foreach (var s in root["spawns"]!.Items) _spawns.Add(new Spawn(Point(s["dog"]!), Point(s["owner"]!)));
-            var obstacles = root["obstacles"];
-            if (obstacles != null)
-                foreach (var o in obstacles.Items)
-                {
-                    string shape = o["shape"]!.AsString();
-                    if (shape == "circle") _circles.Add(new CircleObstacle(Point(o), o["radius"]!.AsFixed()));
-                    else if (shape == "rect") _rects.Add(new RectObstacle(Point(o), o["width"]!.AsFixed() / 2, o["height"]!.AsFixed() / 2));
-                    else throw new KeyNotFoundException($"arena '{ArenaName}': unknown obstacle shape '{shape}'");
-                }
+            foreach (var o in root["obstacles"]!.Items)
+            {
+                string shape = o["shape"]!.AsString();
+                if (shape == "circle") _circles.Add(new CircleObstacle(Point(o), o["radius"]!.AsFixed()));
+                else if (shape == "rect") _rects.Add(new RectObstacle(Point(o), o["width"]!.AsFixed() / 2, o["height"]!.AsFixed() / 2));
+                else throw new KeyNotFoundException($"arena '{ArenaName}': unknown obstacle shape '{shape}'");
+            }
             foreach (var p in root["props"]!.Items) _props.Add(new PropSpec(p["kind"]!.AsString(), Point(p)));
         }
 

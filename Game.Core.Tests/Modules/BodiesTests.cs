@@ -36,10 +36,11 @@ namespace Game.Core.Tests.Modules
         public void DogDragsOwnerWithinLeashAndOwnerSlidesToAStopByFriction()
         {
             var sim = Session(out var bodies);
-            var length = Fixed.FromInt(3);
-            int dog = bodies.AddCircle(P("0", "0"), Fixed.FromInt(20), F("0.35"), Fixed.FromInt(6));
-            int owner = bodies.AddCircle(P("-2", "0"), Fixed.FromInt(60), F("0.4"), Fixed.FromInt(3));
-            bodies.AddRope(dog, owner, length, Fixed.FromInt(50));
+            var data = Repo.Data(); // the roster's numbers: a 2-mass collie against a 60-mass teen
+            var length = data.Num("dogs.collie.leash_m");
+            int dog = bodies.AddCircle(P("0", "0"), data.Num("dogs.collie.mass"), data.Num("dogs.collie.radius"), data.Num("dogs.collie.friction"));
+            int owner = bodies.AddCircle(P("-2", "0"), data.Num("owners.teen.mass"), data.Num("owners.teen.radius"), data.Num("owners.teen.friction"));
+            bodies.AddRope(dog, owner, length, data.Num("leash.stiffness"));
             Fixed maxStretch = Fixed.Zero;
             for (int t = 0; t < 60; t++) // 2 s of running at 7 m/s
             {
@@ -145,10 +146,33 @@ namespace Game.Core.Tests.Modules
             {
                 Tick(sim);
                 Assert.True(bodies.Position(ball).DistanceTo(P("0", "0")) >= F("1.49"), $"inside the tree at tick {t}");
-                foreach (var c in bodies.Contacts) if (c.A == ball && c.B == Contact.Static) hit = true;
+                foreach (var c in bodies.Contacts) if (c.A == ball && c.IsStatic) hit = true;
             }
             Assert.True(hit);
             Assert.True(bodies.Velocity(ball).X < Fixed.Zero, "bounced back");
+        }
+
+        [Fact]
+        public void StaticContactsNameTheObstacleAndTheBound()
+        {
+            // tree 0 (circle), bench 1 is index 1 (rect after circles); bounds follow: left, right, bottom, top
+            const string both = "[{\"shape\":\"circle\",\"x\":-4,\"y\":0,\"radius\":1},{\"shape\":\"rect\",\"x\":4,\"y\":0,\"width\":2,\"height\":2}]";
+            var sim = Session(out var bodies, both);
+            int a = bodies.AddCircle(P("-2", "0"), Fixed.FromInt(5), F("0.4"), Fixed.Zero); // → tree
+            int b = bodies.AddCircle(P("2", "0"), Fixed.FromInt(5), F("0.4"), Fixed.Zero);  // → bench
+            int c = bodies.AddCircle(P("0", "5"), Fixed.FromInt(5), F("0.4"), Fixed.Zero);  // → top bound (hh = 8)
+            var seen = new System.Collections.Generic.Dictionary<int, int>();
+            for (int t = 0; t < 40; t++)
+            {
+                bodies.Drive(a, P("-8", "0"), Fixed.FromInt(100000));
+                bodies.Drive(b, P("8", "0"), Fixed.FromInt(100000));
+                bodies.Drive(c, P("0", "8"), Fixed.FromInt(100000));
+                Tick(sim);
+                foreach (var k in bodies.Contacts) if (k.IsStatic && !seen.ContainsKey(k.A)) seen[k.A] = k.StaticIndex;
+            }
+            Assert.Equal(0, seen[a]);
+            Assert.Equal(1, seen[b]);
+            Assert.Equal(2 + 3, seen[c]);
         }
 
         [Fact]

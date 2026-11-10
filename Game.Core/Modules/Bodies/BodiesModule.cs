@@ -27,13 +27,17 @@ namespace Game.Core.Modules.Bodies
         public Rope(int a, int b, Fixed length, Fixed stiffness) { A = a; B = b; Length = length; Stiffness = stiffness; }
     }
 
-    /// <summary>Two bodies touching in this tick; Normal points from A to B. B is
-    /// <see cref="Static"/> when A touched the arena's own geometry (an obstacle or the bounds),
-    /// then Normal points from A into it. RelSpeed is the magnitude of the relative velocity
-    /// just before the collision was resolved; one contact per pair per tick, the hardest one.</summary>
+    /// <summary>Two bodies touching in this tick; Normal points from A to B. B is negative when
+    /// A touched the arena's own geometry: <c>-1 - k</c>, k being the index of a circle obstacle
+    /// (0..), of a rectangle obstacle (after the circles) or of a bound (after the rectangles:
+    /// left, right, bottom, top); see <see cref="StaticIndex"/>. Normal then points from A into it.
+    /// RelSpeed is the magnitude of the relative velocity just before the collision was
+    /// resolved; one contact per (A, B) per tick, the hardest one.</summary>
     public readonly struct Contact
     {
-        public const int Static = -1;
+        public bool IsStatic => B < 0;
+        public int StaticIndex => -1 - B;
+        public static int StaticCode(int index) => -1 - index;
         public readonly int A, B;
         public readonly Vec2 Normal;
         public readonly Fixed RelSpeed;
@@ -43,9 +47,10 @@ namespace Game.Core.Modules.Bodies
     /// <summary>The arena's 2D physics. It knows no game words: bodies are circles with
     /// a mass, a radius and a friction; they are dynamic, kinematic (move along their own
     /// velocity) or fixed. Per tick, in <c>bodies.substeps</c> substeps: acceleration and
-    /// friction, integration, rope constraints (distance ≤ length, slack allowed; the
-    /// excess is removed at <c>leash.stiffness</c> per second, a rope with stiffness·dt ≥ 1
-    /// is a rod), then collisions body–body, body–obstacle and body–bounds with
+    /// friction, integration, rope constraints (distance ≤ length, slack allowed; the excess
+    /// distance and the outward velocity along the rope are both removed by the factor
+    /// <c>leash.stiffness</c>·dt per substep, so a rope with stiffness·dt ≥ 1 is a rod and a
+    /// lower one is elastic), then collisions body–body, body–obstacle and body–bounds with
     /// <c>bodies.restitution</c>. Contacts of the tick are listed in <see cref="Contacts"/>.</summary>
     public sealed class BodiesModule : IModule
     {
@@ -85,11 +90,11 @@ namespace Game.Core.Modules.Bodies
         public int AddCircle(Vec2 pos, Fixed mass, Fixed radius, Fixed friction) =>
             Add(new Body { Kind = BodyKind.Dynamic, Pos = pos, Mass = mass, Radius = radius, Friction = friction });
 
-        /// <summary>A body that moves with a velocity of its own and cannot be pushed (a car on its route).</summary>
+        /// <summary>A body that moves with a velocity of its own and cannot be pushed (it moves along its route).</summary>
         public int AddKinematic(Vec2 pos, Fixed radius, Vec2 velocity) =>
             Add(new Body { Kind = BodyKind.Kinematic, Pos = pos, Vel = velocity, Radius = radius });
 
-        /// <summary>A body of infinite mass that stays where it is (a post, a grandpa on a stool).</summary>
+        /// <summary>A body of infinite mass that stays where it is (a post, an axis).</summary>
         public int AddFixed(Vec2 pos, Fixed radius) =>
             Add(new Body { Kind = BodyKind.Fixed, Pos = pos, Radius = radius });
 
@@ -168,23 +173,36 @@ namespace Game.Core.Modules.Bodies
             else { wa = Fixed.Zero; wb = Fixed.Zero; }
         }
 
+        /// <summary>Like <see cref="Shares"/>, but a driven body is an engine: against an undriven
+        /// dynamic body it pulls on the rope as if of infinite mass, so a light driven body drags a
+        /// heavy one at its own speed instead of being held back by it. Two driven bodies share by mass.</summary>
+        private static void RopeShares(Body a, Body b, out Fixed wa, out Fixed wb)
+        {
+            bool ae = a.Kind == BodyKind.Dynamic && a.Driven, be = b.Kind == BodyKind.Dynamic && b.Driven;
+            bool am = a.Kind == BodyKind.Dynamic, bm = b.Kind == BodyKind.Dynamic;
+            if (ae && bm && !be) { wa = Fixed.Zero; wb = Fixed.One; }
+            else if (be && am && !ae) { wa = Fixed.One; wb = Fixed.Zero; }
+            else Shares(a, b, out wa, out wb);
+        }
+
         private void SolveRope(Rope r, Fixed dt)
         {
             var a = _bodies[r.A];
             var b = _bodies[r.B];
-            Shares(a, b, out var wa, out var wb);
+            RopeShares(a, b, out var wa, out var wb);
             if (wa == Fixed.Zero && wb == Fixed.Zero) return;
             var delta = b.Pos - a.Pos;
             var dist = delta.Length;
             if (dist <= r.Length) return;
             var n = delta / dist;
+            var k = Fixed.Clamp01(r.Stiffness * dt);
             var along = (b.Vel - a.Vel).Dot(n);
             if (along > Fixed.Zero)
             {
-                a.Vel = a.Vel + n * (along * wa);
-                b.Vel = b.Vel - n * (along * wb);
+                a.Vel = a.Vel + n * (along * k * wa);
+                b.Vel = b.Vel - n * (along * k * wb);
             }
-            var fix = (dist - r.Length) * Fixed.Clamp01(r.Stiffness * dt);
+            var fix = (dist - r.Length) * k;
             a.Pos = a.Pos + n * (fix * wa);
             b.Pos = b.Pos - n * (fix * wb);
             _bodies[r.A] = a;
@@ -222,17 +240,20 @@ namespace Game.Core.Modules.Bodies
         private void CollideStatic(int i)
         {
             var b = _bodies[i];
+            int code = 0;
             foreach (var c in _arena.CircleObstacles)
             {
+                int ci = code++;
                 var delta = b.Pos - c.Pos;
                 var reach = b.Radius + c.Radius;
                 if (delta.LengthSq >= reach * reach) continue;
                 var dist = delta.Length;
                 var outward = dist == Fixed.Zero ? new Vec2(Fixed.One, Fixed.Zero) : delta / dist;
-                PushOut(i, ref b, outward, reach - dist);
+                PushOut(i, ref b, outward, reach - dist, ci);
             }
             foreach (var r in _arena.RectObstacles)
             {
+                int ri = code++;
                 var rel = b.Pos - r.Center;
                 var nearest = new Vec2(Fixed.Clamp(rel.X, -r.HalfWidth, r.HalfWidth), Fixed.Clamp(rel.Y, -r.HalfHeight, r.HalfHeight));
                 var delta = rel - nearest;
@@ -242,33 +263,33 @@ namespace Game.Core.Modules.Bodies
                     // centre inside the rectangle: leave by the nearest side
                     var dx = r.HalfWidth - rel.X.Abs();
                     var dy = r.HalfHeight - rel.Y.Abs();
-                    if (dx < dy) PushOut(i, ref b, new Vec2(rel.X < Fixed.Zero ? -Fixed.One : Fixed.One, Fixed.Zero), dx + b.Radius);
-                    else PushOut(i, ref b, new Vec2(Fixed.Zero, rel.Y < Fixed.Zero ? -Fixed.One : Fixed.One), dy + b.Radius);
+                    if (dx < dy) PushOut(i, ref b, new Vec2(rel.X < Fixed.Zero ? -Fixed.One : Fixed.One, Fixed.Zero), dx + b.Radius, ri);
+                    else PushOut(i, ref b, new Vec2(Fixed.Zero, rel.Y < Fixed.Zero ? -Fixed.One : Fixed.One), dy + b.Radius, ri);
                 }
                 else
                 {
                     var dist = delta.Length;
-                    PushOut(i, ref b, delta / dist, b.Radius - dist);
+                    PushOut(i, ref b, delta / dist, b.Radius - dist, ri);
                 }
             }
             var hw = _arena.Width / 2;
             var hh = _arena.Height / 2;
-            if (b.Pos.X - b.Radius < -hw) PushOut(i, ref b, new Vec2(Fixed.One, Fixed.Zero), -hw - (b.Pos.X - b.Radius));
-            if (b.Pos.X + b.Radius > hw) PushOut(i, ref b, new Vec2(-Fixed.One, Fixed.Zero), b.Pos.X + b.Radius - hw);
-            if (b.Pos.Y - b.Radius < -hh) PushOut(i, ref b, new Vec2(Fixed.Zero, Fixed.One), -hh - (b.Pos.Y - b.Radius));
-            if (b.Pos.Y + b.Radius > hh) PushOut(i, ref b, new Vec2(Fixed.Zero, -Fixed.One), b.Pos.Y + b.Radius - hh);
+            if (b.Pos.X - b.Radius < -hw) PushOut(i, ref b, new Vec2(Fixed.One, Fixed.Zero), -hw - (b.Pos.X - b.Radius), code);
+            if (b.Pos.X + b.Radius > hw) PushOut(i, ref b, new Vec2(-Fixed.One, Fixed.Zero), b.Pos.X + b.Radius - hw, code + 1);
+            if (b.Pos.Y - b.Radius < -hh) PushOut(i, ref b, new Vec2(Fixed.Zero, Fixed.One), -hh - (b.Pos.Y - b.Radius), code + 2);
+            if (b.Pos.Y + b.Radius > hh) PushOut(i, ref b, new Vec2(Fixed.Zero, -Fixed.One), b.Pos.Y + b.Radius - hh, code + 3);
             _bodies[i] = b;
         }
 
         /// <summary>Moves the body out of static geometry along <paramref name="outward"/> (the
         /// direction away from it) and bounces the velocity that points into it.</summary>
-        private void PushOut(int i, ref Body b, Vec2 outward, Fixed depth)
+        private void PushOut(int i, ref Body b, Vec2 outward, Fixed depth, int staticIndex)
         {
             var speed = b.Vel.Length;
             b.Pos = b.Pos + outward * depth;
             var into = b.Vel.Dot(outward);
             if (into < Fixed.Zero) b.Vel = b.Vel - outward * ((Fixed.One + _restitution) * into);
-            Record(new Contact(i, Contact.Static, -outward, speed));
+            Record(new Contact(i, Contact.StaticCode(staticIndex), -outward, speed));
         }
 
         private void Record(Contact c)
