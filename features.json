@@ -462,6 +462,159 @@
       "modules": []
     },
     {
+      "id": "F-025",
+      "title": "Hits: the owner is the weapon, a parked owner scores nothing",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-004",
+        "F-021"
+      ],
+      "acceptance": [
+        "round of fixes of sprint 1 (playtest/sprint-1.md → «Странное и баги», «Предложения техлиду» 1; decisions.md 2026-11-10): a dog running at 7 m/s into a standing foreign owner is scored as a blow by that owner, so the squatter who never swings takes 71 knockout points a match and wins 88%. design/roster.md → «Удар» continues: «Хозяин набирает скорость, только когда собака бежит поперёк поводка … Кружение на месте даёт 3–5 м/с: толкает, но не бьёт», and design/overview.md → «Общие числа» says the same of the threshold; the detector now reads both sentences: a blow needs `Contact.RelSpeed` ≥ `hits.threshold_mps` AND the owner's own velocity component along the contact normal toward the dog ≥ `hits.owner_speed_min_mps` (new number in Data/hits.json, 5, in the «тюнить» list, limits 3–7; 0 restores the old literal rule). Below it the contact is a shove of Bodies: no blow, no knockback, no stun, no event, no entry in ThisTick; the touch still counts as a touch for the «fresh touch» rule",
+        "strength, strong flag, knockback, stun and the pace tags stay as in F-004 (from RelSpeed); near_miss already asks the owner's own speed and does not change",
+        "tests in Game.Core.Tests/Modules/HitsTests.cs with scripted velocities on the sandbox arena: a dog at 7 m/s into a standing foreign owner — no hit, no stun, no event, the dog does not fly 2–7 m, the owner is shoved; the same with the owner at 3 m/s toward the dog (the circling of F-021: 3–5 m/s) — no hit; owner at 5 m/s into a standing dog — a hit as before; head-on owner 4 + dog 3 — no hit; the existing hit tests keep passing",
+        "design/roster.md → «Удар», first bullet, gets the clause «…и сам движется к ней не медленнее 5 м/с: припаркованный хозяин — препятствие, а не оружие» (one line; the decision is the techlead's, decisions.md); Data/variants/sprint-1/A.json and B.json get `hits.owner_speed_min_mps: 0`, so they keep playing exactly as the playtest measured them (variants compare, Data is the new default)",
+        "no change in Unity/ (the F-023 EditMode swing hits a standing mannequin, where RelSpeed equals the owner's speed) and no new link in MODULES.md; `dotnet test` green; the review note has `Game.Sim --bench swing` hits per minute of smart and random before and after (random is expected to lose his «standing» hits)"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 300000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Hits/HitsModule.cs",
+        "Game.Core/Data/hits.json",
+        "Game.Core/Data/variants/sprint-1/",
+        "Game.Core.Tests/Modules/HitsTests.cs",
+        "design/roster.md"
+      ],
+      "priority": 41,
+      "iteration": 1,
+      "modules": [
+        "Hits"
+      ]
+    },
+    {
+      "id": "F-026",
+      "title": "King of the lawn: the lawn is shared, rent in fractions",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-005"
+      ],
+      "acceptance": [
+        "round of fixes of sprint 1 (playtest/sprint-1.md → «Предложения техлиду» 3; H4 in design/overview.md → «Гипотезы»: «самый длинный отрезок, когда все собаки в круге получают очки поровну ≤ 5 с», measured 14.3 s; brainstorm/2026-11-10-в-режиме-царь-газона-стоять-в-круге-выго.md idea 2; decisions.md 2026-11-10): the rent of the circle is paid by the new `rules.king_of_lawn.rent` mode: `split` — `points_per_s` divided equally among the dogs inside this second (two inside: half each), `sole` — `points_per_s` only when exactly one dog is inside, `each` — the old rule of design/arenas.md → «1. Парк — Царь газона» («В круге 1 очко/с каждой собаке внутри»), every dog inside gets `points_per_s`; an unknown mode throws. Data default is `split`; Data/variants/sprint-1/A.json and B.json get `rent: \"each\"`, so they keep playing as measured",
+        "`points_per_s` is read as Fixed, not int, and the rent accrues in a Fixed accumulator per player: Match.Award gets the whole points as the accumulator crosses them, reason \"zone\", so Match, the HUD popups of Unity (LastTickAwards, reason \"zone\") and the metrics stay as they are; the accumulator is part of StateHash and Clone",
+        "knockouts, the leader bonus, the schedule, the events and the pace tags do not change; `longest_equal_stretch_s` keeps its meaning (seconds in a row the circle is held without a knockout)",
+        "tests in Game.Core.Tests/Modules/KingOfLawnTests.cs with scripted positions: two dogs inside for 4 s under `split` earn 2 points each and one alone earns 4; under `sole` two inside earn nothing and the one left alone after a knockout earns; `points_per_s: 0.5` under `each` gives 1 point every 2 s; the existing scoring tests run under `each` through a variant or state the split numbers; same seed and inputs → same StateHash, Fork independent",
+        "no new link in MODULES.md; `dotnet test` green"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 300000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Rules/KingOfLawn/KingOfLawnRules.cs",
+        "Game.Core/Data/rules/king_of_lawn.json",
+        "Game.Core/Data/variants/sprint-1/",
+        "Game.Core.Tests/Modules/KingOfLawnTests.cs"
+      ],
+      "priority": 42,
+      "iteration": 1,
+      "modules": [
+        "Rules"
+      ]
+    },
+    {
+      "id": "F-027",
+      "title": "Dogs: the dog runs round benches and trees instead of sticking to them",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-002",
+        "F-003"
+      ],
+      "acceptance": [
+        "round of fixes of sprint 1 (playtest/sprint-1.md → «Залипание на лавочке», F-009 → «Странное и баги»; against US-20; design/overview.md → «Карта темпа»: «затишье ≤ 10 с», measured 14.9 s): in cursor mode the dog runs straight at the point, meets the bench at (-3, 1) of park.json face-on at x = -3.65 or x = -2.35 and stands there 8–16 s while the circle is on the other side. Dogs steers the wanted velocity round the static obstacles of Arena (circles and rectangles): when the straight run within `avoid_lookahead_m` (new Data/dogs/steering.json: `avoid_lookahead_m` 1.5, `avoid_clearance_m` 0.2, both «тюнить») would touch an obstacle, the drive turns along the obstacle toward the side where the way round is shorter (the nearer corner of a rectangle, the tangent of a circle) at the same speed; the chosen side is held per player until the obstacle is behind (state hashed and cloned), so the dog does not dither between the two corners; the breed's speed and acceleration are not exceeded; a stunned or thrown dog is still not driven (Hits); the owner is not steered: he is pulled by the leash and slides by physics; with no obstacle in the lookahead the wanted velocity passes unchanged",
+        "both mouse modes (AGENTS.md: «фича, меняющая управление, проверяет оба»): tests in Game.Core.Tests/Modules/ControlDogsOwnersLeashesTests.cs on the park arena: in cursor mode a dog from (-6, 1) to the cursor at (3, 1) arrives within 3 s instead of stopping at the bench; in push mode pushed straight east from the same start the dog passes the bench and keeps going; a dog aimed at a tree passes it; a unit test of the steering function shows an unobstructed velocity unchanged",
+        "the swing is not broken: `Game.Sim --bench swing` hits per minute of smart do not drop by more than 10% against main (numbers in the review note); Dogs already depends on Arena and Bodies, no new link in MODULES.md; `dotnet test` green"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 300000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Dogs/DogsModule.cs",
+        "Game.Core/Data/dogs/steering.json",
+        "Game.Core.Tests/Modules/ControlDogsOwnersLeashesTests.cs"
+      ],
+      "priority": 43,
+      "iteration": 1,
+      "modules": [
+        "Dogs"
+      ]
+    },
+    {
+      "id": "F-028",
+      "title": "Decisions that are real and chronicles for every archetype",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-006"
+      ],
+      "acceptance": [
+        "round of fixes of sprint 1 (playtest/sprint-1.md → «Предложения техлиду» 4 and 5): the pace map counts 37.5 decisions a minute with 4% weighty (corridor 12–20, ≥ 40%), because `DogBattlerGame.DecisionOptions` offers «замах / отход» every tick a rival dog is within one leash and the runner forks it every second, whether or not a swing is possible. design/overview.md → «Карта темпа»: «бить или отойти каждые 3–4 с; весомое = исход меняет, кто в круге». Now the swing option is offered when a rival dog is within one leash AND the player's owner moves at ≥ `HitsModule.Threshold` (a swing is loaded; slower it is a shove), and the «swing» option is the cursor point of the shared `SwingSkill` (built from `sim.Data`, aim error zero; ARCHITECTURE.md → «Боты»: the aimed swing is one skill) instead of the rival's dog position, so the fork really swings; the «retreat» option stays one leash away; the announcement options stay as they are",
+        "the runner forks a decision at most once per `DecisionMinGapSeconds` = 3 (Game.Sim/Program.cs, next to DecisionHorizonSeconds) instead of once a second, so one standing situation is not counted three times; hold and horizon unchanged",
+        "chronicles: Game.Sim writes, besides the three `chronicle-<seed>.md` of smart, one `chronicle-<archetype>-<first seed>.md` for every other tracked archetype of bots/session.json (the squatter and the camper become visible: F-009 and F-010 could not see their matches); `DogBattlerGame.Describe` adds the owner position after the dog's («0: собака (x, y), хозяин (x, y), очки N»), so a stuck owner behind the bench can be seen (playtest/sprint-1.md → «Странное и баги», 76–84 s guess); the judge request format and sessions.jsonl do not change",
+        "tests in Game.Core.Tests/Bots/BotsTests.cs or next to it: with a rival within one leash and a standing owner DecisionOptions is empty; with the owner at the threshold it has two options and the first equals the skill's point; Describe contains «хозяин»; contract tests untouched; `dotnet test` green; one `dotnet run --project Game.Sim -- --seeds 2 --out <tmp>` in the review note shows the chronicle files per archetype",
+        "the gate check «бездействие не выигрывает» compares win rates and is red on a 0:0 tie of idle and random: it is the tool's check, not the game's; nothing here changes it (decisions.md 2026-11-10)"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 300000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/GameSetup.cs",
+        "Game.Sim/Program.cs",
+        "Game.Core.Tests/Bots/BotsTests.cs"
+      ],
+      "priority": 44,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-029",
+      "title": "Playtest: sprint 1, round of fixes",
+      "layer": "playtest",
+      "milestone": "M1",
+      "depends_on": [
+        "F-010",
+        "F-025",
+        "F-026",
+        "F-027",
+        "F-028"
+      ],
+      "acceptance": [
+        "the same line-up and seeds as F-010 (park, teen, opponents smart/random/idle, seeds 1–40, the six tracked archetypes, breaker-squatter kept as the regression of the circle rules): `factory tool run sim` on the Data default (split rent, moving-owner hits, obstacle steering, real decisions) into playtest/sprint-1/run-4; playtest/sprint-1.md gets a new first section «Раунд фиксов» and its first line «Гейт: …» is rewritten to the new verdict with the six gate checks of run-4/pace.md; a new row in playtest/ledger.md",
+        "the checks of the fix round, each with a number against run-1: breaker-squatter ≤ 70% and camper ≤ 35% against smart (design/overview.md → «Архетипы ботов»), smart's own win rate; decisions a minute and weighty share; longest lull ≤ 10 s and no «x = -3.65 / -2.35» standing in the chronicles; late lead change ≥ 30% and close finishes ≥ 30%; H1 (expected to rise: random loses his standing hits), H2 (≥ 70% must hold: the first blow of a newcomer still comes by itself), H3, H4 (share and stretch), H5 re-measured with PlaytestMeasureTests.Measure on seeds 1–40; if idle and random are both 0% wins, the points of the two are written next to the gate line",
+        "the chronicles of breaker-squatter and camper (F-028) are read: what the squatter does when his parked owner scores nothing; owner positions checked for the stuck-behind-the-bench guess",
+        "judge: run-4 against run-1 on seeds 1–3 under blind labels; variants for Nick's demo: the Data default against Data/variants/sprint-1/B.json (the rules Nick would have played before the fixes) under blind labels; if `split` does not bring the H4 stretch ≤ 5 s, `sole` is measured with PlaytestMeasureTests through a variant file in Data/variants/sprint-1/ and the better one becomes the default",
+        "tuning only within the «тюнить» lists and the limits of design/overview.md, each round in the tuning table of the report with the same seeds; if the gate is still red, the first line says which check and why and the playtest does not loop further: the sprint goes to Nick's demo with the mark"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "gamedesigner-playtest",
+      "touches": [
+        "playtest/",
+        "Game.Core/Data/",
+        "Game.Core.Tests/"
+      ],
+      "priority": 95,
+      "iteration": 1,
+      "modules": []
+    },
+    {
       "id": "F-011",
       "title": "Leash wraps around poles",
       "layer": "core",
