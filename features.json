@@ -189,7 +189,7 @@
         "`dotnet run --project Game.Sim -- --arena sandbox` plays every tracked archetype as player 0 once per owner type in `rules/sandbox.json → owner_types` (teen, jock) and writes metrics.json keyed `archetype/owner` with the metrics above, chronicles and sessions.jsonl; the park run without `--arena` is unchanged; playtest/sim.json documents the option",
         "tests: a mannequin returns exactly 2 s after the blow with zero velocity; a sandbox session with idle mannequins is deterministic and forks; a sandbox match ends by the Match timer; `--arena sandbox` runs green on 2 seeds (output in the review note)"
       ],
-      "status": "running",
+      "status": "testing",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-core",
