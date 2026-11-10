@@ -160,7 +160,7 @@
         "IGame.Metrics reports per player: points, points from knockouts and hits share, hits per minute, longest stretch of equal in-zone scoring (H4 in design/overview.md)",
         "tests with scripted body positions: in-zone scoring, knockout within 1 s, leader bonus, zone schedule, match end"
       ],
-      "status": "todo",
+      "status": "running",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-core",
