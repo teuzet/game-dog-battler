@@ -1,0 +1,11 @@
+{
+  "тюнить": ["closing_speed_mps", "lead_m", "drift_gain_s", "run_up_m", "min_lead_s", "max_lead_s", "moving_speed_mps"],
+  "closing_speed_mps": 6,
+  "lead_m": 3,
+  "drift_gain_s": 0.25,
+  "wall_margin_m": 0.5,
+  "run_up_m": 4,
+  "min_lead_s": 0.3,
+  "max_lead_s": 1.5,
+  "moving_speed_mps": 2
+}

@@ -60,18 +60,24 @@ namespace Game.Core
             var match = sim.Get<MatchModule>(MatchModule.ModuleName);
             var rules = sim.Get<RulesModule>(RulesModule.ModuleName);
             var me = dogs.Position(sim, player);
-            var v = new BotView { Tick = sim.Tick, Self = player, X = me.X, Y = me.Y };
+            var bodies = sim.Get<BodiesModule>(BodiesModule.ModuleName);
+            var myVel = bodies.Velocity(dogs.BodyOf(player));
+            var v = new BotView { Tick = sim.Tick, Self = player, X = me.X, Y = me.Y, VX = myVel.X, VY = myVel.Y };
             v.Hud["score"] = Fixed.FromInt(match.Scores[player]);
             v.Hud["time_left"] = match.TimeLeft;
             v.Hud["arena_half_width"] = arena.Width / 2;
             v.Hud["arena_half_height"] = arena.Height / 2;
-            // the camera shows the whole arena
+            v.Hud["leash_m"] = sim.Get<LeashesModule>(LeashesModule.ModuleName).LengthOf(player); // the leash is drawn
+            // the camera shows the whole arena: every dog and owner with its speed, and the scoreboard
             for (int q = 0; q < sim.Players; q++)
             {
                 var dog = dogs.Position(sim, q);
+                var dogVel = bodies.Velocity(dogs.BodyOf(q));
                 var owner = owners.Position(sim, q);
-                if (q != player) v.Objects.Add(new SeenObject { Kind = "dog", Id = q, X = dog.X, Y = dog.Y });
-                v.Objects.Add(new SeenObject { Kind = "owner", Id = q, X = owner.X, Y = owner.Y });
+                var ownerVel = bodies.Velocity(owners.BodyOf(q));
+                v.Hud["score_" + q] = Fixed.FromInt(match.Scores[q]);
+                if (q != player) v.Objects.Add(new SeenObject { Kind = "dog", Id = q, X = dog.X, Y = dog.Y, VX = dogVel.X, VY = dogVel.Y });
+                v.Objects.Add(new SeenObject { Kind = "owner", Id = q, X = owner.X, Y = owner.Y, VX = ownerVel.X, VY = ownerVel.Y });
             }
             if (rules.Active.Zone is ZoneInfo z)
                 v.Objects.Add(new SeenObject { Kind = "zone", X = z.Center.X, Y = z.Center.Y, Value = z.Radius });
@@ -86,7 +92,8 @@ namespace Game.Core
             {
                 case "idle": return new IdleStrategy();
                 case "random": return new WanderStrategy();
-                case "smart": return new ZoneRunnerStrategy();
+                case "smart": return new SmartStrategy(new SwingSkill(data), a.AimError, data);
+                case "camper": return new CamperStrategy(a.AimError, data);
                 default: throw new KeyNotFoundException($"no strategy '{a.Strategy}' (archetype {a.Name})");
             }
         }

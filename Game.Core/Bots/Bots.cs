@@ -22,6 +22,7 @@ namespace Game.Core.Bots
         public string About = "";
         public int ReactionMs = 250; // it sees the screen this late
         public int HoldMs = 300; // it keeps a decision at least this long (inertia)
+        public Fixed AimError = Fixed.Zero; // metres: the spread of the cursor point of a swing
         public JsonValue Params = JsonValue.Object();
 
         public static IReadOnlyList<Archetype> LoadAll(GameData data)
@@ -36,6 +37,7 @@ namespace Game.Core.Bots
                     About = a["about"]?.AsString() ?? "",
                     ReactionMs = a["reaction_ms"]?.AsInt() ?? 250,
                     HoldMs = a["hold_ms"]?.AsInt() ?? 300,
+                    AimError = a["aim_error_m"]?.AsFixed() ?? Fixed.Zero,
                     Params = a["params"] ?? JsonValue.Object(),
                 });
             }
