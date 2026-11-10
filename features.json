@@ -322,7 +322,7 @@
         "`factory tool run unity --set mode=test` stays green; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`; if the view changes for the shot, the change is in Unity/Assets/Game/ only"
       ],
       "status": "running",
-      "attempts": 0,
+      "attempts": 1,
       "budget_tokens": 300000,
       "owner_role": "developer-unity",
       "touches": [
