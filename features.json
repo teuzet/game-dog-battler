@@ -126,7 +126,7 @@
         "events `hit`, `strong_hit`, `near_miss` with pace tags per design/overview.md → «Теги событий»",
         "Sandbox rule set inside Rules (risk №1 in design/overview.md: «песочница замаха без правил: одна собака, два хозяина, три манекена»): arena sandbox.json, player 0 plus three idle dummy dogs that respawn at their spot 2 s after a knockback, hit counter per owner type, no score; `dotnet run --project Game.Sim -- --arena sandbox` runs it"
       ],
-      "status": "running",
+      "status": "testing",
       "attempts": 1,
       "budget_tokens": 400000,
       "owner_role": "developer-core",
