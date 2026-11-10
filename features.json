@@ -539,7 +539,7 @@
         "both mouse modes (AGENTS.md: «фича, меняющая управление, проверяет оба»): tests in Game.Core.Tests/Modules/ControlDogsOwnersLeashesTests.cs on the park arena: in cursor mode a dog from (-6, 1) to the cursor at (3, 1) arrives within 3 s instead of stopping at the bench; in push mode pushed straight east from the same start the dog passes the bench and keeps going; a dog aimed at a tree passes it; a unit test of the steering function shows an unobstructed velocity unchanged",
         "the swing is not broken: `Game.Sim --bench swing` hits per minute of smart do not drop by more than 10% against main (numbers in the review note); Dogs already depends on Arena and Bodies, no new link in MODULES.md; `dotnet test` green"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 0,
       "budget_tokens": 300000,
       "owner_role": "developer-core",
