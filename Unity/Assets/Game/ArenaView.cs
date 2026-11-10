@@ -59,6 +59,8 @@ namespace DogBattler.View
         /// <summary>Each leash is a bar from the dog's collar to the owner's hand: length = distance, thickness = tension.</summary>
         public IReadOnlyList<Transform> Leashes => _leashLines;
         public Camera ViewCamera => _camera;
+        /// <summary>Where the player's dog is drawn: the anchor for things that follow the player (popups).</summary>
+        public Transform DogOf(int player) => _dogs[player].Root;
         public float FlashOf(int player) => _dogs[player].Flash;
         public int TreeCount { get; private set; }
         public int BenchCount { get; private set; }

@@ -166,7 +166,7 @@ namespace Game.Core.Modules.Rules.KingOfLawn
             _pendingUntil[victim] = 0;
             bool leader = IsSoleLeader(match, victim);
             int points = leader ? _leaderKnockoutPoints : _knockoutPoints;
-            match.Award(attacker, points, "knockout");
+            match.Award(attacker, points, leader ? "leader_knockout" : "knockout");
             _knockoutPointsOf[attacker] += points;
             _stretch = 0;
             var size = Fixed.Ratio(points, _leaderKnockoutPoints);

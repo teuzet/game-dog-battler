@@ -5,6 +5,14 @@ using Game.Core.Sim;
 
 namespace Game.Core.Modules.Match
 {
+    /// <summary>Points one player got from one award.</summary>
+    public readonly struct PointsAward
+    {
+        public readonly int Player, Points;
+        public readonly string Reason;
+        public PointsAward(int player, int points, string reason) { Player = player; Points = points; Reason = reason; }
+    }
+
     /// <summary>The timer and the score table; ends the match. Rules award points through
     /// <see cref="Award"/>. A tie for the top is a draw for those who tie.</summary>
     public sealed class MatchModule : IModule
@@ -17,6 +25,7 @@ namespace Game.Core.Modules.Match
         private readonly int[] _scores;
         private int _ticksLeft;
         private int _leader = -1; // the last sole top scorer, -1 = nobody yet
+        private List<PointsAward> _awarding = new List<PointsAward>(), _lastAwards = new List<PointsAward>();
 
         public MatchModule(GameData data, int players)
         {
@@ -31,17 +40,30 @@ namespace Game.Core.Modules.Match
             _ticksLeft = src._ticksLeft;
             _leader = src._leader;
             _scores = (int[])src._scores.Clone();
+            _awarding = new List<PointsAward>(src._awarding);
+            _lastAwards = new List<PointsAward>(src._lastAwards);
         }
 
         public IReadOnlyList<int> Scores => _scores;
         public Fixed TimeLeft => Fixed.Ratio(_ticksLeft, Simulation.TicksPerSecond);
 
-        public void Award(int player, int points, string reason) => _scores[player] += points;
+        public void Award(int player, int points, string reason)
+        {
+            _scores[player] += points;
+            _awarding.Add(new PointsAward(player, points, reason));
+        }
+
+        /// <summary>The points given during the last finished tick, in the order the rules gave them
+        /// (reasons: "zone", "knockout", "leader_knockout"). For views; not part of the state hash.</summary>
+        public IReadOnlyList<PointsAward> LastTickAwards => _lastAwards;
 
         public void Init(Simulation sim) { }
 
         public void Step(Simulation sim, TickInputs inputs)
         {
+            // the rules ran earlier in this tick: what they awarded becomes "the last tick's"
+            (_lastAwards, _awarding) = (_awarding, _lastAwards);
+            _awarding.Clear();
             _ticksLeft--;
             CheckLead(sim);
             if (_ticksLeft == _finalTicks) AnnounceFinal(sim);

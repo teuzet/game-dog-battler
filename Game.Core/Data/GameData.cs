@@ -78,6 +78,10 @@ namespace Game.Core.Data
             return new GameData(Root.MergedWith(over), set + "/" + name);
         }
 
+        /// <summary>The same data with the human's owner type set (game.human_owner); the bots' owners stay.</summary>
+        public GameData WithHumanOwner(string owner) =>
+            new GameData(Root.MergedWith(Json.Parse("{\"game\":{\"human_owner\":\"" + owner + "\"}}")), Variant);
+
         public JsonValue Get(string path)
         {
             var node = Root;

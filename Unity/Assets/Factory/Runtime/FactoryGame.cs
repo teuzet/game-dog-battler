@@ -60,8 +60,15 @@ namespace Factory.Shell
             _overlay.OnSurvey = Survey;
             _overlay.OnStart = Begin;
             var owners = new List<string>();
-            foreach (var o in _base.Get("game.human_choices").Items) owners.Add(o.AsString());
+            var ownerLabels = new List<string>();
+            foreach (var o in _base.Get("game.human_choices").Items)
+            {
+                owners.Add(o.AsString());
+                // the pick screen shows the owner's title and one-line hint from Data/owners/<type>.json
+                ownerLabels.Add(_base.Str("owners." + o.AsString() + ".title") + "\n" + _base.Str("owners." + o.AsString() + ".pick_hint"));
+            }
             _overlay.Owners = owners;
+            _overlay.OwnerLabels = ownerLabels;
             _capture = Array.IndexOf(args, "-capture") >= 0;
             var sets = GameData.VariantSets(_dataDir);
             if (sets.Count > 0)
@@ -89,12 +96,8 @@ namespace Factory.Shell
         private void Begin(string owner, bool push)
         {
             InputReader.SetPushMode(push);
-            NewSession(WithOwner(_data, owner));
+            NewSession(_data.WithHumanOwner(owner)); // bots keep Data/bots/session.json
         }
-
-        /// <summary>The data with the human's owner type picked; bots keep Data/bots/session.json.</summary>
-        public static GameData WithOwner(GameData data, string owner) =>
-            new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"human_owner\":\"" + owner + "\"}}")), data.Variant);
 
         private void ShowPicker()
         {
@@ -130,7 +133,7 @@ namespace Factory.Shell
                 var a = Archetype.Find(data, opponents[(p - 1) % opponents.Count]);
                 _bots.Add(new BotDriver(p, a, Game.Strategy(a, data), (ulong)_seed));
             }
-            _log = new InputLog(_seed, Sim.Players, data.Variant);
+            _log = new InputLog(_seed, Sim.Players, data.Variant, data.Str("game.human_owner"));
             _acc = 0;
             _ended = false;
             SessionStarted?.Invoke(Sim);

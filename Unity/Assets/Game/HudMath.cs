@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Game.Core.Modules.Match;
 using Game.Core.Sim;
 
 namespace DogBattler.View
@@ -14,7 +15,7 @@ namespace DogBattler.View
     }
 
     /// <summary>The numbers and words of the HUD, free of scene objects so they can be tested. No game rules:
-    /// points are read back from the score table and the events the rules wrote.</summary>
+    /// points and their reasons are read from the awards the rules gave through Match.</summary>
     public static class HudMath
     {
         public const float PopupLifeS = 1.6f;
@@ -44,28 +45,24 @@ namespace DogBattler.View
             return who;
         }
 
-        /// <summary>What gave points this tick. A knockout is a "knocked_out" event with a Reward (the
-        /// victim's twin event carries a Threat); its points are the Reward share of the leader bonus.
-        /// What is left of a player's score gain is the circle's per-second award.</summary>
-        public static List<Popup> Popups(IReadOnlyList<int> before, IReadOnlyList<int> after, IEnumerable<GameEvent> tickEvents,
-            int knockoutPoints, int leaderKnockoutPoints)
+        /// <summary>One popup per award the rules gave in the last tick (Match.LastTickAwards).</summary>
+        public static List<Popup> Popups(IEnumerable<PointsAward> awards)
         {
             var popups = new List<Popup>();
-            var knocked = new int[after.Count];
-            foreach (var e in tickEvents)
-            {
-                if (e.Kind != "knocked_out" || !e.Reward.HasValue) continue;
-                int points = (int)System.Math.Round(e.Reward.Value.ToDouble() * leaderKnockoutPoints);
-                knocked[e.Actor] += points;
-                popups.Add(new Popup(e.Actor, points, points > knockoutPoints ? PopupKind.LeaderKnockout : PopupKind.Knockout));
-            }
-            for (int p = 0; p < after.Count; p++)
-            {
-                int rest = after[p] - before[p] - knocked[p];
-                if (rest < 0) throw new System.InvalidOperationException($"player {p}: knockout points {knocked[p]} exceed the score gain {after[p] - before[p]}");
-                if (rest > 0) popups.Add(new Popup(p, rest, PopupKind.Zone));
-            }
+            foreach (var a in awards)
+                popups.Add(new Popup(a.Player, a.Points, KindOf(a.Reason)));
             return popups;
+        }
+
+        private static PopupKind KindOf(string reason)
+        {
+            switch (reason)
+            {
+                case "zone": return PopupKind.Zone;
+                case "knockout": return PopupKind.Knockout;
+                case "leader_knockout": return PopupKind.LeaderKnockout;
+                default: throw new System.ArgumentException($"no popup for the award reason '{reason}'");
+            }
         }
 
         public static string PopupText(Popup p)

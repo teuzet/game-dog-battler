@@ -1,11 +1,19 @@
+using System.Collections.Generic;
 using System.IO;
 using DogBattler.View;
 using Factory.Shell;
 using Game.Core;
 using Game.Core.Data;
 using Game.Core.Math;
+using Game.Core.Modules.Arena;
+using Game.Core.Modules.Bodies;
+using Game.Core.Modules.Control;
+using Game.Core.Modules.Dogs;
+using Game.Core.Modules.Hits;
+using Game.Core.Modules.Leashes;
 using Game.Core.Modules.Match;
 using Game.Core.Modules.Owners;
+using Game.Core.Modules.Props;
 using Game.Core.Modules.Rules;
 using Game.Core.Sim;
 using NUnit.Framework;
@@ -53,14 +61,13 @@ namespace DogBattler.Tests
         [Test]
         public void Popups_tell_circle_seconds_knockouts_and_the_leader_bonus_apart()
         {
-            var events = new System.Collections.Generic.List<GameEvent>
+            // player 0 gets a circle second, 1 a knockout with a circle second, 2 the leader bonus
+            var awards = new[]
             {
-                new GameEvent { Kind = "knocked_out", Actor = 1, Reward = Fixed.Ratio(5, 8) },
-                new GameEvent { Kind = "knocked_out", Actor = 2, Reward = Fixed.Ratio(8, 8) },
-                new GameEvent { Kind = "knocked_out", Actor = 3, Threat = Fixed.One }, // a victim's twin: no popup
+                new PointsAward(0, 1, "zone"), new PointsAward(1, 5, "knockout"),
+                new PointsAward(1, 1, "zone"), new PointsAward(2, 8, "leader_knockout"),
             };
-            // player 0 gets a circle second, 1 a knockout (+5) with a circle second, 2 the leader bonus (+8)
-            var popups = HudMath.Popups(new[] { 10, 4, 3, 0 }, new[] { 11, 10, 11, 0 }, events, 5, 8);
+            var popups = HudMath.Popups(awards);
             Assert.AreEqual(4, popups.Count);
             Assert.That(popups, Has.Some.Matches<Popup>(p => p.Player == 1 && p.Kind == PopupKind.Knockout && p.Points == 5));
             Assert.That(popups, Has.Some.Matches<Popup>(p => p.Player == 2 && p.Kind == PopupKind.LeaderKnockout && p.Points == 8));
@@ -71,25 +78,103 @@ namespace DogBattler.Tests
             Assert.AreEqual("ВЫБИЛ ЛИДЕРА! +8", HudMath.PopupText(new Popup(2, 8, PopupKind.LeaderKnockout)));
         }
 
-        [Test]
-        public void A_knockout_in_the_simulation_pops_up_at_the_attacker()
+        /// <summary>Puts blows into the list of Hits between Hits and Rules, like the core's own KingOfLawn tests.</summary>
+        private sealed class ScriptedHits : IModule
         {
-            var sim = NewSim();
+            public string Name => "ScriptedHits";
+            public IReadOnlyList<string> DependsOn { get; } = new[] { HitsModule.ModuleName };
+            public readonly Dictionary<int, Hit> Blows = new Dictionary<int, Hit>();
+            public void Init(Simulation sim) { }
+            public void Step(Simulation sim, TickInputs inputs)
+            {
+                if (Blows.TryGetValue(sim.Tick, out var h)) sim.Need<HitsModule>(this, HitsModule.ModuleName).Record(h);
+            }
+            public void Hash(ref StateHasher h) { }
+            public IModule Clone() => this;
+        }
+
+        private static Simulation ParkWithBlows(out ScriptedHits hits)
+        {
+            var data = GameData.Load(DataDir());
+            int players = data.Int("game.players");
+            hits = new ScriptedHits();
+            var modules = new List<IModule>
+            {
+                new ArenaModule(data), new ControlModule(data, players), new OwnersModule(data, players), new DogsModule(data, players),
+                new PropsModule(), new LeashesModule(data, players), new BodiesModule(data), new HitsModule(data, players),
+                hits, new RulesModule(data, players), new MatchModule(data, players),
+            };
+            return new Simulation(1, players, data, modules);
+        }
+
+        private static void Place(Simulation sim, int player, int xDm, int yDm)
+        {
+            var bodies = sim.Get<BodiesModule>(BodiesModule.ModuleName);
+            var pos = new Vec2(Fixed.Ratio(xDm, 10), Fixed.Ratio(yDm, 10));
+            bodies.Teleport(sim.Get<DogsModule>(DogsModule.ModuleName).BodyOf(player), pos);
+            bodies.Teleport(sim.Get<OwnersModule>(OwnersModule.ModuleName).BodyOf(player), pos + new Vec2(Fixed.FromInt(-2), Fixed.Zero));
+        }
+
+        /// <summary>One tick with every cursor on its own dog: nobody moves of his own will.</summary>
+        private static void Tick(Simulation sim)
+        {
+            var dogs = sim.Get<DogsModule>(DogsModule.ModuleName);
+            var inputs = new TickInputs(sim.Players);
+            for (int p = 0; p < sim.Players; p++)
+            {
+                var at = dogs.Position(sim, p);
+                inputs[p] = new PlayerInput((at.X * 100).FloorToInt(), (at.Y * 100).FloorToInt());
+            }
+            sim.Step(inputs);
+        }
+
+        private static void RunTo(Simulation sim, int tick) { while (sim.Tick < tick) Tick(sim); }
+
+        /// <summary>A real knockout through the rules: a blow on a dog in the circle, then it is out within the window.
+        /// With leaderFirst the victim leads the score alone, so the bonus is the leader's.</summary>
+        private HudView KnockOut(bool leaderFirst, out Simulation sim)
+        {
+            sim = ParkWithBlows(out var hits);
             var hud = NewHud(sim);
-            sim.Step(new TickInputs(sim.Players));
+            Place(sim, 0, -90, -50); Place(sim, 1, 90, -50); Place(sim, 2, 90, 50); Place(sim, 3, -90, 50);
+            Place(sim, 0, -50, 0);  // the attacker stands outside the circle
+            Place(sim, 1, 0, 0);    // the victim is inside it
             var match = sim.Get<MatchModule>(MatchModule.ModuleName);
-            match.Award(2, 5, "knockout"); // what KingOfLawn does for a knockout
-            var e = sim.Events.Add("knocked_out", 2, "test");
-            e.Reward = Fixed.Ratio(5, 8);
+            if (leaderFirst) { match.Award(1, 3, "test"); match.Award(2, 2, "test"); }
+            RunTo(sim, 10);
+            hits.Blows[11] = new Hit(0, 1, Fixed.FromInt(100), false);
+            RunTo(sim, 15);
+            Place(sim, 1, 50, 0);   // thrown out of the circle
+            Tick(sim);
             hud.Take(sim);
-            var popups = hud.ActivePopups;
-            Assert.AreEqual(1, popups.Count);
-            Assert.AreEqual(2, popups[0].Player);
-            Assert.AreEqual(PopupKind.Knockout, popups[0].Kind);
-            Assert.AreEqual(5, popups[0].Points);
-            sim.Step(new TickInputs(sim.Players)); // the next tick: same scores, the old event is not read again
+            return hud;
+        }
+
+        [Test]
+        public void A_real_knockout_pops_up_five_points_at_the_attacker()
+        {
+            var hud = KnockOut(false, out var sim);
+            var pops = hud.ActivePopups;
+            Assert.AreEqual(1, pops.Count);
+            Assert.AreEqual(0, pops[0].Player);
+            Assert.AreEqual(PopupKind.Knockout, pops[0].Kind);
+            Assert.AreEqual(5, pops[0].Points);
+            Assert.AreEqual(5, sim.Get<MatchModule>(MatchModule.ModuleName).Scores[0]);
+            Tick(sim); // the next tick: the old award is not read again
             hud.Take(sim);
             Assert.AreEqual(1, hud.ActivePopups.Count);
+        }
+
+        [Test]
+        public void A_real_knockout_of_the_leader_pops_up_the_bonus()
+        {
+            var hud = KnockOut(true, out var sim);
+            var pops = hud.ActivePopups;
+            Assert.AreEqual(1, pops.Count);
+            Assert.AreEqual(0, pops[0].Player);
+            Assert.AreEqual(PopupKind.LeaderKnockout, pops[0].Kind);
+            Assert.AreEqual(8, pops[0].Points);
+            Assert.AreEqual(8, sim.Get<MatchModule>(MatchModule.ModuleName).Scores[0]);
         }
 
         [Test]
@@ -137,7 +222,7 @@ namespace DogBattler.Tests
             Assert.AreEqual(2, choices.Count);
             Assert.AreEqual("teen", choices[0].AsString());
             Assert.AreEqual("jock", choices[1].AsString());
-            var jock = NewSim(FactoryGame.WithOwner(data, "jock"));
+            var jock = NewSim(data.WithHumanOwner("jock"));
             Assert.AreEqual("jock", jock.Get<OwnersModule>(OwnersModule.ModuleName).TypeOf(0).Name);
             // the bots' owners come from Data/bots/session.json, not from the pick
             var picks = data.Get("bots.session.owner_picks").Items;

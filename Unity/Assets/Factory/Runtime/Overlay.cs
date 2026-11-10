@@ -15,6 +15,8 @@ namespace Factory.Shell
         public IReadOnlyList<string> Labels = Array.Empty<string>();
         /// <summary>Owner types the player may pick before the match (Data/game.json → human_choices).</summary>
         public IReadOnlyList<string> Owners = Array.Empty<string>();
+        /// <summary>What the pick screen shows for each of <see cref="Owners"/> (read from the data by the game).</summary>
+        public IReadOnlyList<string> OwnerLabels = Array.Empty<string>();
         public Action<int> OnPick;
         public Action<string, bool> OnStart; // owner type, push mode
         public Action<string, bool, string, bool> OnSurvey; // verdict, again, boring_at, quit
@@ -24,16 +26,6 @@ namespace Factory.Shell
         private int _verdict = -1;
         private bool _again = true;
         private string _boringAt = "";
-
-        public static string OwnerLabel(string type)
-        {
-            switch (type)
-            {
-                case "teen": return "Подросток\nбредёт, уткнувшись в телефон";
-                case "jock": return "Качок\nупирается и тянет назад";
-                default: return type;
-            }
-        }
 
         public void OpenPrepare()
         {
@@ -74,7 +66,7 @@ namespace Factory.Shell
                 GUILayout.BeginHorizontal();
                 for (int i = 0; i < Owners.Count; i++)
                 {
-                    string text = (_owner == i ? "● " : "") + OwnerLabel(Owners[i]);
+                    string text = (_owner == i ? "● " : "") + OwnerLabels[i];
                     if (GUILayout.Button(text, button, GUILayout.Height(72))) _owner = i;
                 }
                 GUILayout.EndHorizontal();

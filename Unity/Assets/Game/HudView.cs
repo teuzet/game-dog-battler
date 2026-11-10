@@ -20,10 +20,8 @@ namespace DogBattler.View
 
         private Simulation _sim;
         private ArenaView _arena;
-        private int[] _before = new int[0];
         private readonly List<Live> _popups = new List<Live>();
         private float _finalSeconds;
-        private int _knockoutPoints, _leaderKnockoutPoints;
 
         public IReadOnlyList<Popup> ActivePopups
         {
@@ -63,29 +61,13 @@ namespace DogBattler.View
             _sim = sim;
             _popups.Clear();
             _finalSeconds = sim.Data.Int("match.final_seconds");
-            _knockoutPoints = sim.Data.Int("rules.king_of_lawn.knockout_points");
-            _leaderKnockoutPoints = sim.Data.Int("rules.king_of_lawn.leader_knockout_points");
-            _before = Snapshot(sim);
         }
 
-        /// <summary>The state after a tick: popups for what gave points.</summary>
+        /// <summary>The state after a tick: popups for the points the rules awarded in it.</summary>
         public void Take(Simulation sim)
         {
-            var after = Snapshot(sim);
-            var tick = new List<GameEvent>();
-            foreach (var e in sim.Events.All)
-                if (e.Tick == sim.Tick) tick.Add(e);
-            foreach (var p in HudMath.Popups(_before, after, tick, _knockoutPoints, _leaderKnockoutPoints))
+            foreach (var p in HudMath.Popups(sim.Get<MatchModule>(MatchModule.ModuleName).LastTickAwards))
                 _popups.Add(new Live { Popup = p, Born = Time.unscaledTime });
-            _before = after;
-        }
-
-        private static int[] Snapshot(Simulation sim)
-        {
-            var scores = sim.Get<MatchModule>(MatchModule.ModuleName).Scores;
-            var copy = new int[scores.Count];
-            for (int i = 0; i < copy.Length; i++) copy[i] = scores[i];
-            return copy;
         }
 
         // ---------------------------------------------------------------- drawing
@@ -147,20 +129,21 @@ namespace DogBattler.View
             var s = Style(Mathf.RoundToInt(16 * k), TextAnchor.LowerLeft);
             string mode = InputReader.PushMode ? "ТОЛЧОК (курсор скрыт, двигай мышь)" : "КУРСОР (собака бежит к точке)";
             Outlined(new Rect(12 * k, Screen.height - 62 * k, Screen.width, 26 * k), $"Режим мыши: {mode}   [Tab — переключить]", s);
-            Outlined(new Rect(12 * k, Screen.height - 36 * k, Screen.width, 26 * k), "ЛКМ/Q — абилка собаки   ПКМ/E — абилка хозяина   R — заново", s);
+            string keys = _sim.IsOver ? "Матч окончен: «Ещё раз» в опросе — новая игра (R работает только в матче)"
+                : "ЛКМ/Q — абилка собаки   ПКМ/E — абилка хозяина   R — заново";
+            Outlined(new Rect(12 * k, Screen.height - 36 * k, Screen.width, 26 * k), keys, s);
         }
 
         private void DrawPopups(float k)
         {
             if (_arena == null || _arena.ViewCamera == null) return;
-            var dogs = _arena.DogTransforms;
             for (int i = _popups.Count - 1; i >= 0; i--)
             {
                 float age = Time.unscaledTime - _popups[i].Born;
                 if (age > HudMath.PopupLifeS) { _popups.RemoveAt(i); continue; }
                 var popup = _popups[i].Popup;
                 float t = age / HudMath.PopupLifeS;
-                var world = dogs[popup.Player].position + Vector3.up * (1.2f + HudMath.PopupRiseM * t);
+                var world = _arena.DogOf(popup.Player).position + Vector3.up * (1.2f + HudMath.PopupRiseM * t);
                 var screen = _arena.ViewCamera.WorldToScreenPoint(world);
                 if (screen.z <= 0f) continue;
                 bool big = popup.Kind != PopupKind.Zone;
