@@ -321,19 +321,75 @@ namespace Game.Core.Tests.Modules
         }
 
         [Fact]
-        public void ADogRammingAStandingForeignOwnerIsHitByHim()
+        public void ADogRammingAStandingForeignOwnerOnlyShovesHim()
         {
-            // the rule is read literally: a touch at ≥ 5 m/s is the owner's blow, whichever of the two moved
+            // a parked owner is an obstacle, not a weapon: no blow, no stun, no event, no knockback; he is shoved
             var s = Sandbox("teen");
             s.Put(s.Owner(1), "0", "0"); s.Put(s.Dog(1), "0", "2");
             s.Put(s.Owner(0), "-4", "-2"); s.Put(s.Dog(0), "-3", "0");
             var v = new Vec2(F("7"), Fixed.Zero);
             s.Shove.Velocities[s.Dog(0)] = v; // his owner keeps pace beside her, so the leash does not hold her back
             s.Shove.Velocities[s.Owner(0)] = v;
-            s.Tick(25);
-            var hit = s.Events("hit").Single(e => e.Actor == 1);
-            Assert.True(hit.Reward > Fixed.Zero);
-            Assert.True(s.Events("hit").Single(e => e.Actor == 0).Threat > Fixed.Zero, "her dog is the victim");
+            bool touched = false;
+            for (int i = 0; i < 25; i++)
+            {
+                s.Tick();
+                touched |= s.Bodies.Contacts.Any(c => (c.A == s.Dog(0) && c.B == s.Owner(1)) || (c.B == s.Dog(0) && c.A == s.Owner(1)));
+                Assert.Empty(s.Hits.ThisTick);
+            }
+            Assert.True(touched, "the dog met the owner");
+            Assert.Empty(s.Events("hit"));
+            Assert.Empty(s.Events("strong_hit"));
+            Assert.False(s.Hits.IsStunned(0) || s.Hits.IsStunned(1));
+            Assert.True(s.Bodies.Position(s.Owner(1)).DistanceTo(P("0", "0")) >= F("0.1"), "the standing owner is shoved");
+            s.Shove.Velocities.Clear();
+            s.Tick(60);
+            Assert.True(s.Bodies.Position(s.Dog(0)).DistanceTo(P("0", "0")) < F("2"), "the dog is not thrown 2–7 m");
+        }
+
+        [Fact]
+        public void AnOwnerCirclingAtThreeMetresPerSecondTowardTheDogDoesNotHit()
+        {
+            var s = Swing("teen", "3");
+            Assert.Empty(s.Events("hit"));
+            Assert.False(s.Hits.IsStunned(1));
+            // even with his dog running into the rival's owner... and the owner at 3 m/s toward a dog at blow speed
+            var t = Sandbox("teen");
+            t.Put(t.Owner(1), "0", "0"); t.Put(t.Dog(1), "0", "2");
+            t.Put(t.Owner(0), "-4", "-2"); t.Put(t.Dog(0), "-3", "0");
+            t.Shove.Velocities[t.Dog(0)] = new Vec2(F("6"), Fixed.Zero);
+            t.Shove.Velocities[t.Owner(0)] = new Vec2(F("3"), Fixed.Zero);
+            t.Tick(25);
+            Assert.Empty(t.Events("hit"));
+        }
+
+        [Fact]
+        public void OwnerAtFiveMetresPerSecondIntoAStandingDogHitsAsBefore()
+        {
+            var s = Swing("teen", "5.5"); // the scripted speed loses up to 0.3 m/s to friction before the touch, as RelSpeed always did
+            Assert.Equal(2, s.Events("hit").Count);
+        }
+
+        [Fact]
+        public void HeadOnOwnerFourAndDogThreeIsNoHit()
+        {
+            // relative speed 7 but the owner himself goes only 4 m/s
+            var s = Sandbox("teen");
+            s.Put(s.Owner(0), "-4", "0"); s.Put(s.Dog(0), "-4", "-2.5");
+            s.Put(s.Dog(1), "2", "0"); s.Put(s.Owner(1), "2", "3");
+            s.Shove.Velocities[s.Owner(0)] = new Vec2(F("4"), Fixed.Zero);
+            s.Shove.Velocities[s.Dog(0)] = new Vec2(F("4"), Fixed.Zero);
+            s.Shove.Velocities[s.Dog(1)] = new Vec2(F("-3"), Fixed.Zero);
+            s.Shove.Velocities[s.Owner(1)] = new Vec2(F("-3"), Fixed.Zero);
+            s.Tick(40);
+            Assert.Empty(s.Events("hit"));
+            Assert.Empty(s.Events("strong_hit"));
+        }
+
+        [Fact]
+        public void OwnerSpeedMinIsFiveInData()
+        {
+            Assert.Equal(Fixed.FromInt(5), Repo.Data().Num("hits.owner_speed_min_mps"));
         }
 
         [Fact]
