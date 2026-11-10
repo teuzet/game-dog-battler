@@ -29,7 +29,7 @@ namespace DogBattler.View
             return new Vector2(p.x, p.z);
         }
 
-        /// <summary>0..1: how fast the owner flies relative to the dog's ceiling speed.</summary>
+        /// <summary>0..1: how fast the owner flies relative to the strong-hit speed (HitsModule.StrongThreshold, m/s).</summary>
         public static float Airborne(float speed, float referenceSpeed) => Mathf.Clamp01(speed / referenceSpeed);
 
         public const float MaxOwnerHeight = 1.2f;
@@ -43,8 +43,10 @@ namespace DogBattler.View
         public static float LeashWidth(float tension) => Mathf.Lerp(0.05f, 0.16f, tension);
         public static Color LeashColor(Color player, float tension) => Color.Lerp(new Color(player.r * 0.7f, player.g * 0.7f, player.b * 0.7f), Color.Lerp(player, Color.white, 0.35f), tension);
 
-        /// <summary>0..1 brightness of a hit flash; a hit at the strong threshold flashes fully.</summary>
-        public static float FlashAmount(float strength, float strongThreshold) => Mathf.Clamp01(strength / strongThreshold);
+        /// <summary>0..1 brightness of a hit flash. Hit.Strength is attacker mass × relSpeed², so the speed is
+        /// taken back out of it and compared with the strong threshold (m/s); a strong hit flashes fully.</summary>
+        public static float FlashAmount(float strength, float attackerMass, float strongThresholdMps) =>
+            Mathf.Clamp01(Mathf.Sqrt(strength / attackerMass) / strongThresholdMps);
 
         /// <summary>Camera distance along its viewing axis such that the whole w×h arena
         /// (plus a margin, metres) is in frame at the given pitch and vertical field of view.</summary>

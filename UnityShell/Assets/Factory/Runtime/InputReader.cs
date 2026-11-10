@@ -8,8 +8,9 @@ namespace Factory.Shell
     /// once per rendered frame, <see cref="Read"/> once per tick.</summary>
     public static class InputReader
     {
-        /// <summary>Arena centimetres per unit of raw mouse movement in push mode.</summary>
-        public const float CmPerMouseUnit = 1f;
+        /// <summary>Arena centimetres per unit of raw mouse movement in push mode: the player's setting,
+        /// changeable without a rebuild.</summary>
+        public static float CmPerMouseUnit { get; set; } = 1f;
 
         private static readonly MouseInput Mouse = new MouseInput();
 
@@ -41,9 +42,10 @@ namespace Factory.Shell
 
         public static bool RestartPressed() => Input.GetKeyDown(KeyCode.R);
 #else
-        public static void Frame() { }
-        public static PlayerInput Read() => PlayerInput.None;
-        public static bool RestartPressed() => false;
+        // The shell reads the legacy Input Manager only; a dead input must not be silent.
+        public static void Frame() => throw new System.NotSupportedException("InputReader needs the legacy Input Manager (Active Input Handling: Input Manager or Both)");
+        public static PlayerInput Read() => throw new System.NotSupportedException("InputReader needs the legacy Input Manager");
+        public static bool RestartPressed() => throw new System.NotSupportedException("InputReader needs the legacy Input Manager");
 #endif
     }
 }

@@ -3,7 +3,9 @@ using DogBattler.View;
 using Game.Core;
 using Game.Core.Data;
 using Game.Core.Math;
+using Game.Core.Modules.Bodies;
 using Game.Core.Modules.Hits;
+using Game.Core.Modules.Owners;
 using Game.Core.Sim;
 using NUnit.Framework;
 using UnityEngine;
@@ -62,8 +64,13 @@ namespace DogBattler.Tests
             var c = ViewMath.PlayerColor(1);
             Assert.Greater(ViewMath.LeashWidth(1f), ViewMath.LeashWidth(0f));
             Assert.Greater(ViewMath.LeashColor(c, 1f).r + ViewMath.LeashColor(c, 1f).g, ViewMath.LeashColor(c, 0f).r + ViewMath.LeashColor(c, 0f).g);
-            Assert.Greater(ViewMath.FlashAmount(9f, 9f), ViewMath.FlashAmount(4f, 9f));
-            Assert.AreEqual(1f, ViewMath.FlashAmount(20f, 9f));
+            // strength = mass × v², as the hits module records it
+            const float mass = 60f;
+            float weak = ViewMath.FlashAmount(mass * 6f * 6f, mass, 9f);
+            Assert.Less(weak, 1f);
+            Assert.Greater(weak, 0f);
+            Assert.AreEqual(1f, ViewMath.FlashAmount(mass * 9f * 9f, mass, 9f), 1e-4f);
+            Assert.AreEqual(1f, ViewMath.FlashAmount(mass * 20f * 20f, mass, 9f));
         }
 
         [Test]
@@ -149,9 +156,12 @@ namespace DogBattler.Tests
             var sim = NewSim("sandbox");
             var view = Build(sim);
             var hits = sim.Get<HitsModule>(HitsModule.ModuleName);
-            hits.Record(new Hit(0, 1, Fixed.FromInt(4), false));
-            hits.Record(new Hit(0, 2, Fixed.FromInt(9), true));
+            var mass = sim.Get<BodiesModule>(BodiesModule.ModuleName).Mass(sim.Get<OwnersModule>(OwnersModule.ModuleName).BodyOf(0));
+            var weakV = (hits.Threshold + hits.StrongThreshold) / Fixed.FromInt(2); // between the two thresholds
+            hits.Record(new Hit(0, 1, mass * weakV * weakV, false));
+            hits.Record(new Hit(0, 2, mass * hits.StrongThreshold * hits.StrongThreshold, true));
             view.Take(sim);
+            Assert.Less(view.FlashOf(1), 1f);
             Assert.Greater(view.FlashOf(2), view.FlashOf(1));
             Assert.Greater(view.FlashOf(1), 0f);
             Assert.AreEqual(0f, view.FlashOf(3));

@@ -273,7 +273,8 @@ namespace DogBattler.View
             foreach (var hit in sim.Get<HitsModule>(HitsModule.ModuleName).ThisTick)
             {
                 var d = _dogs[hit.Victim];
-                d.Flash = Mathf.Max(d.Flash, ViewMath.FlashAmount((float)hit.Strength.ToDouble(), _strongThreshold));
+                float mass = (float)bodies.Mass(owners.BodyOf(hit.Attacker)).ToDouble();
+                d.Flash = Mathf.Max(d.Flash, ViewMath.FlashAmount((float)hit.Strength.ToDouble(), mass, _strongThreshold));
             }
         }
 
