@@ -11,8 +11,15 @@ namespace DogBattler.View
     /// the swing and quits. It does nothing without the argument.</summary>
     public sealed class ViewCapture : MonoBehaviour
     {
-        const int SwingTick = 66; // where the scripted swing is fastest (3.6 m/s) in the sandbox
+        public const int SwingTick = 66; // where the scripted swing is fastest (3.6 m/s) in the sandbox
         private string _path = "";
+
+        /// <summary>Push-mode input of the scripted swing at a tick: the mouse shift (arena cm) turns on a circle.</summary>
+        public static PlayerInput SwingInput(int tick)
+        {
+            float a = tick * 0.16f;
+            return new PlayerInput((int)(Mathf.Cos(a) * 38), (int)(Mathf.Sin(a) * 38), PlayerInput.PushBit);
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
@@ -27,11 +34,7 @@ namespace DogBattler.View
         {
             var game = FactoryGame.Instance;
             while (game.Sim == null) yield return null;
-            InputReader.Scripted = () =>
-            {
-                float a = game.Sim.Tick * 0.16f;
-                return new PlayerInput((int)(Mathf.Cos(a) * 38), (int)(Mathf.Sin(a) * 38), PlayerInput.PushBit);
-            };
+            InputReader.Scripted = () => SwingInput(game.Sim.Tick);
             while (game.Sim.Tick < SwingTick) yield return null;
             yield return new WaitForEndOfFrame();
             ScreenCapture.CaptureScreenshot(_path);
