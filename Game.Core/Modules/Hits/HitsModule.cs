@@ -44,7 +44,7 @@ namespace Game.Core.Modules.Hits
         public Fixed StrongThreshold { get; }
 
         private readonly Fixed _knockbackMin, _knockbackMax, _strengthMin, _strengthFull;
-        private readonly Fixed _stunBase, _stunPerMps, _stunMax, _threatBase, _nearGap, _nearThreatMax, _slideEnd;
+        private readonly Fixed _stunBase, _stunPerMps, _stunMax, _threatBase, _nearGap, _nearThreatMax, _slideEnd, _recoilShare;
 
         private readonly int _players;
         private readonly List<Hit> _tick = new List<Hit>();
@@ -68,6 +68,7 @@ namespace Game.Core.Modules.Hits
             _stunBase = data.Num("hits.stun_base_s");
             _stunPerMps = data.Num("hits.stun_per_mps_s");
             _stunMax = data.Num("hits.stun_max_s");
+            _recoilShare = data.Num("hits.owner_recoil_share");
             _threatBase = data.Num("hits.threat_base");
             _nearGap = data.Num("hits.near_miss_gap_m");
             _nearThreatMax = data.Num("hits.near_miss_threat_max");
@@ -94,6 +95,7 @@ namespace Game.Core.Modules.Hits
             _stunBase = src._stunBase;
             _stunPerMps = src._stunPerMps;
             _stunMax = src._stunMax;
+            _recoilShare = src._recoilShare;
             _threatBase = src._threatBase;
             _nearGap = src._nearGap;
             _nearThreatMax = src._nearThreatMax;
@@ -176,7 +178,7 @@ namespace Game.Core.Modules.Hits
             var ov = bodies.Velocity(ob);
             var along = ov.Dot(n);
             var thrownSpeed = bodies.Velocity(_dogBody[victim]).Length;
-            var recoil = thrownSpeed / 2; // the owner is slowed by the impact and falls behind the dog instead of pushing her on
+            var recoil = thrownSpeed * _recoilShare; // the owner keeps this share of the thrown dog speed along the normal and falls behind her
             if (along > recoil) bodies.SetVelocity(ob, ov - n * (along - recoil));
             var stun = Fixed.Min(_stunMax, _stunBase + _stunPerMps * (relSpeed - Threshold));
             int ticks = (stun * Simulation.TicksPerSecond).FloorToInt();
