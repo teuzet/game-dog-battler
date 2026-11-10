@@ -89,7 +89,7 @@
         "Leashes: one straight rope per dog body to its owner, registered in Bodies; tension 0..1 exposed for the view; no wraps or knots in sprint 1",
         "each player picks owner (teen / jock) in the session setup; bots get a pick from Data/bots/session.json"
       ],
-      "status": "review",
+      "status": "unity_check",
       "attempts": 1,
       "budget_tokens": 600000,
       "owner_role": "developer-core",
