@@ -140,6 +140,7 @@ namespace Game.Core.Modules.Bodies
         public Vec2 Velocity(int body) => Check(body).Vel;
         public Fixed Mass(int body) => Check(body).Mass;
         public Fixed Radius(int body) => Check(body).Radius;
+        public Fixed Friction(int body) => Check(body).Friction;
         public BodyKind Kind(int body) => Check(body).Kind;
 
         private int Add(Body b)
@@ -278,9 +279,10 @@ namespace Game.Core.Modules.Bodies
                 var nearest = new Vec2(Fixed.Clamp(rel.X, -r.HalfWidth, r.HalfWidth), Fixed.Clamp(rel.Y, -r.HalfHeight, r.HalfHeight));
                 var delta = rel - nearest;
                 if (delta.LengthSq >= b.Radius * b.Radius) continue;
-                if (delta == Vec2.Zero)
+                var edgeDist = delta.Length;
+                if (edgeDist == Fixed.Zero)
                 {
-                    // centre inside the rectangle: leave by the nearest side
+                    // centre inside the rectangle (or on its edge, where the fixed-point length rounds to zero): leave by the nearest side
                     var dx = r.HalfWidth - rel.X.Abs();
                     var dy = r.HalfHeight - rel.Y.Abs();
                     if (dx < dy) PushOut(i, ref b, new Vec2(rel.X < Fixed.Zero ? -Fixed.One : Fixed.One, Fixed.Zero), dx + b.Radius, ri);
@@ -288,8 +290,7 @@ namespace Game.Core.Modules.Bodies
                 }
                 else
                 {
-                    var dist = delta.Length;
-                    PushOut(i, ref b, delta / dist, b.Radius - dist, ri);
+                    PushOut(i, ref b, delta / edgeDist, b.Radius - edgeDist, ri);
                 }
             }
             var hw = _arena.Width / 2;

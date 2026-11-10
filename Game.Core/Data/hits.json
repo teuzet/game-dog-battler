@@ -1,9 +1,16 @@
 {
+  "тюнить": ["threshold_mps", "strong_threshold_mps", "knockback_min_m", "knockback_max_m", "stun_base_s", "stun_per_mps_s", "stun_max_s", "knockback_strength_min", "knockback_strength_full", "threat_base", "near_miss_gap_m", "near_miss_threat_max", "slide_end_mps"],
   "threshold_mps": 5,
   "strong_threshold_mps": 9,
   "knockback_min_m": 2,
   "knockback_max_m": 7,
+  "knockback_strength_min": 1500,
+  "knockback_strength_full": 11760,
   "stun_base_s": 0.4,
   "stun_per_mps_s": 0.05,
-  "stun_max_s": 1.2
+  "stun_max_s": 1.2,
+  "threat_base": 0.5,
+  "near_miss_gap_m": 0.8,
+  "near_miss_threat_max": 0.5,
+  "slide_end_mps": 0.1
 }

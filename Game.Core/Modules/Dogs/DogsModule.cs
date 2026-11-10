@@ -58,11 +58,13 @@ namespace Game.Core.Modules.Dogs
             var bodies = sim.Need<BodiesModule>(this, BodiesModule.ModuleName);
             var control = sim.Need<ControlModule>(this, ControlModule.ModuleName);
             var leashes = sim.Need<LeashesModule>(this, LeashesModule.ModuleName);
+            var hits = sim.Need<HitsModule>(this, HitsModule.ModuleName);
             for (int p = 0; p < _breeds.Length; p++)
             {
                 var b = _breeds[p];
                 _body[p] = bodies.AddCircle(arena.Spawns[p % arena.Spawns.Count].Dog, b.Mass, b.Radius, b.Friction);
                 control.Bind(p, _body[p]);
+                hits.BindDog(p, _body[p]);
                 leashes.AttachDog(p, _body[p], b.LeashLength);
             }
         }
@@ -71,8 +73,10 @@ namespace Game.Core.Modules.Dogs
         {
             var control = sim.Need<ControlModule>(this, ControlModule.ModuleName);
             var bodies = sim.Need<BodiesModule>(this, BodiesModule.ModuleName);
+            var hits = sim.Need<HitsModule>(this, HitsModule.ModuleName);
             for (int p = 0; p < _breeds.Length; p++)
             {
+                if (hits.IsHelpless(p)) continue; // a stunned or thrown dog is not driven: friction slows it
                 var b = _breeds[p];
                 var want = control.Of(p).Velocity.ClampLength(b.Speed);
                 var vel = bodies.Velocity(_body[p]);
