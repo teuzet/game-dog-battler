@@ -192,7 +192,7 @@ namespace Game.Core.Modules.Hits
             // one touch is one blow: the pair must have been apart in the previous tick (a second player's owner can still hit a sliding dog)
             if (relSpeed < Threshold || _touchPrev[pair]) return;
             // a parked owner is an obstacle, not a weapon: his own speed toward the dog (before the collision) must reach the minimum, else the touch is a shove
-            if (ownerVel.Dot(toDog.Normalized()) < OwnerSpeedMin) return;
+            if (ownerVel.Dot(toDog) < OwnerSpeedMin) return;
             var strength = bodies.Mass(owners.BodyOf(attacker)) * relSpeed * relSpeed;
             bool strong = relSpeed >= StrongThreshold;
             var power = Fixed.Clamp01((strength - _strengthMin) / (_strengthFull - _strengthMin));
@@ -200,7 +200,7 @@ namespace Game.Core.Modules.Hits
             _thrown[victim] = true;
             // the owner does not run on into the thrown dog and drive her further than 2–7 m
             int ob = owners.BodyOf(attacker);
-            var n = toDog.Normalized();
+            var n = toDog;
             var ov = bodies.Velocity(ob);
             var along = ov.Dot(n);
             var thrownSpeed = bodies.Velocity(_dogBody[victim]).Length;

@@ -350,17 +350,24 @@ namespace Game.Core.Tests.Modules
         [Fact]
         public void AnOwnerCirclingAtThreeMetresPerSecondTowardTheDogDoesNotHit()
         {
-            var s = Swing("teen", "3");
-            Assert.Empty(s.Events("hit"));
-            Assert.False(s.Hits.IsStunned(1));
-            // even with his dog running into the rival's owner... and the owner at 3 m/s toward a dog at blow speed
+            // foreign owner 1 walks at 3 m/s toward dog 0, which comes at 6 m/s: RelSpeed ~9 >= threshold, owner 3 < 5
             var t = Sandbox("teen");
-            t.Put(t.Owner(1), "0", "0"); t.Put(t.Dog(1), "0", "2");
-            t.Put(t.Owner(0), "-4", "-2"); t.Put(t.Dog(0), "-3", "0");
+            t.Put(t.Owner(1), "2", "0"); t.Put(t.Dog(1), "2", "2.5");
+            t.Put(t.Owner(0), "-6", "-2"); t.Put(t.Dog(0), "-4", "0");
             t.Shove.Velocities[t.Dog(0)] = new Vec2(F("6"), Fixed.Zero);
-            t.Shove.Velocities[t.Owner(0)] = new Vec2(F("3"), Fixed.Zero);
-            t.Tick(25);
+            t.Shove.Velocities[t.Owner(0)] = new Vec2(F("6"), Fixed.Zero);
+            t.Shove.Velocities[t.Owner(1)] = new Vec2(F("-3"), Fixed.Zero);
+            t.Shove.Velocities[t.Dog(1)] = new Vec2(F("-3"), Fixed.Zero);
+            bool touched = false;
+            for (int i = 0; i < 30; i++)
+            {
+                t.Tick();
+                touched |= t.Bodies.Contacts.Any(c => (c.A == t.Dog(0) && c.B == t.Owner(1)) || (c.B == t.Dog(0) && c.A == t.Owner(1)));
+                Assert.Empty(t.Hits.ThisTick);
+            }
+            Assert.True(touched, "the dog met the walking owner");
             Assert.Empty(t.Events("hit"));
+            Assert.False(t.Hits.IsStunned(0) || t.Hits.IsStunned(1));
         }
 
         [Fact]
