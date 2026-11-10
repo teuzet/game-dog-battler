@@ -1,0 +1,5 @@
+{
+  "respawn_s": 2,
+  "opponents": ["idle"],
+  "owner_types": ["teen", "jock"]
+}

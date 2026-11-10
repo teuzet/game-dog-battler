@@ -52,6 +52,19 @@ namespace Game.Core.Modules.Dogs
         public bool InZone(Simulation sim, int player, Vec2 center, Fixed radius) =>
             Position(sim, player).DistanceTo(center) <= radius;
 
+        /// <summary>Puts the player's dog and owner back on the arena's spawn for this player, at rest
+        /// (the sandbox sends a struck mannequin home). The owner is found through the leash, so
+        /// Dogs needs no link to Owners.</summary>
+        public void ReturnToSpawn(Simulation sim, int player)
+        {
+            var arena = sim.Need<ArenaModule>(this, ArenaModule.ModuleName);
+            var bodies = sim.Need<BodiesModule>(this, BodiesModule.ModuleName);
+            var leashes = sim.Need<LeashesModule>(this, LeashesModule.ModuleName);
+            var spawn = arena.Spawns[player % arena.Spawns.Count];
+            bodies.Teleport(_body[player], spawn.Dog);
+            bodies.Teleport(leashes.OwnerBody(player), spawn.Owner);
+        }
+
         public void Init(Simulation sim)
         {
             var arena = sim.Need<ArenaModule>(this, ArenaModule.ModuleName);
