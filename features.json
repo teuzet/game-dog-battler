@@ -17,7 +17,7 @@
         "data skeleton loads through GameData: Data/arenas/park.json and Data/arenas/sandbox.json (24 × 16 m), Data/dogs/collie.json, Data/owners/teen.json, Data/owners/jock.json, Data/hits.json, Data/control.json, with numbers from design/overview.md → «Общие числа» and the tables in design/roster.md",
         "contract tests in Game.Core.Tests/Contract pass; an empty-input session ends no later than game.session.max_seconds"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 0,
       "budget_tokens": 600000,
       "owner_role": "developer-core",
