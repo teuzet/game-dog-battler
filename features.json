@@ -3,109 +3,254 @@
   "game": "game-dog-battler",
   "features": [
     {
-      "id": "F-000",
-      "title": "Design doc: main loop, pace map and bot archetypes",
-      "layer": "design",
-      "milestone": "M1",
-      "depends_on": [],
-      "acceptance": [
-        "design/F-000.md answers: what the player does every 10 seconds, what decision they face, what threatens them; cites US-xx",
-        "has a table of numbers marked «тюнить» and the bot archetypes with reaction/hold"
-      ],
-      "status": "todo",
-      "attempts": 0,
-      "budget_tokens": 400000,
-      "owner_role": "gamedesigner-feature",
-      "touches": [
-        "design/F-000.md"
-      ],
-      "priority": 5,
-      "iteration": 1,
-      "modules": []
-    },
-    {
       "id": "F-001",
-      "title": "Contract: modules, tagged events, inputs, hash",
+      "title": "Contract: game modules as stubs, mouse input, Vec2",
       "layer": "core",
       "milestone": "M1",
       "depends_on": [],
       "acceptance": [
-        "MODULES.md lists the game's modules; GameSetup builds them in that order; the example game is removed",
-        "contract tests in Game.Core.Tests/Contract pass"
+        "GameSetup builds the modules of MODULES.md in its order (Arena, Control, Owners, Dogs, Props, Leashes, Bodies, Hits, rules module chosen by `rules` in the arena json, Match); each module's DependsOn equals MODULES.md; Modules/Example and its data are removed",
+        "Bodies stub already exposes the API from ARCHITECTURE.md → «Модули и порядок тика» (add circle body with mass/radius/friction, kinematic and fixed bodies, drive velocity, add rope between two bodies, positions, velocities, contacts of the tick) with plain Euler integration and no collisions, so F-003 and F-004 can go in parallel",
+        "Hits stub exposes the list of hits of the tick (attacker, victim, strength, strong flag); Match stub exposes Award(player, points, reason), scores and time left",
+        "PlayerInput carries AimX, AimY (short, centimetres), a mode bit (cursor / push) and ability buttons (LMB/Q = dog ability, RMB/E = owner ability, per design/overview.md → «Кнопки»); InputLog round-trips it; a test replays a logged session to the same StateHash",
+        "Game.Core/Math has Vec2 and a deterministic integer Sqrt on Fixed with unit tests; no float/double in state",
+        "data skeleton loads through GameData: Data/arenas/park.json and Data/arenas/sandbox.json (24 × 16 m), Data/dogs/collie.json, Data/owners/teen.json, Data/owners/jock.json, Data/hits.json, Data/control.json, with numbers from design/overview.md → «Общие числа» and the tables in design/roster.md",
+        "contract tests in Game.Core.Tests/Contract pass; an empty-input session ends no later than game.session.max_seconds"
       ],
       "status": "todo",
       "attempts": 0,
-      "budget_tokens": 400000,
+      "budget_tokens": 600000,
       "owner_role": "developer-core",
       "touches": [
         "Game.Core/",
         "Game.Core.Tests/",
+        "Game.Sim/Program.cs",
         "MODULES.md"
       ],
       "priority": 10,
-      "iteration": 1,
-      "modules": []
+      "sprint": 1,
+      "modules": [
+        "Arena",
+        "Control",
+        "Owners",
+        "Dogs",
+        "Props",
+        "Leashes",
+        "Bodies",
+        "Hits",
+        "Sandbox",
+        "KingOfLawn",
+        "Match"
+      ]
     },
     {
       "id": "F-002",
-      "title": "Thinnest main loop",
+      "title": "Bodies and Arena: 2D physics with rope leashes",
       "layer": "core",
       "milestone": "M1",
       "depends_on": [
-        "F-000",
         "F-001"
       ],
       "acceptance": [
-        "a session runs from start to an outcome with the rules quoted from design/F-000.md",
-        "events carry pace tags"
+        "Bodies: circles with mass, velocity and ground friction; physics substeps per tick from data (`bodies.substeps`, start 4); kinematic and fixed (infinite mass) bodies",
+        "rope constraint: distance ≤ length with slack allowed, stiffness from data (rope ↔ rod, ARCHITECTURE.md → «Своя физика»); module test: a dog body running at 7 m/s drags an owner body that stays within leash length; after the dog stops the owner slides and stops by friction",
+        "collisions circle–circle, circle–circle obstacle, circle–rectangle obstacle and arena bounds; contacts of the tick carry both bodies and relative speed; test: a 0.4 m body at 14 m/s does not pass through a 0.4 m body",
+        "Arena loads bounds, obstacles (trees as circles, benches as rectangles), spawns and `rules` from Data/arenas/<name>.json",
+        "Bodies knows no game words (dog, owner, hit): ARCHITECTURE.md → «Модули и порядок тика», `Bodies` is dumb; same seed and inputs → same hash in module tests"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 600000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Bodies/",
+        "Game.Core/Modules/Arena/",
+        "Game.Core/Data/bodies.json",
+        "Game.Core.Tests/Modules/"
+      ],
+      "priority": 20,
+      "sprint": 1,
+      "modules": [
+        "Bodies",
+        "Arena"
+      ]
+    },
+    {
+      "id": "F-003",
+      "title": "Control, Dogs, Owners, Leashes: collie with teen or jock",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-001"
+      ],
+      "acceptance": [
+        "Control implements both modes from design/overview.md → «Управление»: «толчок (сдвиг мыши напрямую задаёт скорость собаки с потолком) и курсор (собака бежит к точке на арене)»; tests: same intent from each mode for a simple path; the mode bit switches mode mid-session",
+        "Dogs: border collie from design/roster.md → «Собаки»: speed 7 m/s, 0→max 0.2 s, mass 2, leash 3 m, passive «Мгновенный разворот без заноса»; no abilities in sprint 1 (concept → «Первый спринт»); breed is a class in Modules/Dogs/Breeds/ with its numbers in Data/dogs/",
+        "Owners: teen (mass 60, medium friction) and jock (mass 110, low friction) from design/roster.md → «Хозяева», as classes in Modules/Owners/Types/; no abilities and no behaviour passives in sprint 1, the owner moves only by the leash; owner has no health (invariant «Хозяин неуязвим»)",
+        "Leashes: one straight rope per dog body to its owner, registered in Bodies; tension 0..1 exposed for the view; no wraps or knots in sprint 1",
+        "each player picks owner (teen / jock) in the session setup; bots get a pick from Data/bots/session.json"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 600000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Control/",
+        "Game.Core/Modules/Dogs/",
+        "Game.Core/Modules/Owners/",
+        "Game.Core/Modules/Leashes/",
+        "Game.Core/Data/",
+        "Game.Core.Tests/Modules/"
+      ],
+      "priority": 20,
+      "sprint": 1,
+      "modules": [
+        "Control",
+        "Dogs",
+        "Owners",
+        "Leashes"
+      ]
+    },
+    {
+      "id": "F-004",
+      "title": "Hits and the swing sandbox",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-002",
+        "F-003"
+      ],
+      "acceptance": [
+        "hit rule quoted from design/roster.md → «Удар»: «Удар засчитывается, когда хозяин касается чужой собаки с относительной скоростью ≥ 5 м/с. Сила = масса хозяина × скорость², отброс и оглушение растут с силой»; strong hit ≥ 9 m/s; knockback 2–7 m and stun 0.4 + 0.05 × (v − 5) s, max 1.2 (design/overview.md → «Общие числа»); all numbers in Data/hits.json",
+        "«Свой хозяин свою собаку не бьёт. Хозяин о хозяина — толчок без очков» (roster → «Удар»); stun stops the dog's drive",
+        "owner speed rule from roster → «Удар»: «потолок скорости хозяина = 1.6 × скорость собаки + бонус от натяжения. Кружение на месте даёт 3–5 м/с»; test: collie circling in place gives the teen 3–5 m/s, running across the leash reaches ≥ 9 m/s",
+        "events `hit`, `strong_hit`, `near_miss` with pace tags per design/overview.md → «Теги событий»",
+        "Sandbox rules module (risk №1 in design/overview.md: «песочница замаха без правил: одна собака, два хозяина, три манекена»): arena sandbox.json, player 0 plus three idle dummy dogs that respawn at their spot 2 s after a knockback, hit counter per owner type, no score; `dotnet run --project Game.Sim -- --arena sandbox` runs it"
       ],
       "status": "todo",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-core",
       "touches": [
-        "Game.Core/Modules/"
+        "Game.Core/Modules/Hits/",
+        "Game.Core/Modules/Rules/Sandbox/",
+        "Game.Core/Data/hits.json",
+        "Game.Core/Data/arenas/sandbox.json",
+        "Game.Core.Tests/Modules/"
       ],
-      "priority": 20,
-      "iteration": 1,
-      "modules": []
+      "priority": 30,
+      "sprint": 1,
+      "modules": [
+        "Hits",
+        "Sandbox"
+      ]
     },
     {
-      "id": "F-003",
-      "title": "Bots idle/random/smart and Game.Sim",
+      "id": "F-005",
+      "title": "King of the lawn in the park and Match",
       "layer": "core",
       "milestone": "M1",
       "depends_on": [
         "F-001"
       ],
       "acceptance": [
-        "archetypes.json has idle, random, smart with about, reaction_ms, hold_ms",
-        "factory tool run sim writes metrics.json, chronicles and sessions.jsonl"
+        "rule quoted from design/arenas.md → «1. Парк — Царь газона»: «Светлый круг радиусом 3.5 м. В круге 1 очко/с каждой собаке внутри. Выбить соперника из круга (он был внутри, после твоего удара оказался снаружи в течение 1 с) — 5 очков, лидера — 8. Круг переезжает каждые 20 с на 8–14 м; следующее место видно за 5 с»; zone moves use the module's own sim.Rng and stay inside the arena and off obstacles",
+        "park layout in Data/arenas/park.json: 24 × 16 m, 4 trees (obstacles in sprint 1, poles later), 3 benches, 4 spawns; no cat in sprint 1; numbers marked тюнить",
+        "Match: 120 s match (design/overview.md → «Общие числа»), scores, winner and margin into SessionResult; `final_seconds` at 10 s left",
+        "events `zone_announced` (Novel, DecisionOptions=2), `knocked_out`, `lead_change`, `final_seconds` with tags per design/overview.md → «Теги событий»; IGame.DecisionOptions offers «бежать к следующему кругу / драться» on zone_announced and «замах / отход» when a rival is within leash range",
+        "IGame.Metrics reports per player: points, points from knockouts and hits share, hits per minute, longest stretch of equal in-zone scoring (H4 in design/overview.md)",
+        "tests with scripted body positions: in-zone scoring, knockout within 1 s, leader bonus, zone schedule, match end"
       ],
       "status": "todo",
       "attempts": 0,
       "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Rules/KingOfLawn/",
+        "Game.Core/Modules/Match/",
+        "Game.Core/Data/arenas/park.json",
+        "Game.Core/GameSetup.cs",
+        "Game.Core.Tests/Modules/"
+      ],
+      "priority": 25,
+      "sprint": 1,
+      "modules": [
+        "KingOfLawn",
+        "Match",
+        "Arena"
+      ]
+    },
+    {
+      "id": "F-006",
+      "title": "Bots: honest sensors, aimed swing, smart and camper",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-004",
+        "F-005"
+      ],
+      "acceptance": [
+        "IGame.Sense per design/overview.md → «Архетипы ботов»: «бот видит позиции и скорости, цель арены и её следующее место, счёт, таймер; не видит чужих намерений и будущих событий арены»",
+        "aimed swing is one shared skill in Game.Core/Bots/ (ARCHITECTURE.md → «Боты»): from seen positions and velocities it predicts the owner's arc and leads the dog so the arc passes the target, with aim_error from the archetype; strategies only pick whom and where to hit; bots play in cursor mode",
+        "archetypes.json has idle, random, smart, camper with the behaviour, reaction, hold and aim error from the table in design/overview.md → «Архетипы ботов»",
+        "swing bench: `Game.Sim --bench swing` runs each archetype in the sandbox against standing and running dummies, for teen and jock, and writes hits per minute and hit share of swings; smart/random ratio printed (H1, threshold ≥ 2.5× — reported, judged by the playtest)",
+        "factory tool run sim on park writes metrics.json, chronicles and sessions.jsonl with pace tags"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 600000,
       "owner_role": "developer-core",
       "touches": [
         "Game.Core/Bots/",
         "Game.Core/Data/bots/",
-        "Game.Sim/"
+        "Game.Core/GameSetup.cs",
+        "Game.Sim/",
+        "Game.Core.Tests/"
       ],
-      "priority": 30,
-      "iteration": 1,
+      "priority": 40,
+      "sprint": 1,
       "modules": []
     },
     {
-      "id": "F-004",
-      "title": "Unity shell and primitives view",
+      "id": "F-007",
+      "title": "Unity shell, mouse input and primitives view",
       "layer": "unity",
       "milestone": "M1",
       "depends_on": [
-        "F-002"
+        "F-001",
+        "F-003"
       ],
       "acceptance": [
-        "UnityShell copied; Game.Core referenced as a local package; FactoryBuild.Demo builds",
-        "a session is playable with the keyboard; the survey appears at the end"
+        "shell set up per UnityShell/README.md steps 1–4: Unity/ project, Game.Core as local package, FactoryBuild.Demo builds",
+        "mouse input into PlayerInput: push mode = locked cursor, mouse delta accumulated per tick into AimX/AimY; cursor mode = visible cursor raycast to the ground, point in centimetres; Tab switches mode, the mode is shown on screen; LMB/Q and RMB/E map to the ability buttons (design/overview.md → «Кнопки»)",
+        "view only (no game logic): sim XY on ground XZ, camera ~60° with the whole arena in frame (art/style.md → «Камера»), interpolation between ticks; dog, owner, trees, benches as primitives; collar, leash and owner accent in the player colour (art/style.md → «Палитра»); leash drawn as a line whose thickness/colour shows tension; owner shadow and cosmetic height grow with owner speed; hit flash scaled by strength",
+        "the sandbox arena is playable: screenshot of the collie swinging the teen into a dummy"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 600000,
+      "owner_role": "developer-unity",
+      "touches": [
+        "Unity/"
+      ],
+      "priority": 30,
+      "sprint": 1,
+      "modules": []
+    },
+    {
+      "id": "F-008",
+      "title": "Unity: king of the lawn HUD and match flow",
+      "layer": "unity",
+      "milestone": "M1",
+      "depends_on": [
+        "F-005",
+        "F-007"
+      ],
+      "acceptance": [
+        "zone drawn as a light circle on the ground, the next zone shown 5 s before the move (arenas.md → «Парк»); points popup at the dog for in-zone, knockout and leader bonus, so the player sees what gives points from the first minute (concept → «Первый спринт», против US-02)",
+        "HUD: scores in player colours, timer, final 10 s highlight; winner screen; R restarts; the shell survey appears at the end",
+        "before the match the player picks teen or jock and the mouse mode; three bots fill the other slots from Data/bots/session.json",
+        "screenshots: mid-match with a knockout popup, winner screen"
       ],
       "status": "todo",
       "attempts": 0,
@@ -114,21 +259,27 @@
       "touches": [
         "Unity/"
       ],
-      "priority": 40,
-      "iteration": 1,
+      "priority": 50,
+      "sprint": 1,
       "modules": []
     },
     {
-      "id": "F-005",
+      "id": "F-009",
       "title": "Breaker: find what breaks the fun",
       "layer": "playtest",
       "milestone": "M1",
       "depends_on": [
+        "F-001",
         "F-002",
-        "F-003"
+        "F-003",
+        "F-004",
+        "F-005",
+        "F-006",
+        "F-007",
+        "F-008"
       ],
       "acceptance": [
-        "a breaker archetype tries to win without playing; finding goes into its report"
+        "a breaker archetype tries to win without playing (e.g. spinning in the zone centre, hugging a tree, standing on a bench edge); finding goes into its report with numbers from sim"
       ],
       "status": "todo",
       "attempts": 0,
@@ -140,25 +291,29 @@
         "Game.Core.Tests/"
       ],
       "priority": 80,
-      "iteration": 1,
+      "sprint": 1,
       "modules": []
     },
     {
-      "id": "F-006",
+      "id": "F-010",
       "title": "Playtest: sprint 1",
       "layer": "playtest",
       "milestone": "M1",
       "depends_on": [
-        "F-000",
         "F-001",
         "F-002",
         "F-003",
         "F-004",
-        "F-005"
+        "F-005",
+        "F-006",
+        "F-007",
+        "F-008",
+        "F-009"
       ],
       "acceptance": [
+        "playtest/pace-targets.json is set from design/overview.md → «Карта темпа» and the gate from «Архетипы ботов» (smart beats random in ≥ 80% of matches, camper and brawler win against smart ≤ 35%)",
         "sim on 40 seeds and judge on chronicles; report playtest/sprint-1.md starts with «Гейт: …»",
-        "every hypothesis from design/overview.md has a verdict with a number"
+        "hypotheses H1–H5 from design/overview.md → «Гипотезы» each have a verdict with a number (H6–H8 need sprint 2 content: marked «не проверялось»)"
       ],
       "status": "todo",
       "attempts": 0,
@@ -170,7 +325,252 @@
         "Game.Core.Tests/"
       ],
       "priority": 90,
-      "iteration": 1,
+      "sprint": 1,
+      "modules": []
+    },
+    {
+      "id": "F-011",
+      "title": "Leash wraps around poles",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "wrap per design/roster.md → «Поводки: запутывание и обмотка», item 1; trees in the park become poles; events `wrap` with Novel"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Leashes/",
+        "Game.Core/Modules/Props/"
+      ],
+      "priority": 110,
+      "sprint": 2,
+      "modules": [
+        "Leashes",
+        "Props"
+      ]
+    },
+    {
+      "id": "F-012",
+      "title": "Dog and owner passives and abilities: collie, dane, teen, jock, granny",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "passives and abilities from the tables in design/roster.md → «Собаки», «Хозяева» for dane, collie, teen, granny (bag on a tether), jock; events `ability`; to be resliced by techlead-sprint"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Dogs/",
+        "Game.Core/Modules/Owners/"
+      ],
+      "priority": 110,
+      "sprint": 2,
+      "modules": [
+        "Dogs",
+        "Owners"
+      ]
+    },
+    {
+      "id": "F-013",
+      "title": "The Stack: leaderless swarm and Yula",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "The Stack per design/roster.md → «The Stack: рой без вожака» with the Yula ability; zone counts at 3 of 4"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Dogs/Breeds/",
+        "Game.Core/Data/dogs/"
+      ],
+      "priority": 120,
+      "sprint": 2,
+      "modules": [
+        "Dogs",
+        "Leashes"
+      ]
+    },
+    {
+      "id": "F-014",
+      "title": "Arena objects: five behaviours and the park cat variant",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "Props implements obstacle, pole, movable body, NPC lure, effect zone from design/arenas.md → «Объекты: шесть поведений»; the park cat as a variant with/without (design/overview.md → «Контент M1»); events `arena_event`"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Props/",
+        "Game.Core/Data/variants/"
+      ],
+      "priority": 120,
+      "sprint": 2,
+      "modules": [
+        "Props",
+        "Dogs"
+      ]
+    },
+    {
+      "id": "F-015",
+      "title": "Yard arena: free bench",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "rules module and arena per design/arenas.md → «2. Двор — Свободная лавочка»; H8 metric"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Rules/",
+        "Game.Core/Data/arenas/"
+      ],
+      "priority": 130,
+      "sprint": 2,
+      "modules": []
+    },
+    {
+      "id": "F-016",
+      "title": "Owner swap experiment",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "both variants from design/roster.md → «Смена хозяев» behind Data/variants/"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Owners/",
+        "Game.Core/Modules/Leashes/"
+      ],
+      "priority": 140,
+      "sprint": 2,
+      "modules": [
+        "Owners",
+        "Leashes"
+      ]
+    },
+    {
+      "id": "F-017",
+      "title": "Unity: pair select, abilities UI, brawl readability",
+      "layer": "unity",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "pair select dog × owner before the match, ability icons and cooldowns, the brawl reads (US-28)"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-unity",
+      "touches": [
+        "Unity/"
+      ],
+      "priority": 130,
+      "sprint": 2,
+      "modules": []
+    },
+    {
+      "id": "F-018",
+      "title": "Bots: brawler, scout and per-breed ability use",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [],
+      "acceptance": [
+        "brawler and scout from design/overview.md → «Архетипы ботов»; bots use abilities by their condition"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Bots/",
+        "Game.Core/Data/bots/"
+      ],
+      "priority": 140,
+      "sprint": 2,
+      "modules": []
+    },
+    {
+      "id": "F-019",
+      "title": "Breaker: sprint 2",
+      "layer": "playtest",
+      "milestone": "M1",
+      "depends_on": [
+        "F-011",
+        "F-012",
+        "F-013",
+        "F-014",
+        "F-015",
+        "F-016",
+        "F-017",
+        "F-018"
+      ],
+      "acceptance": [
+        "a breaker archetype tries to win without playing on both arenas and with every pair; finding goes into its report"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "gamedesigner-breaker",
+      "touches": [
+        "Game.Core/Bots/",
+        "Game.Core/Data/bots/",
+        "Game.Core.Tests/"
+      ],
+      "priority": 180,
+      "sprint": 2,
+      "modules": []
+    },
+    {
+      "id": "F-020",
+      "title": "Playtest: sprint 2",
+      "layer": "playtest",
+      "milestone": "M1",
+      "depends_on": [
+        "F-011",
+        "F-012",
+        "F-013",
+        "F-014",
+        "F-015",
+        "F-016",
+        "F-017",
+        "F-018",
+        "F-019"
+      ],
+      "acceptance": [
+        "report playtest/sprint-2.md starts with «Гейт: …»; H1–H8 each have a verdict with a number"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "gamedesigner-playtest",
+      "touches": [
+        "playtest/",
+        "Game.Core/Data/",
+        "Game.Core.Tests/"
+      ],
+      "priority": 190,
+      "sprint": 2,
       "modules": []
     }
   ]
