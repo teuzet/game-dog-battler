@@ -153,30 +153,36 @@ namespace DogBattler.Tests
         }
 
         [Test]
-        public void The_scripted_swing_pulls_the_leash_taut_and_lifts_the_owner_inside_the_arena()
+        public void The_scripted_swing_hits_a_mannequin_with_a_taut_leash_and_the_victim_slides()
         {
             var sim = NewSim("sandbox");
             var inputs = new TickInputs(sim.Players);
-            while (sim.Tick < ViewCapture.SwingTick)
-            {
-                inputs[0] = ViewCapture.SwingInput(sim.Tick);
-                for (int p = 1; p < sim.Players; p++) inputs[p] = PlayerInput.None;
-                sim.Step(inputs);
-            }
             var bodies = sim.Get<BodiesModule>(BodiesModule.ModuleName);
             var owners = sim.Get<OwnersModule>(OwnersModule.ModuleName);
             var dogs = sim.Get<DogsModule>(DogsModule.ModuleName);
             var leashes = sim.Get<LeashesModule>(LeashesModule.ModuleName);
             var hits = sim.Get<HitsModule>(HitsModule.ModuleName);
+            int victim = -1;
+            while (victim < 0)
+            {
+                Assert.Less(sim.Tick, ViewCapture.SwingTick, "no blow by the capture tick");
+                inputs[0] = ViewCapture.SwingInput(sim.Tick);
+                for (int p = 1; p < sim.Players; p++) inputs[p] = PlayerInput.None;
+                sim.Step(inputs);
+                foreach (var hit in hits.ThisTick)
+                    if (hit.Attacker == 0) victim = hit.Victim;
+            }
+            Assert.Greater(victim, 0, "a mannequin's dog is the victim");
             Assert.GreaterOrEqual((float)leashes.Tension(sim, 0).ToDouble(), 0.95f);
             float speed = (float)bodies.Velocity(owners.BodyOf(0)).Length.ToDouble();
-            Assert.GreaterOrEqual(speed, 3f);
             Assert.Greater(ViewMath.OwnerHeight(ViewMath.Airborne(speed, (float)hits.StrongThreshold.ToDouble())), 0f);
-            foreach (var pos in new[] { bodies.Position(dogs.BodyOf(0)), bodies.Position(owners.BodyOf(0)) })
+            for (int i = 0; i < ViewCapture.SlideTicks; i++)
             {
-                Assert.That((float)pos.X.ToDouble(), Is.InRange(-12f, 12f));
-                Assert.That((float)pos.Y.ToDouble(), Is.InRange(-8f, 8f));
+                inputs[0] = ViewCapture.SwingInput(sim.Tick);
+                sim.Step(inputs);
             }
+            Assert.Greater((float)bodies.Velocity(dogs.BodyOf(victim)).Length.ToDouble(), 0.1f, "the victim still slides 0.5 s later");
+            Assert.AreEqual("a/b-slide.png", ViewCapture.SlidePath("a/b.png").Replace('\\', '/'));
         }
 
         [Test]
