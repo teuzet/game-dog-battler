@@ -1,0 +1,14 @@
+{
+  "tool": "image-gen",
+  "provider": "codex",
+  "model": "codex:$imagegen",
+  "request": {
+    "size": "1024x1024",
+    "n": 1,
+    "name": "dane-teen-phone-01",
+    "prompt": "A big strong Great Dane dog running and swinging its owner through the air on a taut red leash: the owner is a lanky teenager in a hoodie, flying horizontally, completely calm, staring at his smartphone and not noticing anything. Red collar, red leash. Stylized simple 3D render, rounded toy-like shapes, smooth matte flat-colored surfaces, no textures, no visible polygon facets, slightly oversized heads, small dot eyes, soft daylight, soft short shadow on the ground. Three-quarter view from above, plain light grey background, no environment. No text."
+  },
+  "request_hash": "37c2245815792732",
+  "created_at": "2026-11-09T23:37:27Z",
+  "usd": 0.0
+}
