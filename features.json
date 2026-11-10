@@ -157,7 +157,7 @@
         "tests steering the collie in push mode on the sandbox arena: circling the teen in place gives an average owner speed of 3–5 m/s and never reaches the strong-hit threshold 9 m/s (design/overview.md → «Риск №2»: «сильный удар требует бега собаки, а не вращения на месте»); running across the taut leash reaches ≥ 9 m/s; the owner never exceeds 1.6 × 7 + bonus and never exceeds 14 m/s",
         "the speed rule is the only change: no new link in MODULES.md (Owners already reads Bodies and Leashes), Hits and Rules untouched; the branch feat/F-004 (commit fb52d25 and 5a0ebeb, `OwnersModule.Step`, `speed_rule.json`, the three owner-speed tests in HitsTests) is a working draft to take from"
       ],
-      "status": "unity_check",
+      "status": "done",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-core",

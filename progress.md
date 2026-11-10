@@ -6,3 +6,4 @@
 - 2026-11-10 01:51 F-005 King of the lawn in the park and Match (c4ed7dc53d)
 - F-004 (in progress) note for the Bodies owner: the rect-edge case with a zero fixed-point length now leaves by the nearest side (division-by-zero guard), a small change made by the Hits work.
 - 2026-11-10 03:41 F-004 Hits: blow, knockback, stun and the hit events (718cc80fcc)
+- 2026-11-10 03:59 F-021 Owner speed ceiling: a swing needs a running dog (07b55f2097)
