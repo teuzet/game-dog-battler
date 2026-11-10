@@ -32,7 +32,8 @@ namespace Game.Core.Modules.Bodies
     /// (0..), of a rectangle obstacle (after the circles) or of a bound (after the rectangles:
     /// left, right, bottom, top); see <see cref="StaticIndex"/>. Normal then points from A into it.
     /// RelSpeed is the magnitude of the relative velocity just before the collision was
-    /// resolved; one contact per (A, B) per tick, the hardest one.</summary>
+    /// resolved; VelA and VelB are the two velocities at that same moment (VelB is zero for geometry);
+    /// one contact per (A, B) per tick, the hardest one.</summary>
     public readonly struct Contact
     {
         public bool IsStatic => B < 0;
@@ -41,7 +42,11 @@ namespace Game.Core.Modules.Bodies
         public readonly int A, B;
         public readonly Vec2 Normal;
         public readonly Fixed RelSpeed;
-        public Contact(int a, int b, Vec2 normal, Fixed relSpeed) { A = a; B = b; Normal = normal; RelSpeed = relSpeed; }
+        public readonly Vec2 VelA, VelB;
+        public Contact(int a, int b, Vec2 normal, Fixed relSpeed, Vec2 velA, Vec2 velB)
+        {
+            A = a; B = b; Normal = normal; RelSpeed = relSpeed; VelA = velA; VelB = velB;
+        }
     }
 
     /// <summary>The arena's 2D physics. It knows no game words: bodies are circles with
@@ -247,6 +252,8 @@ namespace Game.Core.Modules.Bodies
             a.Pos = a.Pos - n * (push * wa);
             b.Pos = b.Pos + n * (push * wb);
             var closing = rel.Dot(n);
+            var velA = a.Vel;
+            var velB = b.Vel;
             if (closing < Fixed.Zero)
             {
                 var change = -(Fixed.One + _restitution) * closing;
@@ -255,7 +262,7 @@ namespace Game.Core.Modules.Bodies
             }
             _bodies[i] = a;
             _bodies[j] = b;
-            Record(new Contact(i, j, n, speed));
+            Record(new Contact(i, j, n, speed, velA, velB));
         }
 
         private void CollideStatic(int i)
@@ -307,10 +314,11 @@ namespace Game.Core.Modules.Bodies
         private void PushOut(int i, ref Body b, Vec2 outward, Fixed depth, int staticIndex)
         {
             var speed = b.Vel.Length;
+            var vel = b.Vel;
             b.Pos = b.Pos + outward * depth;
             var into = b.Vel.Dot(outward);
             if (into < Fixed.Zero) b.Vel = b.Vel - outward * ((Fixed.One + _restitution) * into);
-            Record(new Contact(i, Contact.StaticCode(staticIndex), -outward, speed));
+            Record(new Contact(i, Contact.StaticCode(staticIndex), -outward, speed, vel, Vec2.Zero));
         }
 
         private void Record(Contact c)

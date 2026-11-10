@@ -27,8 +27,8 @@ namespace Game.Core.Modules.Hits
     }
 
     /// <summary>Blows on dogs (design/roster.md → «Удар»). An owner touching a foreign dog at a relative
-    /// speed ≥ <c>hits.threshold_mps</c> hits it, whichever of the two moved (a dog ramming a standing
-    /// foreign owner is hit by him; no condition on the owner's own speed). Strength = owner mass × speed². A blow throws the dog
+    /// speed ≥ <c>hits.threshold_mps</c> hits it if he himself moves toward it at ≥ <c>hits.owner_speed_min_mps</c>
+    /// (a dog ramming a standing foreign owner only shoves him). Strength = owner mass × speed². A blow throws the dog
     /// away from the owner by 2–7 m (growing with strength) and stuns it for 0.4 + 0.05 × (v − 5) s,
     /// at most 1.2 s; the stunned dog is not driven (Dogs asks <see cref="IsStunned"/>). Own owner and
     /// own dog never hit each other; owner against owner is a shove without points. An owner flying past
@@ -42,6 +42,8 @@ namespace Game.Core.Modules.Hits
         /// <summary>Relative speed (m/s) from which a touch is a blow, and a strong one.</summary>
         public Fixed Threshold { get; }
         public Fixed StrongThreshold { get; }
+        /// <summary>The owner's own speed (m/s) toward the dog at the touch, from which it is a blow; 0 = any touch at blow speed.</summary>
+        public Fixed OwnerSpeedMin { get; }
 
         private readonly Fixed _knockbackMin, _knockbackMax, _strengthMin, _strengthFull;
         private readonly Fixed _stunBase, _stunPerMps, _stunMax, _threatBase, _rewardBase, _nearGap, _nearThreatMax, _slideEnd, _recoilShare;
@@ -64,6 +66,7 @@ namespace Game.Core.Modules.Hits
             _players = players;
             Threshold = data.Num("hits.threshold_mps");
             StrongThreshold = data.Num("hits.strong_threshold_mps");
+            OwnerSpeedMin = data.Num("hits.owner_speed_min_mps");
             _knockbackMin = data.Num("hits.knockback_min_m");
             _knockbackMax = data.Num("hits.knockback_max_m");
             _strengthMin = data.Num("hits.knockback_strength_min");
@@ -94,6 +97,7 @@ namespace Game.Core.Modules.Hits
             _players = src._players;
             Threshold = src.Threshold;
             StrongThreshold = src.StrongThreshold;
+            OwnerSpeedMin = src.OwnerSpeedMin;
             _knockbackMin = src._knockbackMin;
             _knockbackMax = src._knockbackMax;
             _strengthMin = src._strengthMin;
@@ -159,8 +163,8 @@ namespace Game.Core.Modules.Hits
                 if (c.IsStatic) continue;
                 int ownerA = OwnerOf(owners, c.A), dogA = DogOf(c.A);
                 int ownerB = OwnerOf(owners, c.B), dogB = DogOf(c.B);
-                if (ownerA >= 0 && dogB >= 0 && ownerA != dogB) Touch(sim, bodies, owners, ownerA, dogB, c.Normal, c.RelSpeed);
-                else if (ownerB >= 0 && dogA >= 0 && ownerB != dogA) Touch(sim, bodies, owners, ownerB, dogA, -c.Normal, c.RelSpeed);
+                if (ownerA >= 0 && dogB >= 0 && ownerA != dogB) Touch(sim, bodies, owners, ownerA, dogB, c.Normal, c.RelSpeed, c.VelA);
+                else if (ownerB >= 0 && dogA >= 0 && ownerB != dogA) Touch(sim, bodies, owners, ownerB, dogA, -c.Normal, c.RelSpeed, c.VelB);
             }
             var swap = _touchPrev; _touchPrev = _touchNow; _touchNow = swap;
             WatchPasses(sim, bodies, owners);
@@ -180,13 +184,15 @@ namespace Game.Core.Modules.Hits
 
         /// <summary>Owner <paramref name="attacker"/> touches the dog of <paramref name="victim"/>;
         /// <paramref name="toDog"/> points from the owner to the dog.</summary>
-        private void Touch(Simulation sim, BodiesModule bodies, OwnersModule owners, int attacker, int victim, Vec2 toDog, Fixed relSpeed)
+        private void Touch(Simulation sim, BodiesModule bodies, OwnersModule owners, int attacker, int victim, Vec2 toDog, Fixed relSpeed, Vec2 ownerVel)
         {
             int pair = attacker * _players + victim;
             _nearTouched[pair] = true;
             _touchNow[pair] = true;
             // one touch is one blow: the pair must have been apart in the previous tick (a second player's owner can still hit a sliding dog)
             if (relSpeed < Threshold || _touchPrev[pair]) return;
+            // a parked owner is an obstacle, not a weapon: his own speed toward the dog (before the collision) must reach the minimum, else the touch is a shove
+            if (ownerVel.Dot(toDog) < OwnerSpeedMin) return;
             var strength = bodies.Mass(owners.BodyOf(attacker)) * relSpeed * relSpeed;
             bool strong = relSpeed >= StrongThreshold;
             var power = Fixed.Clamp01((strength - _strengthMin) / (_strengthFull - _strengthMin));
@@ -194,7 +200,7 @@ namespace Game.Core.Modules.Hits
             _thrown[victim] = true;
             // the owner does not run on into the thrown dog and drive her further than 2–7 m
             int ob = owners.BodyOf(attacker);
-            var n = toDog.Normalized();
+            var n = toDog;
             var ov = bodies.Velocity(ob);
             var along = ov.Dot(n);
             var thrownSpeed = bodies.Velocity(_dogBody[victim]).Length;
