@@ -94,6 +94,8 @@ namespace Game.Core
                 case "random": return new WanderStrategy(a.Params["repick_min_s"]!.AsFixed(), a.Params["repick_max_s"]!.AsFixed());
                 case "smart": return new SmartStrategy(new SwingSkill(data), a.AimError);
                 case "camper": return new CamperStrategy(a.AimError, data);
+                case "breaker-squatter": return new SquatterStrategy(a.AimError);
+                case "breaker-orbit": return new OrbitStrategy(a.AimError, data);
                 default: throw new KeyNotFoundException($"no strategy '{a.Strategy}' (archetype {a.Name})");
             }
         }

@@ -130,4 +130,50 @@ namespace Game.Core.Bots
 
         public IBotStrategy Clone() => this;
     }
+
+    /// <summary>Breaker: never fights. Sits still in the middle of the circle; the moment the next circle is
+    /// announced it runs to the middle of that one and sits there, so it is the first one in every circle.</summary>
+    public sealed class SquatterStrategy : IBotStrategy
+    {
+        private readonly Fixed _aimError;
+
+        public SquatterStrategy(Fixed aimError) { _aimError = aimError; }
+
+        public PlayerInput Decide(BotView view, ref DetRandom rng)
+        {
+            if (Cursor.Find(view, "next_zone", out var next)) return Cursor.At(SwingSkill.Jitter(next.Pos, _aimError, ref rng));
+            var center = Cursor.Find(view, "zone", out var zone) ? zone.Pos : Vec2.Zero;
+            return Cursor.At(SwingSkill.Jitter(center, _aimError, ref rng));
+        }
+
+        public IBotStrategy Clone() => this;
+    }
+
+    /// <summary>Breaker: runs laps round the inside of the circle (<c>orbit_m</c> from its centre) without
+    /// aiming at anyone, so the owner sweeps the circle at full speed; each decision puts the cursor a quarter
+    /// turn ahead on that ring. Goes to the announced circle like the squatter. Numbers: Data/bots/breaker.json.</summary>
+    public sealed class OrbitStrategy : IBotStrategy
+    {
+        private readonly Fixed _aimError, _orbit;
+
+        public OrbitStrategy(Fixed aimError, GameData data)
+        {
+            _aimError = aimError;
+            _orbit = data.Num("bots.breaker.orbit_m");
+        }
+
+        public PlayerInput Decide(BotView view, ref DetRandom rng)
+        {
+            var me = new Vec2(view.X, view.Y);
+            var center = Cursor.Find(view, "next_zone", out var next) ? next.Pos
+                : Cursor.Find(view, "zone", out var zone) ? zone.Pos : Vec2.Zero;
+            var radial = me - center;
+            if (radial.Length > _orbit * 2) return Cursor.At(SwingSkill.Jitter(center, _aimError, ref rng)); // get to the circle first
+            var r = radial.LengthSq == Fixed.Zero ? new Vec2(Fixed.One, Fixed.Zero) : radial.Normalized();
+            var ahead = center + new Vec2(-r.Y, r.X) * _orbit; // a quarter turn counter-clockwise
+            return Cursor.At(SwingSkill.Jitter(ahead, _aimError, ref rng));
+        }
+
+        public IBotStrategy Clone() => this;
+    }
 }
