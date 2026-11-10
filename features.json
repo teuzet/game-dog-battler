@@ -321,8 +321,8 @@
         "screenshot art/previews/f007-sandbox-swing.png retaken by the build with `-arena sandbox -capture <png>` (the draft's png is a stand-in until then): the teen in flight at the end of a taut leash, collar, leash and the owner's accent in the colour of player 0 (art/style.md → «Палитра»), the whole arena in frame (art/style.md → «Камера»: «вся арена в кадре»); the png is looked at before it is committed. The blow on a mannequin stays F-023",
         "`factory tool run unity --set mode=test` stays green; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`; if the view changes for the shot, the change is in Unity/Assets/Game/ only"
       ],
-      "status": "review",
-      "attempts": 2,
+      "status": "escalated",
+      "attempts": 3,
       "budget_tokens": 300000,
       "owner_role": "developer-unity",
       "touches": [
