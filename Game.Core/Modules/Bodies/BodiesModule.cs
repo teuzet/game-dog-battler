@@ -127,6 +127,15 @@ namespace Game.Core.Modules.Bodies
             _bodies[body] = b;
         }
 
+        /// <summary>Puts a body at a point at rest (scripted scenes of tests and stands).</summary>
+        public void Teleport(int body, Vec2 position)
+        {
+            var b = Check(body);
+            b.Pos = position;
+            b.Vel = Vec2.Zero;
+            _bodies[body] = b;
+        }
+
         public Vec2 Position(int body) => Check(body).Pos;
         public Vec2 Velocity(int body) => Check(body).Vel;
         public Fixed Mass(int body) => Check(body).Mass;

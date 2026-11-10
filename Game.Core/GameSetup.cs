@@ -46,7 +46,7 @@ namespace Game.Core
                 new LeashesModule(data, players),
                 new BodiesModule(data),
                 new HitsModule(data),
-                new RulesModule(data),
+                new RulesModule(data, players),
                 new MatchModule(data, players),
             };
             return new Simulation(seed, players, data, modules);
@@ -75,6 +75,8 @@ namespace Game.Core
             }
             if (rules.Active.Zone is ZoneInfo z)
                 v.Objects.Add(new SeenObject { Kind = "zone", X = z.Center.X, Y = z.Center.Y, Value = z.Radius });
+            if (rules.Active.NextZone is ZoneInfo n)
+                v.Objects.Add(new SeenObject { Kind = "next_zone", X = n.Center.X, Y = n.Center.Y, Value = n.Radius });
             return v;
         }
 
@@ -89,8 +91,34 @@ namespace Game.Core
             }
         }
 
-        /// <summary>No decision moments yet: they come with the rules and the swing (F-005, F-006).</summary>
-        public IReadOnlyList<PlayerInput> DecisionOptions(Simulation sim, int player) => new PlayerInput[0];
+        private static PlayerInput CursorAt(Vec2 p) => new PlayerInput((p.X * 100).FloorToInt(), (p.Y * 100).FloorToInt());
+
+        /// <summary>A moment of decision: the next circle was just announced (run to it / fight over this one),
+        /// or a rival is within the leash range (swing at him / retreat from him).</summary>
+        public IReadOnlyList<PlayerInput> DecisionOptions(Simulation sim, int player)
+        {
+            var rules = sim.Get<RulesModule>(RulesModule.ModuleName).Active;
+            var dogs = sim.Get<DogsModule>(DogsModule.ModuleName);
+            var me = dogs.Position(sim, player);
+            int rival = -1;
+            var reach = sim.Get<LeashesModule>(LeashesModule.ModuleName).LengthOf(player);
+            var best = reach;
+            for (int q = 0; q < sim.Players; q++)
+            {
+                if (q == player) continue;
+                var d = me.DistanceTo(dogs.Position(sim, q));
+                if (d <= best) { best = d; rival = q; }
+            }
+            if (rules.ZoneJustAnnounced(sim) && rules.NextZone is ZoneInfo next)
+            {
+                if (rival < 0) return new[] { CursorAt(next.Center), CursorAt(me) };
+                return new[] { CursorAt(next.Center), CursorAt(dogs.Position(sim, rival)) };
+            }
+            if (rival < 0) return new PlayerInput[0];
+            var away = me - dogs.Position(sim, rival);
+            var retreat = away.LengthSq == Fixed.Zero ? me : me + away.Normalized() * reach; // back off by one leash
+            return new[] { CursorAt(dogs.Position(sim, rival)), CursorAt(retreat) };
+        }
 
         public double Score(Simulation sim, int player)
         {
@@ -115,7 +143,13 @@ namespace Game.Core
             return sb.ToString();
         }
 
-        public IReadOnlyDictionary<string, double> Metrics(Simulation sim, int player) =>
-            new Dictionary<string, double> { { "score", sim.Get<MatchModule>(MatchModule.ModuleName).Scores[player] } };
+        /// <summary>Per player: points and the rules' numbers (knockout points, fight share, hits a minute, the
+        /// longest equal in-zone stretch: H4).</summary>
+        public IReadOnlyDictionary<string, double> Metrics(Simulation sim, int player)
+        {
+            var m = new Dictionary<string, double> { { "points", sim.Get<MatchModule>(MatchModule.ModuleName).Scores[player] } };
+            foreach (var kv in sim.Get<RulesModule>(RulesModule.ModuleName).Active.Metrics(sim, player)) m[kv.Key] = kv.Value;
+            return m;
+        }
     }
 }

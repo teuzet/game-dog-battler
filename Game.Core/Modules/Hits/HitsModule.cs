@@ -55,6 +55,9 @@ namespace Game.Core.Modules.Hits
         /// <summary>Blows of the last tick.</summary>
         public IReadOnlyList<Hit> ThisTick => _tick;
 
+        /// <summary>A blow detected in this tick; the one place a blow enters the list.</summary>
+        public void Record(Hit hit) => _tick.Add(hit);
+
         public void Init(Simulation sim) { }
 
         public void Step(Simulation sim, TickInputs inputs) => _tick.Clear();

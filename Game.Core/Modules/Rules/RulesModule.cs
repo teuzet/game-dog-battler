@@ -27,6 +27,12 @@ namespace Game.Core.Modules.Rules
         string Name { get; }
         /// <summary>The scoring circle, if the rules have one.</summary>
         ZoneInfo? Zone { get; }
+        /// <summary>The announced next place of the circle, if the rules have one and it is announced.</summary>
+        ZoneInfo? NextZone { get; }
+        /// <summary>The next place was announced a moment ago: the player may choose to run or fight.</summary>
+        bool ZoneJustAnnounced(Simulation sim);
+        /// <summary>The rules' own numbers of a player for metrics.json.</summary>
+        IReadOnlyDictionary<string, double> Metrics(Simulation sim, int player);
         void Step(Simulation sim, RulesModule host, TickInputs inputs);
         void Hash(ref StateHasher h);
         IRuleSet Clone();
@@ -44,9 +50,9 @@ namespace Game.Core.Modules.Rules
 
         public IRuleSet Active { get; }
 
-        public RulesModule(GameData data)
+        public RulesModule(GameData data, int players)
         {
-            Active = RuleSetRegistry.Create(data.Get("arenas." + data.Str("game.arena"))["rules"]!.AsString(), data);
+            Active = RuleSetRegistry.Create(data.Get("arenas." + data.Str("game.arena"))["rules"]!.AsString(), data, players);
         }
 
         private RulesModule(RulesModule src) { Active = src.Active.Clone(); }
@@ -71,11 +77,11 @@ namespace Game.Core.Modules.Rules
     /// <summary>One line per rule set: name in the arena json → class.</summary>
     public static class RuleSetRegistry
     {
-        public static IRuleSet Create(string name, GameData data)
+        public static IRuleSet Create(string name, GameData data, int players)
         {
             switch (name)
             {
-                case "KingOfLawn": return new KingOfLawnRules(data);
+                case "KingOfLawn": return new KingOfLawnRules(data, players);
                 case "Sandbox": return new SandboxRules();
                 default: throw new KeyNotFoundException($"no rule set '{name}' in the registry (Modules/Rules)");
             }

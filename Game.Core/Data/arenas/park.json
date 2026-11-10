@@ -3,12 +3,21 @@
   "rules": "KingOfLawn",
   "width": 24,
   "height": 16,
+  "тюнить": ["obstacles", "spawns"],
   "spawns": [
     { "dog": { "x": -6, "y": -4 }, "owner": { "x": -8, "y": -5.5 } },
     { "dog": { "x": 6, "y": -4 }, "owner": { "x": 8, "y": -5.5 } },
     { "dog": { "x": 6, "y": 4 }, "owner": { "x": 8, "y": 5.5 } },
     { "dog": { "x": -6, "y": 4 }, "owner": { "x": -8, "y": 5.5 } }
   ],
-  "obstacles": [],
+  "obstacles": [
+    { "shape": "circle", "x": -3.5, "y": -2.5, "radius": 0.4 },
+    { "shape": "circle", "x": 3.5, "y": 2.5, "radius": 0.4 },
+    { "shape": "circle", "x": -9, "y": 0, "radius": 0.4 },
+    { "shape": "circle", "x": 9, "y": 0, "radius": 0.4 },
+    { "shape": "rect", "x": 0, "y": -6.5, "width": 2, "height": 0.6 },
+    { "shape": "rect", "x": 0, "y": 6.5, "width": 2, "height": 0.6 },
+    { "shape": "rect", "x": -3, "y": 1, "width": 0.6, "height": 2 }
+  ],
   "props": []
 }
