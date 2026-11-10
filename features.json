@@ -321,7 +321,7 @@
         "a new EditMode test in Unity/Assets/Tests/EditMode (in ViewTests.cs or next to it, with the same `NewSim(\"sandbox\")` helper) steps a sandbox simulation with `ViewCapture.SwingInput(sim.Tick)` for player 0 and `PlayerInput.None` for players 1–3 up to `SwingTick` and asserts what the screenshot was meant to show: the leash of player 0 is taut (`LeashesModule.Tension(sim, 0)` ≥ 0.95), the teen moves at ≥ 3 m/s (`BodiesModule.Velocity(owners.BodyOf(0)).Length`; the draft's comment claims 3.6 m/s at tick 66), so `ViewMath.OwnerHeight(ViewMath.Airborne(speed, HitsModule.StrongThreshold))` > 0 — the lift the shot shows through the owner height and shadow (art/style.md → «Материалы и свет»: «мягкие короткие тени под объектами, чтобы высота полёта хозяина читалась по тени»), and dog and owner are still inside the 24 × 16 m sandbox; if the swing does not reach these numbers, tune the amplitude, the angular step and `SwingTick` in ViewCapture.cs only, never the core or the data; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`",
         "one `factory tool run unity --set mode=test` run after the change (16 EditMode tests green, the summary from `.factory/unity/unity-EditMode.xml`) and one `mode=execute --set method=FactoryBuild.Demo` run on the final commit, its log searched for `Build Failed` and `error CS`, not read whole; the log tails go to `notes`; `git status` is clean after the runs; nothing outside Unity/Assets/Game/ and Unity/Assets/Tests/ changes (the editor's own files, if it rewrites them, are committed as they are); the blow on a mannequin stays F-023"
       ],
-      "status": "unity_check",
+      "status": "done",
       "attempts": 0,
       "budget_tokens": 300000,
       "owner_role": "developer-unity",
