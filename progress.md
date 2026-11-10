@@ -8,3 +8,4 @@
 - 2026-11-10 03:41 F-004 Hits: blow, knockback, stun and the hit events (718cc80fcc)
 - 2026-11-10 03:59 F-021 Owner speed ceiling: a swing needs a running dog (07b55f2097)
 - 2026-11-10 04:18 F-007 Unity shell, mouse input and primitives view (302e445058)
+- 2026-11-10 04:38 F-022 Swing sandbox: mannequins and --arena sandbox (387dc564b8)
