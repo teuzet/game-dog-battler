@@ -1,0 +1,6 @@
+{
+  "a": ["playtest/sprint-1/run-1/chronicle-1.md", "playtest/sprint-1/run-1/chronicle-2.md", "playtest/sprint-1/run-1/chronicle-3.md"],
+  "b": ["playtest/sprint-1/run-0/chronicle-1.md", "playtest/sprint-1/run-0/chronicle-2.md", "playtest/sprint-1/run-0/chronicle-3.md"],
+  "count": 5,
+  "context": "PvP-баттлер с видом сверху на четыре собаки: собака раскручивает хозяина на поводке и бьёт им соперников, очки идут за время в круге на газоне и за выбивание соперника из круга; круг переезжает по арене, матч две минуты, никто не выбывает."
+}

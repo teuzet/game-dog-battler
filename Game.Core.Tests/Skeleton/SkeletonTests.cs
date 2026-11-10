@@ -242,7 +242,9 @@ namespace Game.Core.Tests.Skeleton
             Assert.Equal(new[] { Outcome.Loss, Outcome.Win, Outcome.Loss, Outcome.Loss }, sim.Result!.Outcomes);
             Assert.Equal(120 * Simulation.TicksPerSecond, sim.Tick);
 
-            var tie = GameSetup.Game.Create(1, data);
+            // the tie on the sandbox: no circle there, so none can land on one tied player's spawn and break it
+            var sandbox = new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"sandbox\"}}")), data.Variant);
+            var tie = GameSetup.Game.Create(1, sandbox);
             tie.Get<MatchModule>("Match").Award(0, 400, "test");
             tie.Get<MatchModule>("Match").Award(3, 400, "test");
             while (!tie.IsOver) tie.Step(Stay(tie));
