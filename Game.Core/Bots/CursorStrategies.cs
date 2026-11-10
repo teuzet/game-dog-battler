@@ -38,8 +38,15 @@ namespace Game.Core.Bots
     /// <summary>Runs to random points of the arena, changing the point every 1–2 seconds.</summary>
     public sealed class WanderStrategy : IBotStrategy
     {
+        private readonly int _minTicks, _extraTicks;
         private int _until = -1;
         private PlayerInput _point;
+
+        public WanderStrategy(Fixed repickMinS, Fixed repickMaxS)
+        {
+            _minTicks = (repickMinS * Simulation.TicksPerSecond).FloorToInt();
+            _extraTicks = ((repickMaxS - repickMinS) * Simulation.TicksPerSecond).FloorToInt();
+        }
 
         public PlayerInput Decide(BotView view, ref DetRandom rng)
         {
@@ -48,7 +55,7 @@ namespace Game.Core.Bots
                 var halfW = view.Hud["arena_half_width"];
                 var halfH = view.Hud["arena_half_height"];
                 _point = Cursor.At((rng.NextFixed01() * 2 - Fixed.One) * halfW, (rng.NextFixed01() * 2 - Fixed.One) * halfH);
-                _until = view.Tick + Simulation.TicksPerSecond + rng.NextInt(Simulation.TicksPerSecond + 1);
+                _until = view.Tick + _minTicks + rng.NextInt(_extraTicks + 1);
             }
             return _point;
         }

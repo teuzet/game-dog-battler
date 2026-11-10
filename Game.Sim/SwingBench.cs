@@ -91,7 +91,7 @@ static class SwingBench
         var owners = sim.Get<OwnersModule>(OwnersModule.ModuleName);
         var bodies = sim.Get<BodiesModule>(BodiesModule.ModuleName);
         var blow = data.Num("hits.threshold_mps");
-        var slow = blow / 2;
+        var slow = blow * data.Num("bots.swing.swing_end_share");
         bool swinging = false, swingHit = false;
         int lastHits = 0;
         while (!sim.IsOver)

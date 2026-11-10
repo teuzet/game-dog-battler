@@ -143,7 +143,7 @@ namespace Game.Core.Tests.Bots
         [Fact]
         public void WanderChangesItsPointEveryOneToTwoSeconds()
         {
-            var s = new WanderStrategy();
+            var s = new WanderStrategy(F("1"), F("2"));
             var rng = new DetRandom(3);
             var view = new BotView();
             view.Hud["arena_half_width"] = F("12");
