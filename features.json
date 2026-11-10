@@ -57,7 +57,7 @@
         "Arena loads bounds, obstacles (trees as circles, benches as rectangles), spawns and `rules` from Data/arenas/<name>.json",
         "Bodies knows no game words (dog, owner, hit): ARCHITECTURE.md → «Модули и порядок тика», `Bodies` is dumb; same seed and inputs → same hash in module tests"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 2,
       "budget_tokens": 600000,
       "owner_role": "developer-core",
