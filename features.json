@@ -448,7 +448,7 @@
         "sim on 40 seeds and judge on chronicles; report playtest/sprint-1.md starts with «Гейт: …»",
         "hypotheses H1–H5 from design/overview.md → «Гипотезы» each have a verdict with a number (H6–H8 need sprint 2 content: marked «не проверялось»)"
       ],
-      "status": "running",
+      "status": "testing",
       "attempts": 1,
       "budget_tokens": 400000,
       "owner_role": "gamedesigner-playtest",
