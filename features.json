@@ -379,7 +379,7 @@
         "before the match the player picks teen or jock and the mouse mode; three bots fill the other slots from Data/bots/session.json",
         "screenshots: mid-match with a knockout popup, winner screen"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 1,
       "budget_tokens": 400000,
       "owner_role": "developer-unity",
