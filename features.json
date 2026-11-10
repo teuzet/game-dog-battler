@@ -295,8 +295,8 @@
         "view only (no game logic): sim XY on ground XZ, interpolation between ticks by `Alpha`; camera per art/style.md → «Камера»: «Сверху под наклоном около 60°, вся арена в кадре, без вращения», test: the four arena corners are inside the viewport; dog, owner, trees, benches as primitives built from code; per art/style.md → «Палитра»: «ошейник, поводок и акцент одежды хозяина в цвете игрока (красный, синий, жёлтый, фиолетовый и далее)»; the leash is a line whose thickness and colour grow with `LeashesModule.Tension`; owner shadow and cosmetic height grow with owner speed (art/style.md → «Материалы и свет»: «мягкие короткие тени под объектами, чтобы высота полёта хозяина читалась по тени»); hit flash on the victim scaled by `Hit.Strength` against `HitsModule.StrongThreshold`, read from `HitsModule.ThisTick` — empty until F-004 lands, so the flash is tested by recording a Hit in an EditMode test, not by play; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`",
         "the sandbox arena is playable with the collie in both mouse modes: the demo build started with `-arena sandbox` runs, the teen swings around the running dog on a taut leash and visibly lifts; screenshot art/previews/f007-sandbox-swing.png of the owner in flight at the end of a taut leash, taken by the build with `-capture <png>` and the scripted swing (the draft has one; retake it if the view changes). The blow on a mannequin is F-023"
       ],
-      "status": "escalated",
-      "attempts": 3,
+      "status": "todo",
+      "attempts": 0,
       "budget_tokens": 600000,
       "owner_role": "developer-unity",
       "touches": [
