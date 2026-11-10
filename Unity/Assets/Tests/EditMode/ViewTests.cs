@@ -4,7 +4,9 @@ using Game.Core;
 using Game.Core.Data;
 using Game.Core.Math;
 using Game.Core.Modules.Bodies;
+using Game.Core.Modules.Dogs;
 using Game.Core.Modules.Hits;
+using Game.Core.Modules.Leashes;
 using Game.Core.Modules.Owners;
 using Game.Core.Sim;
 using NUnit.Framework;
@@ -148,6 +150,33 @@ namespace DogBattler.Tests
             float mid = view.DogTransforms[0].position.x;
             Assert.AreNotEqual(a, b);
             Assert.AreEqual((a + b) / 2, mid, 1e-3f);
+        }
+
+        [Test]
+        public void The_scripted_swing_pulls_the_leash_taut_and_lifts_the_owner_inside_the_arena()
+        {
+            var sim = NewSim("sandbox");
+            var inputs = new TickInputs(sim.Players);
+            while (sim.Tick < ViewCapture.SwingTick)
+            {
+                inputs[0] = ViewCapture.SwingInput(sim.Tick);
+                for (int p = 1; p < sim.Players; p++) inputs[p] = PlayerInput.None;
+                sim.Step(inputs);
+            }
+            var bodies = sim.Get<BodiesModule>(BodiesModule.ModuleName);
+            var owners = sim.Get<OwnersModule>(OwnersModule.ModuleName);
+            var dogs = sim.Get<DogsModule>(DogsModule.ModuleName);
+            var leashes = sim.Get<LeashesModule>(LeashesModule.ModuleName);
+            var hits = sim.Get<HitsModule>(HitsModule.ModuleName);
+            Assert.GreaterOrEqual((float)leashes.Tension(sim, 0).ToDouble(), 0.95f);
+            float speed = (float)bodies.Velocity(owners.BodyOf(0)).Length.ToDouble();
+            Assert.GreaterOrEqual(speed, 3f);
+            Assert.Greater(ViewMath.OwnerHeight(ViewMath.Airborne(speed, (float)hits.StrongThreshold.ToDouble())), 0f);
+            foreach (var pos in new[] { bodies.Position(dogs.BodyOf(0)), bodies.Position(owners.BodyOf(0)) })
+            {
+                Assert.That((float)pos.X.ToDouble(), Is.InRange(-12f, 12f));
+                Assert.That((float)pos.Y.ToDouble(), Is.InRange(-8f, 8f));
+            }
         }
 
         [Test]
