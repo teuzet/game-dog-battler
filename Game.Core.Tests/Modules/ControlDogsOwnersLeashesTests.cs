@@ -16,10 +16,13 @@ namespace Game.Core.Tests.Modules
     {
         private static readonly DogBattlerGame Game = new DogBattlerGame();
 
-        private static Simulation Session(IReadOnlyList<string>? owners = null)
+        private static Simulation Session() => Game.Create(1, Repo.Data());
+
+        /// <summary>The game data with the human's owner pick set, the way the shell or a variant sets it.</summary>
+        private static GameData WithHumanOwner(string owner)
         {
             var data = Repo.Data();
-            return owners == null ? Game.Create(1, data) : Game.Create(1, data, owners);
+            return new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"human_owner\":\"" + owner + "\"}}")), data.Variant);
         }
 
         private static TickInputs Inputs(Simulation sim, PlayerInput p0)
@@ -92,7 +95,7 @@ namespace Game.Core.Tests.Modules
             // the cursor far to the left of the dog: the dog heads left
             sim.Step(Inputs(sim, new PlayerInput(sx - 400, sy)));
             Assert.True(control.Of(0).Velocity.X < Fixed.Zero);
-            // same numbers with the mode bit: a push of -400 cm — still left, but the numbers mean a shift now
+            // the mode bit: (0, 300) is now a shift of 300 cm along +Y, not a cursor point
             sim.Step(Inputs(sim, new PlayerInput(0, 300, PlayerInput.PushBit)));
             var v = control.Of(0).Velocity;
             Assert.True(v.X.Abs() < Fixed.Ratio(1, 100) && v.Y > Fixed.Zero, "push mode reads Aim as a shift");
@@ -107,7 +110,6 @@ namespace Game.Core.Tests.Modules
             var sim = Session();
             var dogs = sim.Get<DogsModule>("Dogs");
             var bodies = sim.Get<BodiesModule>("Bodies");
-            Assert.True(dogs.BreedOf(0).InstantTurn);
             for (int i = 0; i < 20; i++) sim.Step(Inputs(sim, new PlayerInput(10, 0, PlayerInput.PushBit))); // running +X
             var before = bodies.Velocity(dogs.BodyOf(0));
             Assert.True(before.X > Fixed.One);
@@ -115,6 +117,37 @@ namespace Game.Core.Tests.Modules
             var after = bodies.Velocity(dogs.BodyOf(0));
             Assert.True(after.Y > after.X.Abs(), $"turned: {after.X},{after.Y}");
             Assert.True(after.Length >= before.Length - Fixed.Ratio(1, 2), "speed is not lost in the turn");
+        }
+
+        [Fact]
+        public void ColliePassiveTurnsAtOnceInCursorModeToo()
+        {
+            var sim = Session();
+            var dogs = sim.Get<DogsModule>("Dogs");
+            var bodies = sim.Get<BodiesModule>("Bodies");
+            var start = bodies.Position(dogs.BodyOf(0));
+            int sy = (int)(start.Y.ToDouble() * 100);
+            for (int i = 0; i < 20; i++) // cursor far ahead on +X: running
+                sim.Step(Inputs(sim, new PlayerInput((int)(bodies.Position(dogs.BodyOf(0)).X.ToDouble() * 100) + 600, sy)));
+            var before = bodies.Velocity(dogs.BodyOf(0));
+            Assert.True(before.X > Fixed.One);
+            // the cursor jumps behind the dog: the velocity turns at once, no skid
+            sim.Step(Inputs(sim, new PlayerInput((int)(bodies.Position(dogs.BodyOf(0)).X.ToDouble() * 100) - 600, sy)));
+            var after = bodies.Velocity(dogs.BodyOf(0));
+            Assert.True(after.X < Fixed.Zero, $"turned: {after.X},{after.Y}");
+        }
+
+        [Fact]
+        public void ColliePassiveDoesNotSteerSpeedAboveTheBreedSpeed()
+        {
+            var sim = Session();
+            var dogs = sim.Get<DogsModule>("Dogs");
+            var bodies = sim.Get<BodiesModule>("Bodies");
+            var breed = dogs.BreedOf(0);
+            bodies.SetVelocity(dogs.BodyOf(0), new Vec2(Fixed.FromInt(10), Fixed.Zero)); // knocked at 10 m/s
+            sim.Step(Inputs(sim, new PlayerInput(0, 10, PlayerInput.PushBit)));           // and aims elsewhere
+            var v = bodies.Velocity(dogs.BodyOf(0));
+            Assert.True(v.Length <= breed.Speed + Fixed.Ratio(1, 10), $"speed {v.Length}");
         }
 
         [Fact]
@@ -132,24 +165,50 @@ namespace Game.Core.Tests.Modules
         [Fact]
         public void TeenAndJockMatchTheRosterAndPickIsHonoured()
         {
-            var sim = Session(new[] { "jock", "teen", "jock", "teen" });
+            var sim = Game.Create(1, WithHumanOwner("jock"));
             var owners = sim.Get<OwnersModule>("Owners");
             var bodies = sim.Get<BodiesModule>("Bodies");
+            var teenIdx = -1;
+            for (int p = 1; p < sim.Players; p++) if (owners.TypeOf(p).Name == "teen") teenIdx = p;
             Assert.Equal("jock", owners.TypeOf(0).Name);
-            Assert.Equal("teen", owners.TypeOf(1).Name);
+            Assert.True(teenIdx > 0);
             Assert.Equal(Fixed.FromInt(110), bodies.Mass(owners.BodyOf(0)));
-            Assert.Equal(Fixed.FromInt(60), bodies.Mass(owners.BodyOf(1)));
-            Assert.True(owners.TypeOf(0).Friction < owners.TypeOf(1).Friction, "jock: low friction");
-            Assert.True(owners.TypeOf(0).Mass > owners.TypeOf(1).Mass);
+            Assert.Equal(Fixed.FromInt(60), bodies.Mass(owners.BodyOf(teenIdx)));
+            Assert.True(owners.TypeOf(0).Friction < owners.TypeOf(teenIdx).Friction, "jock: low friction");
+            Assert.True(owners.TypeOf(0).Mass > owners.TypeOf(teenIdx).Mass);
         }
 
         [Fact]
-        public void DefaultSetupGivesHumanThePairOwnerAndBotsTheirPicksFromData()
+        public void LoggedSessionWithAJockPickReplaysToTheSameHash()
+        {
+            var data = WithHumanOwner("jock");
+            var game = new DogBattlerGame();
+            var sim = game.Create(7, data);
+            var log = new InputLog(7, sim.Players, data.Variant);
+            for (int i = 0; i < 120; i++)
+            {
+                var t = Inputs(sim, new PlayerInput(i % 40 < 20 ? 8 : -8, 3, PlayerInput.PushBit));
+                log.Record(t);
+                sim.Step(t);
+            }
+            Assert.Equal("jock", sim.Get<OwnersModule>("Owners").TypeOf(0).Name);
+            var replayed = InputLog.Parse(log.Serialize());
+            var again = game.Create(replayed.Seed, data);
+            foreach (var t in replayed.Ticks) again.Step(t);
+            Assert.Equal(sim.StateHash(), again.StateHash());
+            // and the default pick (teen) is another session
+            var teen = game.Create(7, Repo.Data());
+            foreach (var t in replayed.Ticks) teen.Step(t);
+            Assert.NotEqual(sim.StateHash(), teen.StateHash());
+        }
+
+        [Fact]
+        public void DefaultSetupGivesHumanTheDataPickAndBotsTheirPicksFromData()
         {
             var data = Repo.Data();
             var sim = Game.Create(1, data);
             var owners = sim.Get<OwnersModule>("Owners");
-            Assert.Equal(data.Get("game.pairs").Items[0]["owner"]!.AsString(), owners.TypeOf(0).Name);
+            Assert.Equal(data.Str("game.human_owner"), owners.TypeOf(0).Name);
             var picks = data.Get("bots.session.owner_picks").Items;
             for (int p = 1; p < sim.Players; p++)
                 Assert.Equal(picks[(p - 1) % picks.Count].AsString(), owners.TypeOf(p).Name);
@@ -158,7 +217,7 @@ namespace Game.Core.Tests.Modules
         [Fact]
         public void UnknownOwnerPickIsAnError()
         {
-            Assert.Throws<KeyNotFoundException>(() => Session(new[] { "teen", "granny", "teen", "teen" }));
+            Assert.Throws<KeyNotFoundException>(() => Game.Create(1, WithHumanOwner("granny")));
         }
 
         [Fact]

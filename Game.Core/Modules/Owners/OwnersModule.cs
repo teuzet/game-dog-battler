@@ -24,12 +24,18 @@ namespace Game.Core.Modules.Owners
         private readonly OwnerType[] _types;
         private readonly int[] _body;
 
-        /// <summary>One owner type name per player: what each player picked in the session setup.</summary>
-        public OwnersModule(GameData data, IReadOnlyList<string> picks)
+        /// <summary>The session picks live in data, so a logged session replays: the human (player 0)
+        /// has "game.human_owner", bots take "bots.session.owner_picks" in turn.</summary>
+        public OwnersModule(GameData data, int players)
         {
-            _types = new OwnerType[picks.Count];
-            _body = new int[picks.Count];
-            for (int p = 0; p < picks.Count; p++) _types[p] = OwnerTypeRegistry.Create(picks[p], data);
+            _types = new OwnerType[players];
+            _body = new int[players];
+            var botPicks = data.Get("bots.session.owner_picks").Items;
+            for (int p = 0; p < players; p++)
+            {
+                string pick = p == 0 ? data.Str("game.human_owner") : botPicks[(p - 1) % botPicks.Count].AsString();
+                _types[p] = OwnerTypeRegistry.Create(pick, data);
+            }
         }
 
         private OwnersModule(OwnersModule src)

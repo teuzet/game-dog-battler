@@ -76,8 +76,8 @@ namespace Game.Core.Modules.Dogs
                 var b = _breeds[p];
                 var want = control.Of(p).Velocity.ClampLength(b.Speed);
                 var vel = bodies.Velocity(_body[p]);
-                if (b.InstantTurn && want.Length > Fixed.Zero && vel.Length > Fixed.Zero)
-                    bodies.SetVelocity(_body[p], want.Normalized() * vel.Length); // turns without a skid, speed stays
+                var steered = b.SteerVelocity(vel, want);
+                if (steered != vel) bodies.SetVelocity(_body[p], steered);
                 bodies.Drive(_body[p], want, b.Speed / b.AccelTime);
             }
         }

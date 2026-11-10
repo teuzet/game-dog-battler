@@ -2,8 +2,8 @@
   "session": { "max_seconds": 180 },
   "players": 4,
   "arena": "park",
+  "human_owner": "teen",
   "pairs": [
-    { "dog": "collie", "owner": "teen" },
-    { "dog": "collie", "owner": "jock" }
+    { "dog": "collie" }
   ]
 }

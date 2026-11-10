@@ -5,6 +5,5 @@
   "mass": 2,
   "radius": 0.35,
   "friction": 6,
-  "leash_m": 3,
-  "instant_turn": true
+  "leash_m": 3
 }
