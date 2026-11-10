@@ -264,7 +264,7 @@
         "swing bench: `Game.Sim --bench swing` runs each archetype in the sandbox against standing and running dummies, for teen and jock, and writes hits per minute and hit share of swings; smart/random ratio printed (H1, threshold ≥ 2.5× — reported, judged by the playtest)",
         "factory tool run sim on park writes metrics.json, chronicles and sessions.jsonl with pace tags"
       ],
-      "status": "unity_check",
+      "status": "done",
       "attempts": 2,
       "budget_tokens": 600000,
       "owner_role": "developer-core",

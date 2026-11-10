@@ -11,3 +11,4 @@
 - 2026-11-10 04:38 F-022 Swing sandbox: mannequins and --arena sandbox (387dc564b8)
 - 2026-11-10 04:43 F-024 Unity: demo build check and the scripted swing proven by a test (aac25a4f2d)
 - 2026-11-10 04:50 F-023 Unity: the collie swings the teen into a mannequin (85853f33f4)
+- 2026-11-10 05:46 F-006 Bots: honest sensors, aimed swing, smart and camper (36058fa08b)
