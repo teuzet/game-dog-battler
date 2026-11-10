@@ -61,13 +61,12 @@ namespace Game.Core.Bots
     public sealed class SmartStrategy : IBotStrategy
     {
         private readonly SwingSkill _skill;
-        private readonly Fixed _aimError, _engage;
+        private readonly Fixed _aimError;
 
-        public SmartStrategy(SwingSkill skill, Fixed aimError, GameData data)
+        public SmartStrategy(SwingSkill skill, Fixed aimError)
         {
             _skill = skill;
             _aimError = aimError;
-            _engage = data.Num("bots.smart.engage_m");
         }
 
         public PlayerInput Decide(BotView view, ref DetRandom rng)
@@ -81,7 +80,7 @@ namespace Game.Core.Bots
             }
             if (Leading(view) && Cursor.Find(view, "next_zone", out var next))
                 return Cursor.At(SwingSkill.Jitter(next.Pos, _aimError, ref rng));
-            if (Cursor.NearestRival(view, zone.Pos, zone.Value, out var rival) && rival.Pos.DistanceTo(me) <= _engage)
+            if (Cursor.NearestRival(view, zone.Pos, zone.Value, out var rival) && rival.Pos.DistanceTo(me) <= view.Hud["leash_m"])
                 return Cursor.At(_skill.Aim(view, rival, _aimError, ref rng));
             return Cursor.At(SwingSkill.Jitter(zone.Pos, _aimError, ref rng));
         }
@@ -98,8 +97,9 @@ namespace Game.Core.Bots
         public IBotStrategy Clone() => this;
     }
 
-    /// <summary>Stands in the middle of the circle and circles on the spot: the cursor goes round a small
-    /// ring every <c>spin_period_s</c>, so the dog swings the owner round without ever aiming.</summary>
+    /// <summary>Stands in the middle of the circle and keeps the owner moving without aiming: the cursor jumps
+    /// to the next of four points of a small ring (<c>ring_m</c>) every <c>spin_period_s</c>, so the dog
+    /// is dragged back and forth round the centre and the owner is swung along (a full round takes four periods).</summary>
     public sealed class CamperStrategy : IBotStrategy
     {
         private readonly Fixed _aimError, _ring;

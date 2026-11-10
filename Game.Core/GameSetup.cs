@@ -92,7 +92,7 @@ namespace Game.Core
             {
                 case "idle": return new IdleStrategy();
                 case "random": return new WanderStrategy();
-                case "smart": return new SmartStrategy(new SwingSkill(data), a.AimError, data);
+                case "smart": return new SmartStrategy(new SwingSkill(data), a.AimError);
                 case "camper": return new CamperStrategy(a.AimError, data);
                 default: throw new KeyNotFoundException($"no strategy '{a.Strategy}' (archetype {a.Name})");
             }

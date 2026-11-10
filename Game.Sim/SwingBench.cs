@@ -11,7 +11,7 @@ using Game.Core.Sim;
 /// <summary>The swing bench (design/overview.md → «Риск №1», hypothesis H1): every tracked archetype plays in the
 /// swing sandbox against standing mannequins (idle) and running ones (random), once per owner type. A swing is
 /// one stretch of the owner moving at blow speed (hits.threshold_mps) until he slows to half of it; it hits if
-/// the participant's hit count grew during it. Writes swing-bench.json and prints the smart/random ratio.</summary>
+/// the participant's hit count grew while it lasted (hits outside a swing, rams by a rival, are not counted). Writes swing-bench.json and prints the smart/random ratio.</summary>
 static class SwingBench
 {
     private static readonly (string Name, string Archetype)[] Dummies = { ("standing", "idle"), ("running", "random") };
@@ -92,26 +92,26 @@ static class SwingBench
         var bodies = sim.Get<BodiesModule>(BodiesModule.ModuleName);
         var blow = data.Num("hits.threshold_mps");
         var slow = blow / 2;
-        bool swinging = false;
-        int hitsAtStart = 0;
+        bool swinging = false, swingHit = false;
+        int lastHits = 0;
         while (!sim.IsOver)
         {
             sim.Step(Forks.Inputs(game, sim, bots, -1, PlayerInput.None));
             int hits = (int)game.Metrics(sim, 0)["hits"];
             var speed = bodies.Velocity(owners.BodyOf(0)).Length;
-            if (!swinging && speed >= blow) { swinging = true; hitsAtStart = cell.LastHits; } // hits before this tick
-            else if (swinging && speed < slow)
+            if (!swinging && speed >= blow) { swinging = true; swingHit = false; }
+            // only a hit landed while the owner is swinging counts: a rival dog running into a standing owner is a ram, not a swing
+            if (swinging && hits > lastHits) { cell.Hits += hits - lastHits; swingHit = true; }
+            lastHits = hits;
+            if (swinging && speed < slow)
             {
                 swinging = false;
                 cell.Swings++;
-                if (hits > hitsAtStart) cell.HitSwings++;
+                if (swingHit) cell.HitSwings++;
             }
-            cell.LastHits = hits;
         }
-        if (swinging) { cell.Swings++; if ((int)game.Metrics(sim, 0)["hits"] > hitsAtStart) cell.HitSwings++; }
-        cell.Hits += (int)game.Metrics(sim, 0)["hits"];
+        if (swinging) { cell.Swings++; if (swingHit) cell.HitSwings++; }
         cell.Minutes += sim.Seconds / 60.0;
-        cell.LastHits = 0;
     }
 
     private static string Fmt(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
@@ -119,7 +119,7 @@ static class SwingBench
     private sealed class Cell
     {
         public readonly string Dummy, Owner, Archetype;
-        public int Hits, Swings, HitSwings, LastHits;
+        public int Hits, Swings, HitSwings;
         public double Minutes;
         public Cell(string dummy, string owner, string archetype) { Dummy = dummy; Owner = owner; Archetype = archetype; }
         public double HitsPerMin => Minutes == 0 ? 0 : Hits / Minutes;
