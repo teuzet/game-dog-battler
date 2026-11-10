@@ -127,8 +127,8 @@
         "events `hit`, `strong_hit`, `near_miss` with pace tags per design/overview.md → «Теги событий»: «hit → Reward нападающему по силе, Threat жертве; strong_hit → Reward 2×; near_miss → Threat»; the first strong hit of a player is also Novel; near_miss = an owner at ≥ threshold speed passed a foreign dog within `hits.near_miss_gap_m` without touching her, told once per pass; Hits writes `Hit(attacker, victim, strength, strong)` into ThisTick for Rules (no owner-type name in the record)",
         "tests in Game.Core.Tests/Modules/HitsTests.cs with scripted velocities on the sandbox arena; same seed and inputs → same StateHash, Fork independent; no new link in MODULES.md"
       ],
-      "status": "review",
-      "attempts": 0,
+      "status": "running",
+      "attempts": 1,
       "budget_tokens": 400000,
       "owner_role": "developer-core",
       "touches": [
