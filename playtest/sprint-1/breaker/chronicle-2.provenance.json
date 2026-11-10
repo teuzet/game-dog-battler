@@ -1,0 +1,13 @@
+{
+  "tool": "sim",
+  "provider": "local",
+  "model": "sim",
+  "request": {
+    "seeds": "10",
+    "first_seed": 1,
+    "timeout_s": 0
+  },
+  "request_hash": "dfec19f2ec4606c9",
+  "created_at": "2026-11-10T06:48:30Z",
+  "usd": 0.0
+}

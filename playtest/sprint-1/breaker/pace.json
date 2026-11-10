@@ -1,0 +1,91 @@
+{
+  "pace": {
+    "sessions": 60,
+    "duration_s": 120.0,
+    "decisions_per_min": 35.25,
+    "weighty_share": 0.014928698752228164,
+    "crisis_interval_s": 40.0,
+    "longest_lull_s": 16.1335,
+    "rewards_per_min": 6.0,
+    "reward_cv": 0.5862848751060132,
+    "late_swing_share": 0.13333333333333333,
+    "close_share": 0.2833333333333333,
+    "novel_per_min": 0.5,
+    "repeat_share": 0.8333333333333334,
+    "archetypes": {
+      "idle": {
+        "sessions": 10,
+        "wins": 0,
+        "winrate": 0.0
+      },
+      "random": {
+        "sessions": 10,
+        "wins": 0,
+        "winrate": 0.0
+      },
+      "smart": {
+        "sessions": 10,
+        "wins": 3,
+        "winrate": 0.3
+      },
+      "camper": {
+        "sessions": 10,
+        "wins": 6,
+        "winrate": 0.6
+      },
+      "breaker-squatter": {
+        "sessions": 10,
+        "wins": 9,
+        "winrate": 0.9
+      },
+      "breaker-orbit": {
+        "sessions": 10,
+        "wins": 7,
+        "winrate": 0.7
+      }
+    },
+    "unfinished": 0
+  },
+  "gate": {
+    "passed": false,
+    "checks": [
+      {
+        "name": "сессия заканчивается",
+        "passed": true,
+        "detail": "60 из 60 дошли до исхода"
+      },
+      {
+        "name": "бездействие не выигрывает",
+        "passed": false,
+        "detail": "idle 0%, хуже всех остальных: 0%"
+      },
+      {
+        "name": "решения значат",
+        "passed": false,
+        "detail": "умный 30% против случайного 0% (нужно +20%), весомых решений 1% (нужно 50%)"
+      },
+      {
+        "name": "нет доминирующей стратегии",
+        "passed": false,
+        "detail": "лучший архетип breaker-squatter: 90% (потолок 70%)"
+      },
+      {
+        "name": "исход не решён заранее",
+        "passed": false,
+        "detail": "перелом после середины в 13% сессий (нужно 30%)"
+      },
+      {
+        "name": "темп в целях",
+        "passed": false,
+        "detail": "в коридоре 1 из 6: награды; мимо: решения, напряжение, неопределённость, развязка, новизна"
+      }
+    ],
+    "thresholds": {
+      "smart_minus_random": 0.2,
+      "max_archetype_winrate": 0.7,
+      "late_swing_share": 0.3,
+      "pace_in_corridor_min": 4,
+      "weighty_share": 0.5
+    }
+  }
+}

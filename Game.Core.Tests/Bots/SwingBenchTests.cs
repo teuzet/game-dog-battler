@@ -19,7 +19,7 @@ namespace Game.Core.Tests.Bots
                 SwingBench.Run(GameSetup.Game, Repo.Data(), 1, 1, dir);
                 var root = Json.Parse(File.ReadAllText(Path.Combine(dir, "swing-bench.json")));
                 var cells = root["cells"]!.Items;
-                Assert.Equal(16, cells.Count); // 2 dummies × 2 owners × 4 archetypes
+                Assert.Equal(2 * 2 * Repo.Data().Get("bots.session.tracked").Items.Count, cells.Count); // 2 dummies × 2 owners × tracked archetypes
                 foreach (var c in cells)
                 {
                     foreach (var key in new[] { "dummies", "owner", "archetype", "hits_per_min", "swings_per_min", "hit_share" })
