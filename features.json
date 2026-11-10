@@ -225,7 +225,7 @@
         "view only (no game logic): sim XY on ground XZ, camera ~60° with the whole arena in frame (art/style.md → «Камера»), interpolation between ticks; dog, owner, trees, benches as primitives; collar, leash and owner accent in the player colour (art/style.md → «Палитра»); leash drawn as a line whose thickness/colour shows tension; owner shadow and cosmetic height grow with owner speed; hit flash scaled by strength",
         "the sandbox arena is playable: screenshot of the collie swinging the teen into a dummy"
       ],
-      "status": "todo",
+      "status": "running",
       "attempts": 0,
       "budget_tokens": 600000,
       "owner_role": "developer-unity",
