@@ -392,5 +392,75 @@ namespace Game.Core.Tests.Modules
             var s = Swing("teen", "5.5");
             Assert.True(s.Events("hit").Single(e => e.Actor == 0).Reward >= F("0.2"));
         }
+
+        // ---- owner speed rule (roster → «Удар») ----
+
+        /// <summary>Player 0 on the sandbox in the middle: owner at the origin, the collie 3 m away, steered by push-mode
+        /// shifts the way a mouse would: <paramref name="steer"/> gives the wanted direction each tick.</summary>
+        private static (double Max, double Avg, Vec2 OwnerAt) Run(System.Func<int, Vec2, Vec2, Vec2> steer, int ticks, string owner = "teen")
+        {
+            var s = Sandbox(owner);
+            s.Put(s.Owner(0), "0", "0"); s.Put(s.Dog(0), "3", "0");
+            s.Put(s.Dog(1), "-10", "6"); s.Put(s.Owner(1), "-11", "7");
+            double max = 0, sum = 0;
+            for (int i = 0; i < ticks; i++)
+            {
+                var dir = steer(i, s.Bodies.Position(s.Dog(0)), s.Bodies.Position(s.Owner(0)));
+                var shift = dir * Fixed.FromInt(10); // m/s asked
+                s.Tick(1, new Dictionary<int, PlayerInput> { { 0, new PlayerInput((shift.X * 100 / Simulation.TicksPerSecond).FloorToInt(), (shift.Y * 100 / Simulation.TicksPerSecond).FloorToInt(), PlayerInput.PushBit) } });
+                var speed = s.Bodies.Velocity(s.Owner(0)).Length.ToDouble();
+                max = System.Math.Max(max, speed);
+                sum += speed;
+            }
+            return (max, sum / ticks, s.Bodies.Position(s.Owner(0)));
+        }
+
+        private static Vec2 Tangent(Vec2 dog, Vec2 owner) { var r = dog - owner; return new Vec2(-r.Y, r.X).Normalized(); }
+
+        [Fact]
+        public void ColliePullingTheTeenInCirclesInPlaceGivesThreeToFiveMetresPerSecond()
+        {
+            // the dog circles the owner, leaning slightly outward so that the leash is taut and pulls him round
+            var (max, avg, at) = Run((i, dog, owner) => (Tangent(dog, owner) + (dog - owner).Normalized() * F("0.2")).Normalized(), 300);
+            Assert.InRange(avg, 3.0, 5.0);
+            Assert.True(max < 5.5, $"circling does not make a strong hit: max {max}");
+            Assert.True(at.Length < Fixed.FromInt(2), $"the owner stayed in place: {at}");
+        }
+
+        [Fact]
+        public void ColliePullingTheTeenAcrossTheLeashReachesNineMetresPerSecond()
+        {
+            // the dog runs perpendicular to the taut leash: the owner is whipped round
+            var (max, _, _) = Run((i, dog, owner) => new Vec2(Fixed.Zero, -Fixed.One), 90);
+            Assert.True(max >= 9.0, $"max {max}");
+            Assert.True(max <= 14.0);
+        }
+
+        [Fact]
+        public void OwnerSpeedNeverExceedsOnePointSixDogSpeedPlusTensionBonusAndFourteen()
+        {
+            var data = Repo.Data();
+            var ceiling = data.Num("owners.speed_rule.dog_speed_factor").ToDouble() * data.Num("dogs.collie.speed").ToDouble()
+                          + data.Num("owners.speed_rule.tension_bonus_mps").ToDouble();
+            // a wide, hard swing that, left alone, whips the owner above the ceiling
+            var (max, _, _) = Run((i, dog, owner) => (Tangent(dog, owner) + (dog - owner).Normalized() * F("1.2")).Normalized(), 300);
+            Assert.True(max <= ceiling + 0.2, $"max {max}, ceiling {ceiling}");
+            Assert.True(ceiling <= data.Num("owners.speed_rule.max_mps").ToDouble());
+        }
+
+        [Fact]
+        public void ADogThatStandsStillStopsAnOwnerFlyingOnHisMomentum()
+        {
+            var s = Sandbox("teen");
+            s.Put(s.Owner(0), "0", "0"); s.Put(s.Dog(0), "0", "1.5");
+            s.Put(s.Dog(1), "-10", "6"); s.Put(s.Owner(1), "-11", "7");
+            s.Bodies.SetVelocity(s.Owner(0), new Vec2(Fixed.FromInt(10), Fixed.Zero));
+            var brake = Repo.Data().Num("owners.speed_rule.brake_mps2") / Simulation.TicksPerSecond;
+            s.Tick();
+            // braked, not cut: one tick takes off at most the brake (plus the ground's friction), not everything
+            Assert.True(s.Bodies.Velocity(s.Owner(0)).Length >= Fixed.FromInt(10) - brake - F("0.5"));
+            s.Tick(60);
+            Assert.True(s.Bodies.Velocity(s.Owner(0)).Length <= Repo.Data().Num("owners.speed_rule.tension_bonus_mps") + F("0.5"));
+        }
     }
 }

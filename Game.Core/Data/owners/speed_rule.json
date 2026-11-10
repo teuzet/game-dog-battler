@@ -1,0 +1,7 @@
+{
+  "тюнить": ["dog_speed_factor", "tension_bonus_mps", "max_mps", "brake_mps2"],
+  "dog_speed_factor": 1.6,
+  "tension_bonus_mps": 2,
+  "max_mps": 14,
+  "brake_mps2": 20
+}
