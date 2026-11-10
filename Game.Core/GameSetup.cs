@@ -4,7 +4,16 @@ using System.Text;
 using Game.Core.Bots;
 using Game.Core.Data;
 using Game.Core.Math;
-using Game.Core.Modules.Example;
+using Game.Core.Modules.Arena;
+using Game.Core.Modules.Bodies;
+using Game.Core.Modules.Control;
+using Game.Core.Modules.Dogs;
+using Game.Core.Modules.Hits;
+using Game.Core.Modules.Leashes;
+using Game.Core.Modules.Match;
+using Game.Core.Modules.Owners;
+using Game.Core.Modules.Props;
+using Game.Core.Modules.Rules;
 using Game.Core.Sim;
 
 namespace Game.Core
@@ -14,45 +23,56 @@ namespace Game.Core
     /// may touch; everything else lives in its module.</summary>
     public static class GameSetup
     {
-        public static readonly IGame Game = new ExampleRaceGame();
+        public static readonly IGame Game = new DogBattlerGame();
     }
 
-    /// <summary>The template's example game (see Modules/Example/README.md).</summary>
-    public sealed class ExampleRaceGame : IGame
+    public sealed class DogBattlerGame : IGame
     {
-        public string Name => "example-race";
+        public string Name => "dog-battler";
         public int Players => 4;
 
         public Simulation Create(int seed, GameData data)
         {
-            int players = data.Has("game.race.players") ? data.Int("game.race.players") : Players;
+            int players = data.Has("game.players") ? data.Int("game.players") : Players;
             var modules = new List<IModule>
             {
-                new Course(data.Num("game.race.length"), data.Num("game.race.fork_every")),
-                new Runners(players, data),
-                new Referee(data),
+                new ArenaModule(data),
+                new ControlModule(data, players),
+                new OwnersModule(data, players),
+                new DogsModule(data, players),
+                new PropsModule(),
+                new LeashesModule(data, players),
+                new BodiesModule(data),
+                new HitsModule(data),
+                new RulesModule(data),
+                new MatchModule(data, players),
             };
             return new Simulation(seed, players, data, modules);
         }
 
         public BotView Sense(Simulation sim, int player)
         {
-            var course = sim.Get<Course>(Course.ModuleName);
-            var all = sim.Get<Runners>(Runners.ModuleName).All;
-            var me = all[player];
-            var screen = new ScreenRect(sim.Data.Num("game.race.screen_half_width"), Fixed.FromInt(5));
-            var v = new BotView { Tick = sim.Tick, Self = player, X = me.Pos };
-            v.Hud["stamina"] = me.Stamina;
-            v.Hud["coins"] = Fixed.FromInt(me.Coins);
-            v.Hud["place"] = Fixed.FromInt(me.Place);
-            for (int q = 0; q < all.Length; q++)
-                if (q != player && screen.Sees(me.Pos, Fixed.Zero, all[q].Pos, Fixed.Zero))
-                    v.Objects.Add(new SeenObject { Kind = "runner", Id = q, X = all[q].Pos });
-            for (int f = me.NextFork; f < course.Forks.Count; f++)
-                if (screen.Sees(me.Pos, Fixed.Zero, course.Forks[f], Fixed.Zero))
-                    v.Objects.Add(new SeenObject { Kind = "fork", Id = f, X = course.Forks[f] });
-            if (screen.Sees(me.Pos, Fixed.Zero, course.Length, Fixed.Zero))
-                v.Objects.Add(new SeenObject { Kind = "finish", X = course.Length });
+            var arena = sim.Get<ArenaModule>(ArenaModule.ModuleName);
+            var dogs = sim.Get<DogsModule>(DogsModule.ModuleName);
+            var owners = sim.Get<OwnersModule>(OwnersModule.ModuleName);
+            var match = sim.Get<MatchModule>(MatchModule.ModuleName);
+            var rules = sim.Get<RulesModule>(RulesModule.ModuleName);
+            var me = dogs.Position(sim, player);
+            var v = new BotView { Tick = sim.Tick, Self = player, X = me.X, Y = me.Y };
+            v.Hud["score"] = Fixed.FromInt(match.Scores[player]);
+            v.Hud["time_left"] = match.TimeLeft;
+            v.Hud["arena_half_width"] = arena.Width / 2;
+            v.Hud["arena_half_height"] = arena.Height / 2;
+            // the camera shows the whole arena
+            for (int q = 0; q < sim.Players; q++)
+            {
+                var dog = dogs.Position(sim, q);
+                var owner = owners.Position(sim, q);
+                if (q != player) v.Objects.Add(new SeenObject { Kind = "dog", Id = q, X = dog.X, Y = dog.Y });
+                v.Objects.Add(new SeenObject { Kind = "owner", Id = q, X = owner.X, Y = owner.Y });
+            }
+            if (rules.Active.Zone is ZoneInfo z)
+                v.Objects.Add(new SeenObject { Kind = "zone", X = z.Center.X, Y = z.Center.Y, Value = z.Radius });
             return v;
         }
 
@@ -61,51 +81,39 @@ namespace Game.Core
             switch (a.Strategy)
             {
                 case "idle": return new IdleStrategy();
-                case "random": return new RandomStrategy(0);
-                case "runner": return new RunnerStrategy(a.Params["risk"]?.AsFixed() ?? Fixed.Half);
+                case "random": return new WanderStrategy();
+                case "smart": return new ZoneRunnerStrategy();
                 default: throw new KeyNotFoundException($"no strategy '{a.Strategy}' (archetype {a.Name})");
             }
         }
 
-        public IReadOnlyList<PlayerInput> DecisionOptions(Simulation sim, int player)
-        {
-            var course = sim.Get<Course>(Course.ModuleName);
-            var r = sim.Get<Runners>(Runners.ModuleName).All[player];
-            if (r.NextFork >= course.Forks.Count || r.StunTicks > 0) return new PlayerInput[0];
-            var gap = course.Forks[r.NextFork] - r.Pos;
-            // one moment per fork: just before it
-            if (gap <= Fixed.Zero || gap > sim.Data.Num("game.race.jog_speed") / 3) return new PlayerInput[0];
-            return new[] { new PlayerInput(1, 1), new PlayerInput(1, -1) };
-        }
+        /// <summary>No decision moments yet: they come with the rules and the swing (F-005, F-006).</summary>
+        public IReadOnlyList<PlayerInput> DecisionOptions(Simulation sim, int player) => new PlayerInput[0];
 
         public double Score(Simulation sim, int player)
         {
-            var all = sim.Get<Runners>(Runners.ModuleName).All;
-            double lead = 0;
-            foreach (var r in all) if (r.Pos.ToDouble() > lead) lead = r.Pos.ToDouble();
-            double me = all[player].Pos.ToDouble() + all[player].Stamina.ToDouble() * 0.05;
-            return lead <= 0 ? 0.5 : System.Math.Max(0, System.Math.Min(1, 0.5 + (me - lead) / 20 + 0.25));
+            var scores = sim.Get<MatchModule>(MatchModule.ModuleName).Scores;
+            int total = 0;
+            foreach (var s in scores) total += s;
+            return total == 0 ? 0.5 : scores[player] / (double)total;
         }
 
         public string Describe(Simulation sim)
         {
-            var all = sim.Get<Runners>(Runners.ModuleName).All;
+            var dogs = sim.Get<DogsModule>(DogsModule.ModuleName);
+            var scores = sim.Get<MatchModule>(MatchModule.ModuleName).Scores;
             var sb = new StringBuilder();
-            for (int p = 0; p < all.Length; p++)
+            for (int p = 0; p < sim.Players; p++)
             {
                 if (p > 0) sb.Append(" · ");
-                sb.Append(p).Append(": ").Append(all[p].Pos.FloorToInt().ToString(CultureInfo.InvariantCulture))
-                  .Append("м, силы ").Append(all[p].Stamina.FloorToInt().ToString(CultureInfo.InvariantCulture));
-                if (all[p].StunTicks > 0) sb.Append(", лежит");
-                if (all[p].Exhausted) sb.Append(", выдохся");
+                var pos = dogs.Position(sim, p);
+                sb.Append(p).Append(": (").Append(pos.X.ToString()).Append(", ").Append(pos.Y.ToString()).Append("), очки ")
+                  .Append(scores[p].ToString(CultureInfo.InvariantCulture));
             }
             return sb.ToString();
         }
 
-        public IReadOnlyDictionary<string, double> Metrics(Simulation sim, int player)
-        {
-            var r = sim.Get<Runners>(Runners.ModuleName).All[player];
-            return new Dictionary<string, double> { { "coins", r.Coins }, { "place", r.Place } };
-        }
+        public IReadOnlyDictionary<string, double> Metrics(Simulation sim, int player) =>
+            new Dictionary<string, double> { { "score", sim.Get<MatchModule>(MatchModule.ModuleName).Scores[player] } };
     }
 }

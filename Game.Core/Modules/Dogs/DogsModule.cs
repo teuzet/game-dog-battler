@@ -1,0 +1,88 @@
+using System.Collections.Generic;
+using Game.Core.Data;
+using Game.Core.Math;
+using Game.Core.Modules.Arena;
+using Game.Core.Modules.Bodies;
+using Game.Core.Modules.Control;
+using Game.Core.Modules.Dogs.Breeds;
+using Game.Core.Modules.Hits;
+using Game.Core.Modules.Leashes;
+using Game.Core.Modules.Props;
+using Game.Core.Sim;
+
+namespace Game.Core.Modules.Dogs
+{
+    /// <summary>The dogs: one per player, a breed each (pairs in "game.pairs"). Stub of
+    /// F-001: the dog accelerates to the intent's velocity within the breed's speed;
+    /// stun, abilities and prop pulls come with F-003 and later.</summary>
+    public sealed class DogsModule : IModule
+    {
+        public const string ModuleName = "Dogs";
+        public string Name => ModuleName;
+        public IReadOnlyList<string> DependsOn { get; } = new[]
+        {
+            ArenaModule.ModuleName, ControlModule.ModuleName, BodiesModule.ModuleName, HitsModule.ModuleName, LeashesModule.ModuleName, PropsModule.ModuleName,
+        };
+
+        private readonly Breed[] _breeds;
+        private readonly int[] _body;
+
+        public DogsModule(GameData data, int players)
+        {
+            _breeds = new Breed[players];
+            _body = new int[players];
+            var pairs = data.Get("game.pairs").Items;
+            for (int p = 0; p < players; p++) _breeds[p] = BreedRegistry.Create(pairs[p % pairs.Count]["dog"]!.AsString(), data);
+        }
+
+        private DogsModule(DogsModule src)
+        {
+            _breeds = src._breeds; // immutable
+            _body = (int[])src._body.Clone();
+        }
+
+        public int Players => _breeds.Length;
+        public Breed BreedOf(int player) => _breeds[player];
+        public int BodyOf(int player) => _body[player];
+
+        public Vec2 Position(Simulation sim, int player) =>
+            sim.Need<BodiesModule>(this, BodiesModule.ModuleName).Position(_body[player]);
+
+        /// <summary>Is the player's dog inside the circle? Rules ask this instead of knowing breeds.</summary>
+        public bool InZone(Simulation sim, int player, Vec2 center, Fixed radius) =>
+            Position(sim, player).DistanceTo(center) <= radius;
+
+        public void Init(Simulation sim)
+        {
+            var arena = sim.Need<ArenaModule>(this, ArenaModule.ModuleName);
+            var bodies = sim.Need<BodiesModule>(this, BodiesModule.ModuleName);
+            var control = sim.Need<ControlModule>(this, ControlModule.ModuleName);
+            var leashes = sim.Need<LeashesModule>(this, LeashesModule.ModuleName);
+            for (int p = 0; p < _breeds.Length; p++)
+            {
+                var b = _breeds[p];
+                _body[p] = bodies.AddCircle(arena.Spawns[p % arena.Spawns.Count].Dog, b.Mass, b.Radius, b.Friction);
+                control.Bind(p, _body[p]);
+                leashes.AttachDog(p, _body[p], b.LeashLength);
+            }
+        }
+
+        public void Step(Simulation sim, TickInputs inputs)
+        {
+            var control = sim.Need<ControlModule>(this, ControlModule.ModuleName);
+            var bodies = sim.Need<BodiesModule>(this, BodiesModule.ModuleName);
+            for (int p = 0; p < _breeds.Length; p++)
+            {
+                var b = _breeds[p];
+                bodies.Drive(_body[p], control.Of(p).Velocity.ClampLength(b.Speed), b.Speed / b.AccelTime);
+            }
+        }
+
+        public void Hash(ref StateHasher h)
+        {
+            foreach (var b in _body) h.Add(b);
+        }
+
+        public IModule Clone() => new DogsModule(this);
+    }
+}

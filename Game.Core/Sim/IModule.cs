@@ -16,6 +16,10 @@ namespace Game.Core.Sim
         /// <summary>Modules this one reads, by name.</summary>
         IReadOnlyList<string> DependsOn { get; }
 
+        /// <summary>Called once, in module order, when the session is created (not on a fork):
+        /// the place to register bodies and links with the modules named in DependsOn.</summary>
+        void Init(Simulation sim);
+
         void Step(Simulation sim, TickInputs inputs);
 
         /// <summary>Adds every number of the module's state.</summary>

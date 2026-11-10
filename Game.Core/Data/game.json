@@ -1,24 +1,9 @@
 {
   "session": { "max_seconds": 180 },
-  "race": {
-    "players": 4,
-    "length": 150,
-    "fork_every": 12,
-    "rest_speed": 2,
-    "jog_speed": 5,
-    "sprint_speed": 9,
-    "rest_gain": 20,
-    "jog_gain": 3,
-    "sprint_cost": 25,
-    "stamina_max": 100,
-    "exhausted_until": 30,
-    "coin_boost_speed": 3,
-    "coin_boost_s": 2,
-    "hazard_chance": 0.45,
-    "stun_s": 1.5,
-    "screen_half_width": 18,
-    "threat_gap": 12,
-    "final_stretch": 0.8,
-    "margin_scale": 30
-  }
+  "players": 4,
+  "arena": "park",
+  "pairs": [
+    { "dog": "collie", "owner": "teen" },
+    { "dog": "collie", "owner": "jock" }
+  ]
 }

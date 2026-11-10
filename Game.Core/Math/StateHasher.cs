@@ -24,6 +24,7 @@ namespace Game.Core.Math
         public void Add(int v) => Add((long)v);
         public void Add(bool v) => Add(v ? 1L : 0L);
         public void Add(Fixed v) => Add(v.Raw);
+        public void Add(Vec2 v) { Add(v.X); Add(v.Y); }
 
         public void Add(string s)
         {
