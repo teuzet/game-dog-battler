@@ -48,6 +48,7 @@ namespace Game.Core.Modules.Hits
 
         private readonly int _players;
         private readonly List<Hit> _tick = new List<Hit>();
+        private readonly List<(int Owner, int Dog)> _nearTick = new List<(int Owner, int Dog)>();
         private readonly int[] _dogBody;
         private readonly int[] _stunLeft; // ticks
         private readonly bool[] _thrown; // the dog still slides from a blow: not driven until it has stopped
@@ -107,6 +108,7 @@ namespace Game.Core.Modules.Hits
             _nearThreatMax = src._nearThreatMax;
             _slideEnd = src._slideEnd;
             _tick.AddRange(src._tick);
+            _nearTick.AddRange(src._nearTick);
             _dogBody = (int[])src._dogBody.Clone();
             _stunLeft = (int[])src._stunLeft.Clone();
             _thrown = (bool[])src._thrown.Clone();
@@ -120,6 +122,11 @@ namespace Game.Core.Modules.Hits
 
         /// <summary>Blows of the last tick.</summary>
         public IReadOnlyList<Hit> ThisTick => _tick;
+
+        /// <summary>Passes told in the last tick: the owner of player <c>Owner</c> flew past the dog of player <c>Dog</c>
+        /// (the same facts as the <c>near_miss</c> events, for rule sets that count them). Not hashed: it is
+        /// rebuilt every tick and read by Rules in the same tick.</summary>
+        public IReadOnlyList<(int Owner, int Dog)> NearMissesThisTick => _nearTick;
 
         /// <summary>A blow detected in this tick; the one place a blow enters the list.</summary>
         public void Record(Hit hit) => _tick.Add(hit);
@@ -139,6 +146,7 @@ namespace Game.Core.Modules.Hits
         public void Step(Simulation sim, TickInputs inputs)
         {
             _tick.Clear();
+            _nearTick.Clear();
             for (int p = 0; p < _players; p++)
                 if (_stunLeft[p] > 0) _stunLeft[p]--;
             var bodies = sim.Need<BodiesModule>(this, BodiesModule.ModuleName);
@@ -246,6 +254,7 @@ namespace Game.Core.Modules.Hits
                     {
                         var e = sim.Events.Add("near_miss", q, $"хозяин участника {p} пролетел мимо собаки участника {q}: {_nearPeak[i]} м/с");
                         e.Threat = _nearThreatMax * Fixed.Clamp01(_nearPeak[i] / StrongThreshold);
+                        _nearTick.Add((p, q));
                     }
                     _near[i] = false;
                     _nearTouched[i] = false;

@@ -5,6 +5,7 @@
 //   chronicle-*.md   a few sessions second by second, events and state only
 //   sessions.jsonl   one line per session with pace tags (see tools/sim/SKILL.md)
 // Options: --seeds N --first-seed S --out DIR [--variant set/name] [--replay inputs.txt]
+//          [--arena sandbox]: the swing sandbox, every archetype once per owner type, keys "archetype/owner"
 using System.Globalization;
 using System.Text;
 using Game.Core;
@@ -32,23 +33,34 @@ if (opts.Replay.Length > 0)
     return 0;
 }
 
-var setup = data.Get("bots.session");
-var tracked = setup["tracked"]!.Items.Select(i => i.AsString()).ToList();
-var opponents = setup["opponents"]!.Items.Select(i => i.AsString()).ToList();
+var tracked = data.Get("bots.session.tracked").Items.Select(i => i.AsString()).ToList();
+// the park run plays each archetype once; "--arena X" plays it once per owner type the arena's rules list
+// (rules/sandbox.json → owner_types) on that arena, keyed "archetype/owner"
+var ownerTypes = new List<string>();
+if (opts.Arena.Length > 0)
+{
+    data = new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"" + opts.Arena + "\"}}")), data.Variant);
+    foreach (var o in data.Get("rules." + opts.Arena + ".owner_types").Items) ownerTypes.Add(o.AsString());
+}
+var opponents = Archetype.Opponents(data);
 var sessions = new StringBuilder();
 var metrics = JsonValue.Object();
 var perArchetype = JsonValue.Object();
 int chronicles = 0;
 
 foreach (var name in tracked)
+foreach (var owner in ownerTypes.Count == 0 ? new List<string> { "" } : ownerTypes)
 {
+    var runData = owner.Length == 0 ? data
+        : new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"human_owner\":\"" + owner + "\"}}")), data.Variant);
+    var key = owner.Length == 0 ? name : name + "/" + owner;
     int wins = 0, n = 0;
     double seconds = 0;
     var sums = new SortedDictionary<string, double>(StringComparer.Ordinal);
     for (int seed = opts.FirstSeed; seed < opts.FirstSeed + opts.Seeds; seed++)
     {
-        bool chronicle = name == "smart" && chronicles < 3;
-        var s = Runner.Play(game, data, seed, name, opponents, chronicle);
+        bool chronicle = name == "smart" && (owner.Length > 0 ? seed < opts.FirstSeed + 1 : chronicles < 3);
+        var s = Runner.Play(game, runData, seed, name, opponents, chronicle);
         sessions.Append(s.Line).Append('\n');
         n++;
         wins += s.Outcome == Outcome.Win ? 1 : 0;
@@ -56,8 +68,8 @@ foreach (var name in tracked)
         foreach (var kv in s.Metrics) sums[kv.Key] = (sums.TryGetValue(kv.Key, out var v) ? v : 0) + kv.Value;
         if (chronicle)
         {
-            chronicles++;
-            File.WriteAllText(Path.Combine(opts.Out, $"chronicle-{seed}.md"), s.Chronicle, new UTF8Encoding(false));
+            if (owner.Length == 0) chronicles++;
+            File.WriteAllText(Path.Combine(opts.Out, owner.Length == 0 ? $"chronicle-{seed}.md" : $"chronicle-{owner}-{seed}.md"), s.Chronicle, new UTF8Encoding(false));
         }
     }
     var a = JsonValue.Object();
@@ -65,21 +77,22 @@ foreach (var name in tracked)
     a.Set("winrate", Json.Num(n == 0 ? 0 : wins / (double)n));
     a.Set("duration_s", Json.Num(n == 0 ? 0 : seconds / n));
     foreach (var kv in sums) a.Set(kv.Key, Json.Num(kv.Value / Math.Max(1, n)));
-    perArchetype.Set(name, a);
+    perArchetype.Set(key, a);
 }
 metrics.Set("game", JsonValue.Str(game.Name));
 metrics.Set("variant", JsonValue.Str(data.Variant));
 metrics.Set("seeds", Json.Num(opts.Seeds));
+if (opts.Arena.Length > 0) metrics.Set("arena", JsonValue.Str(opts.Arena));
 var opp = JsonValue.Array();
 foreach (var o in opponents) opp.Add(JsonValue.Str(o));
 metrics.Set("opponents", opp);
 metrics.Set("archetypes", perArchetype);
 File.WriteAllText(Path.Combine(opts.Out, "metrics.json"), metrics.ToString() + "\n", new UTF8Encoding(false));
 File.WriteAllText(Path.Combine(opts.Out, "sessions.jsonl"), sessions.ToString(), new UTF8Encoding(false));
-Console.WriteLine($"{tracked.Count} archetypes × {opts.Seeds} seeds → {opts.Out}");
+Console.WriteLine($"{perArchetype.Fields.Count} runs × {opts.Seeds} seeds → {opts.Out}");
 return 0;
 
-sealed record Args(int Seeds, int FirstSeed, string Out, string Variant, string Replay)
+sealed record Args(int Seeds, int FirstSeed, string Out, string Variant, string Replay, string Arena)
 {
     public static Args Parse(string[] a)
     {
@@ -90,7 +103,7 @@ sealed record Args(int Seeds, int FirstSeed, string Out, string Variant, string 
         }
         return new Args(int.Parse(Get("--seeds", "40"), CultureInfo.InvariantCulture),
                         int.Parse(Get("--first-seed", "1"), CultureInfo.InvariantCulture),
-                        Get("--out", "playtest/run"), Get("--variant", ""), Get("--replay", ""));
+                        Get("--out", "playtest/run"), Get("--variant", ""), Get("--replay", ""), Get("--arena", ""));
     }
 }
 

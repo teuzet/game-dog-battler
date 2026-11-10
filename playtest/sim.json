@@ -1,5 +1,8 @@
 {
   "command": ["dotnet", "run", "--project", "Game.Sim", "-c", "Release", "--", "--seeds", "{seeds}", "--first-seed", "{first_seed}", "--out", "{out}"],
   "seeds": 40,
-  "timeout_s": 900
+  "timeout_s": 900,
+  "options": {
+    "--arena sandbox": "append to the command: the swing sandbox instead of the park. Every tracked archetype plays as player 0 once per owner type of Game.Core/Data/rules/sandbox.json → owner_types (teen, jock) against mannequins; metrics.json is keyed \"archetype/owner\" (hits, strong_hits, near_misses, hits_per_min). Without it the run is the park run."
+  }
 }

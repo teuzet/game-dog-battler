@@ -99,11 +99,11 @@ namespace Factory.Shell
             _seed = Environment.TickCount & 0x7fffffff;
             Sim = Game.Create(_seed, data);
             _bots = new List<BotDriver>();
-            var opponents = data.Get("bots.session.opponents").Items;
+            var opponents = Archetype.Opponents(data);
             for (int p = 0; p < Sim.Players; p++)
             {
                 if (p == HumanPlayer) continue;
-                var a = Archetype.Find(data, opponents[(p - 1) % opponents.Count].AsString());
+                var a = Archetype.Find(data, opponents[(p - 1) % opponents.Count]);
                 _bots.Add(new BotDriver(p, a, Game.Strategy(a, data), (ulong)_seed));
             }
             _log = new InputLog(_seed, Sim.Players, data.Variant);

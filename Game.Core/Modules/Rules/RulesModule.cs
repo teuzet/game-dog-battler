@@ -82,7 +82,7 @@ namespace Game.Core.Modules.Rules
             switch (name)
             {
                 case "KingOfLawn": return new KingOfLawnRules(data, players);
-                case "Sandbox": return new SandboxRules();
+                case "Sandbox": return new SandboxRules(data, players);
                 default: throw new KeyNotFoundException($"no rule set '{name}' in the registry (Modules/Rules)");
             }
         }

@@ -42,6 +42,23 @@ namespace Game.Core.Bots
             return list;
         }
 
+        /// <summary>Who drives players 1..: the active rule set names them in its own file when it needs to
+        /// (Data/rules/sandbox.json → "opponents": mannequins), otherwise Data/bots/session.json → "opponents".</summary>
+        public static IReadOnlyList<string> Opponents(GameData data)
+        {
+            var rules = data.Get("arenas." + data.Str("game.arena"))["rules"]!.AsString();
+            var key = new System.Text.StringBuilder();
+            foreach (var c in rules)
+            {
+                if (char.IsUpper(c) && key.Length > 0) key.Append('_');
+                key.Append(char.ToLowerInvariant(c));
+            }
+            var path = "rules." + key + ".opponents";
+            var names = new List<string>();
+            foreach (var n in data.Get(data.Has(path) ? path : "bots.session.opponents").Items) names.Add(n.AsString());
+            return names;
+        }
+
         public static Archetype Find(GameData data, string name)
         {
             foreach (var a in LoadAll(data)) if (a.Name == name) return a;
