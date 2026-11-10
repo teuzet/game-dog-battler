@@ -289,19 +289,53 @@
         "F-003"
       ],
       "acceptance": [
-        "shell set up per UnityShell/README.md steps 1–4: Unity/ project, Game.Core as local package, FactoryBuild.Demo builds",
-        "mouse input into PlayerInput: push mode = locked cursor, mouse delta accumulated per tick into AimX/AimY; cursor mode = visible cursor raycast to the ground, point in centimetres; Tab switches mode, the mode is shown on screen; LMB/Q and RMB/E map to the ability buttons (design/overview.md → «Кнопки»)",
-        "view only (no game logic): sim XY on ground XZ, camera ~60° with the whole arena in frame (art/style.md → «Камера»), interpolation between ticks; dog, owner, trees, benches as primitives; collar, leash and owner accent in the player colour (art/style.md → «Палитра»); leash drawn as a line whose thickness/colour shows tension; owner shadow and cosmetic height grow with owner speed; hit flash scaled by strength",
-        "the sandbox arena is playable: screenshot of the collie swinging the teen into a dummy"
+        "resliced by the techlead (2026-11-10): the three attempts did the work but never committed it. Start from commit 649fcf3 on branch feat/F-007 (the saved draft: Unity/ project, shell copy, MouseInput, ArenaView, ViewMath, 15 EditMode tests, art/previews/f007-sandbox-swing.png) and bring it to a reviewed state instead of rebuilding it; the mannequin screenshot went to F-023. The feature ends with commits on feat/F-007 — commit before writing the result; `git status` is clean after any `factory tool run unity` (the .meta files Unity writes into Game.Core/ are ignored by .gitignore since 649fcf3); nothing outside Unity/, UnityShell/, art/previews/ changes",
+        "shell set up per UnityShell/README.md steps 1–4: Unity/ project, Game.Core as local package (`Unity/Packages/manifest.json` → `\"com.factory.game-core\": \"file:../../Game.Core\"`), `factory tool run unity --set mode=open` compiles without errors, `mode=execute --set method=FactoryBuild.Demo` builds, `mode=test` runs the EditMode tests green; the shell changes the view needs (the `Stepped` event and `Alpha` for interpolation, `MenuOpen` and the cursor lock, the `-arena <name>` argument, the mouse `InputReader`) are made in UnityShell/Assets/ and mirrored into Unity/Assets/Factory/ so the two trees are identical (ARCHITECTURE.md → «Как Unity подключена к ядру»); UnityShell/README.md names the mouse keys instead of WASD",
+        "mouse input into PlayerInput per design/overview.md → «Управление»: «толчок (сдвиг мыши напрямую задаёт скорость собаки с потолком) и курсор (собака бежит к точке на арене)» and «Кнопки»: «ЛКМ или Q — абилка собаки, ПКМ или E — абилка хозяина»: push mode = locked hidden cursor, the mouse delta accumulated between ticks into AimX/AimY in arena centimetres with the fraction carried to the next tick, push bit set; cursor mode = visible cursor, a ray from the camera to the ground, the point in centimetres from the arena centre, push bit clear; Tab switches the mode and the mode is shown on screen; mouse sensitivity is a player setting (`InputReader.CmPerMouseUnit`), not a variant; EditMode tests drive `MouseInput` without Unity input calls (both modes, the fraction, the buttons)",
+        "view only (no game logic): sim XY on ground XZ, interpolation between ticks by `Alpha`; camera per art/style.md → «Камера»: «Сверху под наклоном около 60°, вся арена в кадре, без вращения», test: the four arena corners are inside the viewport; dog, owner, trees, benches as primitives built from code; per art/style.md → «Палитра»: «ошейник, поводок и акцент одежды хозяина в цвете игрока (красный, синий, жёлтый, фиолетовый и далее)»; the leash is a line whose thickness and colour grow with `LeashesModule.Tension`; owner shadow and cosmetic height grow with owner speed (art/style.md → «Материалы и свет»: «мягкие короткие тени под объектами, чтобы высота полёта хозяина читалась по тени»); hit flash on the victim scaled by `Hit.Strength` against `HitsModule.StrongThreshold`, read from `HitsModule.ThisTick` — empty until F-004 lands, so the flash is tested by recording a Hit in an EditMode test, not by play; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`",
+        "the sandbox arena is playable with the collie in both mouse modes: the demo build started with `-arena sandbox` runs, the teen swings around the running dog on a taut leash and visibly lifts; screenshot art/previews/f007-sandbox-swing.png of the owner in flight at the end of a taut leash, taken by the build with `-capture <png>` and the scripted swing (the draft has one; retake it if the view changes). The blow on a mannequin is F-023"
       ],
       "status": "escalated",
       "attempts": 3,
       "budget_tokens": 600000,
       "owner_role": "developer-unity",
       "touches": [
-        "Unity/"
+        "Unity/",
+        "UnityShell/Assets/Factory/Runtime/",
+        "UnityShell/README.md",
+        "art/previews/",
+        ".gitignore"
       ],
       "priority": 30,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-023",
+      "title": "Unity: the collie swings the teen into a mannequin",
+      "layer": "unity",
+      "milestone": "M1",
+      "depends_on": [
+        "F-004",
+        "F-007",
+        "F-022"
+      ],
+      "acceptance": [
+        "split from F-007 by the techlead (2026-11-10): its last criterion needed the real blow (F-004) and the mannequins (F-022), which were not in main. The demo build started with `-arena sandbox` plays design/overview.md → «Риск «скучно» №1»: «песочница замаха без правил: одна собака, два хозяина, три манекена»: the mannequins of F-022 stand idle, the pair whose dog was hit returns to its spawn after `rules.sandbox.respawn_s`, and the player sees it happen",
+        "the view of F-007 shows the real hits of F-004 without changes to the core: the flash on the victim follows design/roster.md → «Удар» («Сила = масса хозяина × скорость², отброс и оглушение растут с силой»): a strong hit (RelSpeed ≥ `hits.strong_threshold_mps`) flashes fully, a weak one dimly; the thrown dog visibly slides and is not driven while stunned; nothing in Unity/ writes to the simulation",
+        "the scripted capture (`-capture <png>`, `ViewCapture`) drives a swing that connects: the owner's arc passes through a mannequin's dog on the sandbox spawns; the script may replay an inputs.txt recorded in play or by Game.Sim instead of the cosine swing of the draft",
+        "screenshots in art/previews/: f023-sandbox-mannequin-hit.png at the tick of the blow (the teen in flight at the end of a taut leash, the mannequin's dog flashing) and f023-sandbox-mannequin-slide.png about 0.5 s later (the dog sliding away, the owner landing); both from the build, not the editor",
+        "`factory tool run unity --set mode=test` and `mode=execute --set method=FactoryBuild.Demo` stay green; no new link in MODULES.md; commits on feat/F-023 before the result is written"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 300000,
+      "owner_role": "developer-unity",
+      "touches": [
+        "Unity/Assets/Game/",
+        "art/previews/"
+      ],
+      "priority": 36,
       "iteration": 1,
       "modules": []
     },
@@ -346,7 +380,8 @@
         "F-007",
         "F-008",
         "F-021",
-        "F-022"
+        "F-022",
+        "F-023"
       ],
       "acceptance": [
         "a breaker archetype tries to win without playing (e.g. spinning in the zone centre, hugging a tree, standing on a bench edge); finding goes into its report with numbers from sim"
@@ -380,7 +415,8 @@
         "F-008",
         "F-009",
         "F-021",
-        "F-022"
+        "F-022",
+        "F-023"
       ],
       "acceptance": [
         "playtest/pace-targets.json is set from design/overview.md → «Карта темпа» and the gate from «Архетипы ботов» (smart beats random in ≥ 80% of matches, camper and brawler win against smart ≤ 35%)",

@@ -7,3 +7,5 @@ Unity/Temp/
 Unity/Logs/
 Unity/Builds/
 Unity/UserSettings/
+# Unity imports Game.Core as a local package and writes .meta files into it; the core is pure C#, nothing references its GUIDs
+Game.Core/**/*.meta
