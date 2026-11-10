@@ -1,0 +1,10 @@
+{
+  "name": "Factory.Runtime",
+  "rootNamespace": "Factory.Shell",
+  "references": [ "Game.Core" ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "autoReferenced": true
+}
