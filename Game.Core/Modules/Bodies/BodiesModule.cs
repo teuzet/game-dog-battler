@@ -119,6 +119,14 @@ namespace Game.Core.Modules.Bodies
             _bodies[body] = b;
         }
 
+        /// <summary>Replaces the velocity of a body (a driver turning it at once).</summary>
+        public void SetVelocity(int body, Vec2 velocity)
+        {
+            var b = Check(body);
+            b.Vel = velocity;
+            _bodies[body] = b;
+        }
+
         public Vec2 Position(int body) => Check(body).Pos;
         public Vec2 Velocity(int body) => Check(body).Vel;
         public Fixed Mass(int body) => Check(body).Mass;

@@ -10,9 +10,8 @@ using Game.Core.Sim;
 
 namespace Game.Core.Modules.Owners
 {
-    /// <summary>The owners: one per player, a type each (pairs in "game.pairs"). Stub of
-    /// F-001: an owner is a plain body the leash will pull; behaviours and abilities
-    /// of the types come with F-003.</summary>
+    /// <summary>The owners: one per player, the type he picked. Sprint 1: an owner is a plain
+    /// body with no abilities and no health; it moves only by the leash.</summary>
     public sealed class OwnersModule : IModule
     {
         public const string ModuleName = "Owners";
@@ -25,12 +24,12 @@ namespace Game.Core.Modules.Owners
         private readonly OwnerType[] _types;
         private readonly int[] _body;
 
-        public OwnersModule(GameData data, int players)
+        /// <summary>One owner type name per player: what each player picked in the session setup.</summary>
+        public OwnersModule(GameData data, IReadOnlyList<string> picks)
         {
-            _types = new OwnerType[players];
-            _body = new int[players];
-            var pairs = data.Get("game.pairs").Items;
-            for (int p = 0; p < players; p++) _types[p] = OwnerTypeRegistry.Create(pairs[p % pairs.Count]["owner"]!.AsString(), data);
+            _types = new OwnerType[picks.Count];
+            _body = new int[picks.Count];
+            for (int p = 0; p < picks.Count; p++) _types[p] = OwnerTypeRegistry.Create(picks[p], data);
         }
 
         private OwnersModule(OwnersModule src)

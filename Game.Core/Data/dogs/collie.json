@@ -6,5 +6,5 @@
   "radius": 0.35,
   "friction": 6,
   "leash_m": 3,
-  "ability": { "name": "dash", "cooldown_s": 5 }
+  "instant_turn": true
 }

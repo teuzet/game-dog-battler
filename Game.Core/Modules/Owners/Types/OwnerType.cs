@@ -12,8 +12,6 @@ namespace Game.Core.Modules.Owners.Types
         public Fixed Mass { get; }
         public Fixed Radius { get; }
         public Fixed Friction { get; }
-        public string AbilityName { get; }
-        public Fixed AbilityCooldown { get; }
 
         protected OwnerType(string name, GameData data)
         {
@@ -22,8 +20,6 @@ namespace Game.Core.Modules.Owners.Types
             Mass = j["mass"]!.AsFixed();
             Radius = j["radius"]!.AsFixed();
             Friction = j["friction"]!.AsFixed();
-            AbilityName = j["ability"]!["name"]!.AsString();
-            AbilityCooldown = j["ability"]!["cooldown_s"]!.AsFixed();
         }
     }
 

@@ -15,8 +15,8 @@ namespace Game.Core.Modules.Dogs.Breeds
         public Fixed Radius { get; }
         public Fixed Friction { get; }
         public Fixed LeashLength { get; }
-        public string AbilityName { get; }
-        public Fixed AbilityCooldown { get; }
+        /// <summary>Passive of the collie: a change of direction turns the velocity at once, no skid.</summary>
+        public bool InstantTurn { get; }
 
         protected Breed(string name, GameData data)
         {
@@ -28,8 +28,7 @@ namespace Game.Core.Modules.Dogs.Breeds
             Radius = j["radius"]!.AsFixed();
             Friction = j["friction"]!.AsFixed();
             LeashLength = j["leash_m"]!.AsFixed();
-            AbilityName = j["ability"]!["name"]!.AsString();
-            AbilityCooldown = j["ability"]!["cooldown_s"]!.AsFixed();
+            InstantTurn = j["instant_turn"]!.AsBool();
         }
     }
 

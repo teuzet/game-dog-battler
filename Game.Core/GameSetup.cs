@@ -31,14 +31,26 @@ namespace Game.Core
         public string Name => "dog-battler";
         public int Players => 4;
 
+        /// <summary>Default session setup: the human (player 0) has the owner of the first pair in
+        /// "game.pairs", bots take theirs from "bots.session.owner_picks".</summary>
         public Simulation Create(int seed, GameData data)
+        {
+            int n = data.Has("game.players") ? data.Int("game.players") : Players;
+            var picks = new List<string> { data.Get("game.pairs").Items[0]["owner"]!.AsString() };
+            var botPicks = data.Get("bots.session.owner_picks").Items;
+            for (int p = 1; p < n; p++) picks.Add(botPicks[(p - 1) % botPicks.Count].AsString());
+            return Create(seed, data, picks);
+        }
+
+        /// <summary>The session setup: <paramref name="ownerPicks"/> is the owner type (teen, jock) each player picked.</summary>
+        public Simulation Create(int seed, GameData data, IReadOnlyList<string> ownerPicks)
         {
             int players = data.Has("game.players") ? data.Int("game.players") : Players;
             var modules = new List<IModule>
             {
                 new ArenaModule(data),
                 new ControlModule(data, players),
-                new OwnersModule(data, players),
+                new OwnersModule(data, ownerPicks),
                 new DogsModule(data, players),
                 new PropsModule(),
                 new LeashesModule(data, players),
