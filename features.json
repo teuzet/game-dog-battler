@@ -289,11 +289,10 @@
         "F-003"
       ],
       "acceptance": [
-        "resliced by the techlead (2026-11-10): the three attempts did the work but never committed it. Start from commit 649fcf3 on branch feat/F-007 (the saved draft: Unity/ project, shell copy, MouseInput, ArenaView, ViewMath, 15 EditMode tests, art/previews/f007-sandbox-swing.png) and bring it to a reviewed state instead of rebuilding it; the mannequin screenshot went to F-023. The feature ends with commits on feat/F-007 — commit before writing the result; `git status` is clean after any `factory tool run unity` (the .meta files Unity writes into Game.Core/ are ignored by .gitignore since 649fcf3); nothing outside Unity/, UnityShell/, art/previews/ changes",
-        "shell set up per UnityShell/README.md steps 1–4: Unity/ project, Game.Core as local package (`Unity/Packages/manifest.json` → `\"com.factory.game-core\": \"file:../../Game.Core\"`), `factory tool run unity --set mode=open` compiles without errors, `mode=execute --set method=FactoryBuild.Demo` builds, `mode=test` runs the EditMode tests green; the shell changes the view needs (the `Stepped` event and `Alpha` for interpolation, `MenuOpen` and the cursor lock, the `-arena <name>` argument, the mouse `InputReader`) are made in UnityShell/Assets/ and mirrored into Unity/Assets/Factory/ so the two trees are identical (ARCHITECTURE.md → «Как Unity подключена к ядру»); UnityShell/README.md names the mouse keys instead of WASD",
+        "resliced twice by the techlead (2026-11-10). The work is done and committed on branch feat/F-007: commit b71d9ca merges the draft of the first three attempts (Unity/ project, shell copy, MouseInput, ArenaView, ViewMath, 15 EditMode tests), commit d2f4ae8 mirrors the shell changes into UnityShell/ (the two shell trees differ only by .meta files) and renames the keys in the README. The fourth run stopped there: verifying everything (compile, tests, build, a build-driven screenshot) in one attempt did not fit, and the next two attempts died within a minute. So this feature is compile + tests only: start from d2f4ae8, run `factory tool run unity --set mode=open` once and `mode=test` once, fix what is red, commit on feat/F-007 before writing the result. The demo build, the sandbox run and the screenshot are F-024 — do not run `mode=execute` here. Unity logs are long: search them for `error CS`, `Exception`, `Failed` and the test summary, never read a log whole (ARCHITECTURE.md → «Как Unity подключена к ядру»). `git status` is clean after a Unity run (Game.Core/**/*.meta are ignored since 649fcf3); nothing outside Unity/ and UnityShell/ changes",
+        "shell set up per UnityShell/README.md steps 1–4 without the build: Unity/ project, Game.Core as local package (`Unity/Packages/manifest.json` → `\"com.factory.game-core\": \"file:../../Game.Core\"`), `factory tool run unity --set mode=open` compiles without errors, `mode=test` runs the 15 EditMode tests green (InputTests, ViewTests); the shell changes the view needs (the `Stepped` event and `Alpha` for interpolation, `MenuOpen` and the cursor lock, the `-arena <name>` argument, the mouse `InputReader`) live in UnityShell/Assets/ and are mirrored into Unity/Assets/Factory/ so the two trees are identical up to .meta files (ARCHITECTURE.md → «Как Unity подключена к ядру»); UnityShell/README.md names the mouse keys instead of WASD",
         "mouse input into PlayerInput per design/overview.md → «Управление»: «толчок (сдвиг мыши напрямую задаёт скорость собаки с потолком) и курсор (собака бежит к точке на арене)» and «Кнопки»: «ЛКМ или Q — абилка собаки, ПКМ или E — абилка хозяина»: push mode = locked hidden cursor, the mouse delta accumulated between ticks into AimX/AimY in arena centimetres with the fraction carried to the next tick, push bit set; cursor mode = visible cursor, a ray from the camera to the ground, the point in centimetres from the arena centre, push bit clear; Tab switches the mode and the mode is shown on screen; mouse sensitivity is a player setting (`InputReader.CmPerMouseUnit`), not a variant; EditMode tests drive `MouseInput` without Unity input calls (both modes, the fraction, the buttons)",
-        "view only (no game logic): sim XY on ground XZ, interpolation between ticks by `Alpha`; camera per art/style.md → «Камера»: «Сверху под наклоном около 60°, вся арена в кадре, без вращения», test: the four arena corners are inside the viewport; dog, owner, trees, benches as primitives built from code; per art/style.md → «Палитра»: «ошейник, поводок и акцент одежды хозяина в цвете игрока (красный, синий, жёлтый, фиолетовый и далее)»; the leash is a line whose thickness and colour grow with `LeashesModule.Tension`; owner shadow and cosmetic height grow with owner speed (art/style.md → «Материалы и свет»: «мягкие короткие тени под объектами, чтобы высота полёта хозяина читалась по тени»); hit flash on the victim scaled by `Hit.Strength` against `HitsModule.StrongThreshold`, read from `HitsModule.ThisTick` — empty until F-004 lands, so the flash is tested by recording a Hit in an EditMode test, not by play; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`",
-        "the sandbox arena is playable with the collie in both mouse modes: the demo build started with `-arena sandbox` runs, the teen swings around the running dog on a taut leash and visibly lifts; screenshot art/previews/f007-sandbox-swing.png of the owner in flight at the end of a taut leash, taken by the build with `-capture <png>` and the scripted swing (the draft has one; retake it if the view changes). The blow on a mannequin is F-023"
+        "view only (no game logic): sim XY on ground XZ, interpolation between ticks by `Alpha`; camera per art/style.md → «Камера»: «Сверху под наклоном около 60°, вся арена в кадре, без вращения», test: the four arena corners are inside the viewport; dog, owner, trees, benches as primitives built from code; per art/style.md → «Палитра»: «ошейник, поводок и акцент одежды хозяина в цвете игрока (красный, синий, жёлтый, фиолетовый и далее)»; the leash is a line whose thickness and colour grow with `LeashesModule.Tension`; owner shadow and cosmetic height grow with owner speed (art/style.md → «Материалы и свет»: «мягкие короткие тени под объектами, чтобы высота полёта хозяина читалась по тени»); hit flash on the victim scaled by `Hit.Strength` against `HitsModule.StrongThreshold`, read from `HitsModule.ThisTick` (F-004 is in main, the flash is still tested by recording a Hit in an EditMode test, not by play); no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`; the reviewer reads ArenaView.cs and ViewMath.cs against this criterion, the build and the screenshot are judged in F-024"
       ],
       "status": "escalated",
       "attempts": 3,
@@ -302,11 +301,35 @@
       "touches": [
         "Unity/",
         "UnityShell/Assets/Factory/Runtime/",
-        "UnityShell/README.md",
-        "art/previews/",
-        ".gitignore"
+        "UnityShell/README.md"
       ],
       "priority": 30,
+      "iteration": 1,
+      "modules": []
+    },
+    {
+      "id": "F-024",
+      "title": "Unity: demo build and the sandbox swing screenshot",
+      "layer": "unity",
+      "milestone": "M1",
+      "depends_on": [
+        "F-007"
+      ],
+      "acceptance": [
+        "split from F-007 by the techlead (2026-11-10): the build and the screenshot are the part of F-007 that no attempt reached; the fourth run spent itself on compile and tests. Start from the reviewed feat/F-007 (main once it is merged); `factory tool run unity --set mode=execute --set method=FactoryBuild.Demo` builds the Windows demo into `FACTORY_BUILD_OUT` (or Unity/Builds/demo) with the core data in StreamingAssets/Data; one build run, its log searched for `Build Failed` and `error CS`, not read whole (ARCHITECTURE.md → «Как Unity подключена к ядру»); the build exits by itself when started with `-capture`; commits on feat/F-024 before the result is written; `git status` is clean after the runs; nothing outside Unity/ and art/previews/ changes",
+        "the build started with `-arena sandbox` plays Data/arenas/sandbox.json with the collie: player 0 is the human, players 1–3 come from bots/session.json until F-022 puts mannequins there; push mode per design/overview.md → «Управление»: «толчок (сдвиг мыши напрямую задаёт скорость собаки с потолком)»: the scripted swing of `ViewCapture` circles the dog in push mode and the teen swings around it on a taut leash and visibly lifts (owner height and shadow of the F-007 view); cursor mode («курсор (собака бежит к точке на арене)») is covered by the EditMode tests of F-007 and by Nick's play, not by a script",
+        "screenshot art/previews/f007-sandbox-swing.png retaken by the build with `-arena sandbox -capture <png>` (the draft's png is a stand-in until then): the teen in flight at the end of a taut leash, collar, leash and the owner's accent in the colour of player 0 (art/style.md → «Палитра»), the whole arena in frame (art/style.md → «Камера»: «вся арена в кадре»); the png is looked at before it is committed. The blow on a mannequin stays F-023",
+        "`factory tool run unity --set mode=test` stays green; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`; if the view changes for the shot, the change is in Unity/Assets/Game/ only"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 300000,
+      "owner_role": "developer-unity",
+      "touches": [
+        "Unity/Assets/Game/",
+        "art/previews/"
+      ],
+      "priority": 32,
       "iteration": 1,
       "modules": []
     },
@@ -318,10 +341,11 @@
       "depends_on": [
         "F-004",
         "F-007",
-        "F-022"
+        "F-022",
+        "F-024"
       ],
       "acceptance": [
-        "split from F-007 by the techlead (2026-11-10): its last criterion needed the real blow (F-004) and the mannequins (F-022), which were not in main. The demo build started with `-arena sandbox` plays design/overview.md → «Риск «скучно» №1»: «песочница замаха без правил: одна собака, два хозяина, три манекена»: the mannequins of F-022 stand idle, the pair whose dog was hit returns to its spawn after `rules.sandbox.respawn_s`, and the player sees it happen",
+        "split from F-007 by the techlead (2026-11-10): its last criterion needed the real blow (F-004) and the mannequins (F-022), which were not in main; the build and the capture pipeline come from F-024. The demo build started with `-arena sandbox` plays design/overview.md → «Риск «скучно» №1»: «песочница замаха без правил: одна собака, два хозяина, три манекена»: the mannequins of F-022 stand idle, the pair whose dog was hit returns to its spawn after `rules.sandbox.respawn_s`, and the player sees it happen",
         "the view of F-007 shows the real hits of F-004 without changes to the core: the flash on the victim follows design/roster.md → «Удар» («Сила = масса хозяина × скорость², отброс и оглушение растут с силой»): a strong hit (RelSpeed ≥ `hits.strong_threshold_mps`) flashes fully, a weak one dimly; the thrown dog visibly slides and is not driven while stunned; nothing in Unity/ writes to the simulation",
         "the scripted capture (`-capture <png>`, `ViewCapture`) drives a swing that connects: the owner's arc passes through a mannequin's dog on the sandbox spawns; the script may replay an inputs.txt recorded in play or by Game.Sim instead of the cosine swing of the draft",
         "screenshots in art/previews/: f023-sandbox-mannequin-hit.png at the tick of the blow (the teen in flight at the end of a taut leash, the mannequin's dog flashing) and f023-sandbox-mannequin-slide.png about 0.5 s later (the dog sliding away, the owner landing); both from the build, not the editor",
@@ -346,7 +370,8 @@
       "milestone": "M1",
       "depends_on": [
         "F-005",
-        "F-007"
+        "F-007",
+        "F-024"
       ],
       "acceptance": [
         "zone drawn as a light circle on the ground, the next zone shown 5 s before the move (arenas.md → «Парк»); points popup at the dog for in-zone, knockout and leader bonus, so the player sees what gives points from the first minute (concept → «Первый спринт», против US-02)",

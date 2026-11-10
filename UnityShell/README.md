@@ -9,6 +9,8 @@
 4. `factory tool run unity --set mode=open` — компиляция без ошибок; `mode=execute --set method=FactoryBuild.Demo` — билд собирается.
 5. Заменяет пример рендера `Assets/Game/ExampleRaceView.cs` своим (примитивы, камера, HUD) — это единственная игровая часть оболочки.
 
+Каждый прогон `factory tool run unity` долгий и многословный: фича укладывается в один-два прогона (компиляция и тесты — одна фича, билд и скриншоты — следующая), а в логе ищут `error CS`, `Exception`, `Failed` и итог тестов, не читая его целиком.
+
 Что где:
 - `Factory/Runtime/FactoryGame.cs` — точка входа, сама появляется в любой сцене. Шагает `Simulation` по `TicksPerSecond`, человек — участник 0, остальных ведут боты (`Game.Core/Data/bots/session.json → opponents`). R — рестарт.
 - `Factory/Runtime/InputReader.cs` — клавиатура → `PlayerInput`: WASD/стрелки — стик, пробел/Shift/E/Q — кнопки 0–3. Работает и со старым, и с новым Input System.
