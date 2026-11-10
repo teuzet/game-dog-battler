@@ -411,7 +411,7 @@
       "acceptance": [
         "a breaker archetype tries to win without playing (e.g. spinning in the zone centre, hugging a tree, standing on a bench edge); finding goes into its report with numbers from sim"
       ],
-      "status": "running",
+      "status": "testing",
       "attempts": 2,
       "budget_tokens": 400000,
       "owner_role": "gamedesigner-breaker",
