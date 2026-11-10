@@ -112,7 +112,7 @@
     },
     {
       "id": "F-004",
-      "title": "Hits and the swing sandbox",
+      "title": "Hits: blow, knockback, stun and the hit events",
       "layer": "core",
       "milestone": "M1",
       "depends_on": [
@@ -120,28 +120,95 @@
         "F-003"
       ],
       "acceptance": [
-        "hit rule quoted from design/roster.md → «Удар»: «Удар засчитывается, когда хозяин касается чужой собаки с относительной скоростью ≥ 5 м/с. Сила = масса хозяина × скорость², отброс и оглушение растут с силой»; strong hit ≥ 9 m/s; knockback 2–7 m and stun 0.4 + 0.05 × (v − 5) s, max 1.2 (design/overview.md → «Общие числа»); all numbers in Data/hits.json",
-        "«Свой хозяин свою собаку не бьёт. Хозяин о хозяина — толчок без очков» (roster → «Удар»); stun stops the dog's drive",
-        "owner speed rule from roster → «Удар»: «потолок скорости хозяина = 1.6 × скорость собаки + бонус от натяжения. Кружение на месте даёт 3–5 м/с»; test: collie circling in place gives the teen 3–5 m/s, running across the leash reaches ≥ 9 m/s",
-        "events `hit`, `strong_hit`, `near_miss` with pace tags per design/overview.md → «Теги событий»",
-        "Sandbox rule set inside Rules (risk №1 in design/overview.md: «песочница замаха без правил: одна собака, два хозяина, три манекена»): arena sandbox.json, player 0 plus three idle dummy dogs that respawn at their spot 2 s after a knockback, hit counter per owner type, no score; `dotnet run --project Game.Sim -- --arena sandbox` runs it"
+        "resliced by the techlead (2026-11-10): this feature is the Hits module only; the owner speed ceiling went to F-021 and the sandbox rule set with `--arena sandbox` to F-022. Start from branch feat/F-004 (commit 5a0ebeb): keep its Hits module, the Dogs stun check and HitsTests; its owner speed rule (Owners, Data/owners/speed_rule.json), Sandbox rules, Game.Sim `--arena`, `Archetype.Opponents`, the UnityShell edit and its lines in decisions.md and discuss-later.md are not in this feature's diff",
+        "hit rule quoted from design/roster.md → «Удар»: «Удар засчитывается, когда хозяин касается чужой собаки с относительной скоростью ≥ 5 м/с. Сила = масса хозяина × скорость², отброс и оглушение растут с силой». Read literally (ARCHITECTURE.md → «Модули и порядок тика», `Hits`): a Bodies contact between an owner body and the dog body of another player with `Contact.RelSpeed` ≥ `hits.threshold_mps` is a blow by the owner's player, whichever of the two was moving (a dog that rams a standing foreign owner is hit by him; the question is logged for Nick in discuss-later.md); no extra condition on the owner's own speed. Strength = owner mass × RelSpeed²; strong hit at RelSpeed ≥ `hits.strong_threshold_mps` (9); all numbers in Data/hits.json with the «тюнить» list",
+        "knockback and stun from design/overview.md → «Общие числа»: the dog is thrown along the contact normal away from the owner with a speed that ground friction alone stops after 2–7 m; the distance grows with strength between `hits.knockback_strength_min` and `hits.knockback_strength_full`, so the jock throws farther than the teen at the same speed (sprints/S-1.md: «разница между лёгким подростком и тяжёлым качком ощущается в замахе»); stun = 0.4 + 0.05 × (v − 5) s, at most 1.2 s; a stunned or still-sliding dog (below `hits.slide_end_mps` ends the slide) is not driven by Dogs (`HitsModule.IsStunned` / `IsHelpless`, link Dogs → Hits is already in MODULES.md); test: a teen at 5.5, 7 and 10 m/s and a jock at 10 m/s throw the dog 2–7 m in growing order, a strong hit farther than 3.5 m",
+        "«Свой хозяин свою собаку не бьёт. Хозяин о хозяина — толчок без очков» (roster → «Удар»): tests that an owner touching his own dog at 8 m/s and two owners meeting at 8 m/s produce no hit, no stun and no event, and that the shoved owner really moves",
+        "events `hit`, `strong_hit`, `near_miss` with pace tags per design/overview.md → «Теги событий»: «hit → Reward нападающему по силе, Threat жертве; strong_hit → Reward 2×; near_miss → Threat»; the first strong hit of a player is also Novel; near_miss = an owner at ≥ threshold speed passed a foreign dog within `hits.near_miss_gap_m` without touching her, told once per pass; Hits writes `Hit(attacker, victim, strength, strong)` into ThisTick for Rules (no owner-type name in the record)",
+        "tests in Game.Core.Tests/Modules/HitsTests.cs with scripted velocities on the sandbox arena; same seed and inputs → same StateHash, Fork independent; no new link in MODULES.md"
       ],
       "status": "escalated",
-      "attempts": 3,
+      "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-core",
       "touches": [
         "Game.Core/Modules/Hits/",
-        "Game.Core/Modules/Rules/",
+        "Game.Core/Modules/Dogs/DogsModule.cs",
         "Game.Core/Data/hits.json",
-        "Game.Core/Data/arenas/sandbox.json",
+        "Game.Core.Tests/Modules/HitsTests.cs"
+      ],
+      "priority": 30,
+      "iteration": 1,
+      "modules": [
+        "Hits"
+      ]
+    },
+    {
+      "id": "F-021",
+      "title": "Owner speed ceiling: a swing needs a running dog",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-003"
+      ],
+      "acceptance": [
+        "rule quoted from design/roster.md → «Удар»: «Хозяин набирает скорость, только когда собака бежит поперёк поводка: потолок скорости хозяина = 1.6 × скорость собаки + бонус от натяжения. Кружение на месте даёт 3–5 м/с: толкает, но сильным ударом не становится»; lives in Owners (ARCHITECTURE.md → «Модули и порядок тика», `Owners`), numbers in Data/owners/speed_rule.json: factor 1.6, tension bonus in m/s at tension 1, hard ceiling 14 m/s (design/overview.md → «Общие числа»: «Скорость хозяина, потолок 14»), all marked «тюнить»",
+        "the ceiling brakes the excess instead of cutting it, so a shove by another owner still moves him: test: a standing owner given 10 m/s keeps most of it one tick later and is within the tension bonus of zero after 2 s",
+        "tests steering the collie in push mode on the sandbox arena: circling the teen in place gives an average owner speed of 3–5 m/s and never reaches the strong-hit threshold 9 m/s (design/overview.md → «Риск №2»: «сильный удар требует бега собаки, а не вращения на месте»); running across the taut leash reaches ≥ 9 m/s; the owner never exceeds 1.6 × 7 + bonus and never exceeds 14 m/s",
+        "the speed rule is the only change: no new link in MODULES.md (Owners already reads Bodies and Leashes), Hits and Rules untouched; the branch feat/F-004 (commit fb52d25 and 5a0ebeb, `OwnersModule.Step`, `speed_rule.json`, the three owner-speed tests in HitsTests) is a working draft to take from"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Owners/OwnersModule.cs",
+        "Game.Core/Data/owners/speed_rule.json",
         "Game.Core.Tests/Modules/"
       ],
       "priority": 30,
       "iteration": 1,
       "modules": [
-        "Hits",
-        "Rules"
+        "Owners"
+      ]
+    },
+    {
+      "id": "F-022",
+      "title": "Swing sandbox: mannequins and --arena sandbox",
+      "layer": "core",
+      "milestone": "M1",
+      "depends_on": [
+        "F-004",
+        "F-021",
+        "F-007"
+      ],
+      "acceptance": [
+        "Sandbox rule set inside Rules per design/overview.md → «Риск №1»: «песочница замаха без правил: одна собака, два хозяина, три манекена»: on arena sandbox.json player 0 plays, players 1–3 are mannequins driven by the `idle` archetype; a mannequin whose dog was hit returns, dog and owner, to its spawn `rules.sandbox.respawn_s` (2 s) after the blow through `DogsModule.ReturnToSpawn` (link Rules → Dogs is in MODULES.md; no Rules → Owners link); no zone, no points; event `arena_event` on the return",
+        "the rule set's metrics per session: `hits`, `strong_hits`, `near_misses`, `hits_per_min` for player 0 (the counter per owner type comes from running the sandbox once per owner type, below)",
+        "who drives players 1.. is named by the rule set when it needs to: `rules/sandbox.json → opponents` (`[\"idle\"]`), otherwise `bots/session.json → opponents`; one helper `Archetype.Opponents(data)` in Game.Core/Bots is read by Game.Sim and by the Unity shell (`UnityShell/Assets/Factory/Runtime/FactoryGame.cs` and its copy in `Unity/Assets/`), so the sandbox mannequins stand in the demo build too; test: park gives smart, random, idle and sandbox gives idle",
+        "`dotnet run --project Game.Sim -- --arena sandbox` plays every tracked archetype as player 0 once per owner type in `rules/sandbox.json → owner_types` (teen, jock) and writes metrics.json keyed `archetype/owner` with the metrics above, chronicles and sessions.jsonl; the park run without `--arena` is unchanged; playtest/sim.json documents the option",
+        "tests: a mannequin returns exactly 2 s after the blow with zero velocity; a sandbox session with idle mannequins is deterministic and forks; a sandbox match ends by the Match timer; `--arena sandbox` runs green on 2 seeds (output in the review note)"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Rules/Sandbox/",
+        "Game.Core/Modules/Dogs/DogsModule.cs",
+        "Game.Core/Data/rules/sandbox.json",
+        "Game.Core/Bots/Bots.cs",
+        "Game.Sim/Program.cs",
+        "UnityShell/Assets/Factory/Runtime/FactoryGame.cs",
+        "Unity/Assets/Factory/Runtime/FactoryGame.cs",
+        "playtest/sim.json",
+        "Game.Core.Tests/Modules/"
+      ],
+      "priority": 35,
+      "iteration": 1,
+      "modules": [
+        "Rules",
+        "Dogs"
       ]
     },
     {
@@ -186,7 +253,9 @@
       "milestone": "M1",
       "depends_on": [
         "F-004",
-        "F-005"
+        "F-005",
+        "F-021",
+        "F-022"
       ],
       "acceptance": [
         "IGame.Sense per design/overview.md → «Архетипы ботов»: «бот видит позиции и скорости, цель арены и её следующее место, счёт, таймер; не видит чужих намерений и будущих событий арены»",
@@ -275,7 +344,9 @@
         "F-005",
         "F-006",
         "F-007",
-        "F-008"
+        "F-008",
+        "F-021",
+        "F-022"
       ],
       "acceptance": [
         "a breaker archetype tries to win without playing (e.g. spinning in the zone centre, hugging a tree, standing on a bench edge); finding goes into its report with numbers from sim"
@@ -307,7 +378,9 @@
         "F-006",
         "F-007",
         "F-008",
-        "F-009"
+        "F-009",
+        "F-021",
+        "F-022"
       ],
       "acceptance": [
         "playtest/pace-targets.json is set from design/overview.md → «Карта темпа» and the gate from «Архетипы ботов» (smart beats random in ≥ 80% of matches, camper and brawler win against smart ≤ 35%)",
