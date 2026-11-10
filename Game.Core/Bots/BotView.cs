@@ -11,6 +11,7 @@ namespace Game.Core.Bots
         public int Tick;
         public int Self;
         public Fixed X, Y;
+        public Fixed VX, VY; // the participant's own dog: the camera shows how fast it runs
         public readonly Dictionary<string, Fixed> Hud = new Dictionary<string, Fixed>();
         public readonly List<SeenObject> Objects = new List<SeenObject>();
 
@@ -22,7 +23,11 @@ namespace Game.Core.Bots
         public string Kind;
         public int Id;
         public Fixed X, Y;
+        public Fixed VX, VY; // seen velocity (zero for what stands still)
         public Fixed Value;
+
+        public Vec2 Pos => new Vec2(X, Y);
+        public Vec2 Vel => new Vec2(VX, VY);
     }
 
     /// <summary>A rectangle around the participant: the screen. Sensors keep only what is inside.</summary>

@@ -6,6 +6,7 @@
 //   sessions.jsonl   one line per session with pace tags (see tools/sim/SKILL.md)
 // Options: --seeds N --first-seed S --out DIR [--variant set/name] [--replay inputs.txt]
 //          [--arena sandbox]: the swing sandbox, every archetype once per owner type, keys "archetype/owner"
+//          [--bench swing]: the swing bench (standing and running mannequins × owners × archetypes → swing-bench.json)
 using System.Globalization;
 using System.Text;
 using Game.Core;
@@ -30,6 +31,13 @@ if (opts.Replay.Length > 0)
     var replay = Runner.Replay(game, data, InputLog.Load(opts.Replay));
     File.WriteAllText(Path.Combine(opts.Out, "replay.md"), replay, new UTF8Encoding(false));
     Console.WriteLine($"replayed {opts.Replay}");
+    return 0;
+}
+
+if (opts.Bench.Length > 0)
+{
+    if (opts.Bench != "swing") throw new ArgumentException($"no bench '{opts.Bench}' (known: swing)");
+    SwingBench.Run(game, data, opts.Seeds, opts.FirstSeed, opts.Out);
     return 0;
 }
 
@@ -92,7 +100,7 @@ File.WriteAllText(Path.Combine(opts.Out, "sessions.jsonl"), sessions.ToString(),
 Console.WriteLine($"{perArchetype.Fields.Count} runs × {opts.Seeds} seeds → {opts.Out}");
 return 0;
 
-sealed record Args(int Seeds, int FirstSeed, string Out, string Variant, string Replay, string Arena)
+sealed record Args(int Seeds, int FirstSeed, string Out, string Variant, string Replay, string Arena, string Bench)
 {
     public static Args Parse(string[] a)
     {
@@ -103,7 +111,7 @@ sealed record Args(int Seeds, int FirstSeed, string Out, string Variant, string 
         }
         return new Args(int.Parse(Get("--seeds", "40"), CultureInfo.InvariantCulture),
                         int.Parse(Get("--first-seed", "1"), CultureInfo.InvariantCulture),
-                        Get("--out", "playtest/run"), Get("--variant", ""), Get("--replay", ""), Get("--arena", ""));
+                        Get("--out", "playtest/run"), Get("--variant", ""), Get("--replay", ""), Get("--arena", ""), Get("--bench", ""));
     }
 }
 
