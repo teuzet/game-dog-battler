@@ -309,25 +309,25 @@
     },
     {
       "id": "F-024",
-      "title": "Unity: demo build and the sandbox swing screenshot",
+      "title": "Unity: demo build check and the scripted swing proven by a test",
       "layer": "unity",
       "milestone": "M1",
       "depends_on": [
         "F-007"
       ],
       "acceptance": [
-        "split from F-007 by the techlead (2026-11-10): the build and the screenshot are the part of F-007 that no attempt reached; the fourth run spent itself on compile and tests. Start from the reviewed feat/F-007 (main once it is merged); `factory tool run unity --set mode=execute --set method=FactoryBuild.Demo` builds the Windows demo into `FACTORY_BUILD_OUT` (or Unity/Builds/demo) with the core data in StreamingAssets/Data; one build run, its log searched for `Build Failed` and `error CS`, not read whole (ARCHITECTURE.md → «Как Unity подключена к ядру»); the build exits by itself when started with `-capture`; commits on feat/F-024 before the result is written; `git status` is clean after the runs; nothing outside Unity/ and art/previews/ changes",
-        "the build started with `-arena sandbox` plays Data/arenas/sandbox.json with the collie: player 0 is the human, players 1–3 come from bots/session.json until F-022 puts mannequins there; push mode per design/overview.md → «Управление»: «толчок (сдвиг мыши напрямую задаёт скорость собаки с потолком)»: the scripted swing of `ViewCapture` circles the dog in push mode and the teen swings around it on a taut leash and visibly lifts (owner height and shadow of the F-007 view); cursor mode («курсор (собака бежит к точке на арене)») is covered by the EditMode tests of F-007 and by Nick's play, not by a script",
-        "screenshot art/previews/f007-sandbox-swing.png retaken by the build with `-arena sandbox -capture <png>` (the draft's png is a stand-in until then): the teen in flight at the end of a taut leash, collar, leash and the owner's accent in the colour of player 0 (art/style.md → «Палитра»), the whole arena in frame (art/style.md → «Камера»: «вся арена в кадре»); the png is looked at before it is committed. The blow on a mannequin stays F-023",
-        "`factory tool run unity --set mode=test` stays green; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`; if the view changes for the shot, the change is in Unity/Assets/Game/ only"
+        "resliced by the techlead (2026-11-10) after three attempts of two to three minutes each. They did what they could: the demo build ran green (`.factory/unity/unity-execute.log` ends in `FactoryBuild.Demo: built …Unity/Builds/demo/Unity.exe`, no `error CS`) and `mode=test` ran green (15/15), but the screenshot was never taken, and no attempt can take it: a developer-unity worker may run only `dotnet`, `git` and `factory tool run unity`, and the `unity` tool has only `create`, `open`, `execute`, `test`, all in `-batchmode -nographics`, so nobody in the pipeline starts `Unity/Builds/demo/Unity.exe` or renders a frame (ARCHITECTURE.md → «Как Unity подключена к ядру»). The screenshot art/previews/f007-sandbox-swing.png is therefore not a deliverable of this feature: a person takes it from the sprint demo build with `-arena sandbox -capture <png>` (same section) and commits it. Do not put a stand-in png or a .gitkeep into art/previews/. Start from feat/F-024 merged with main; its head be7ddf8 adds only art/previews/.gitkeep — remove it. Commits on feat/F-024 before the result is written, each commit message naming only what its diff changes; result.json validates (`decisions` empty or entries `{question, chosen, why}`)",
+        "the scripted swing of `ViewCapture` (Unity/Assets/Game/ViewCapture.cs) becomes a pure function the runtime and the tests share: `public static PlayerInput SwingInput(int tick)` returns the push-mode input of the swing per design/overview.md → «Управление»: «толчок (сдвиг мыши напрямую задаёт скорость собаки с потолком)» (push bit set, AimX/AimY the mouse shift in arena centimetres), `SwingTick` is public, `Start` only wires `SwingInput(game.Sim.Tick)` into `InputReader.Scripted`; the capture, `Application.Quit` and the `-capture` argument stay as they are, so the human run `Unity.exe -arena sandbox -capture <png>` still saves the png at `SwingTick` and exits by itself",
+        "a new EditMode test in Unity/Assets/Tests/EditMode (in ViewTests.cs or next to it, with the same `NewSim(\"sandbox\")` helper) steps a sandbox simulation with `ViewCapture.SwingInput(sim.Tick)` for player 0 and `PlayerInput.None` for players 1–3 up to `SwingTick` and asserts what the screenshot was meant to show: the leash of player 0 is taut (`LeashesModule.Tension(sim, 0)` ≥ 0.95), the teen moves at ≥ 3 m/s (`BodiesModule.Velocity(owners.BodyOf(0)).Length`; the draft's comment claims 3.6 m/s at tick 66), so `ViewMath.OwnerHeight(ViewMath.Airborne(speed, HitsModule.StrongThreshold))` > 0 — the lift the shot shows through the owner height and shadow (art/style.md → «Материалы и свет»: «мягкие короткие тени под объектами, чтобы высота полёта хозяина читалась по тени»), and dog and owner are still inside the 24 × 16 m sandbox; if the swing does not reach these numbers, tune the amplitude, the angular step and `SwingTick` in ViewCapture.cs only, never the core or the data; no file in Unity/ writes to the simulation other than `Sim.Step(inputs)`",
+        "one `factory tool run unity --set mode=test` run after the change (16 EditMode tests green, the summary from `.factory/unity/unity-EditMode.xml`) and one `mode=execute --set method=FactoryBuild.Demo` run on the final commit, its log searched for `Build Failed` and `error CS`, not read whole; the log tails go to `notes`; `git status` is clean after the runs; nothing outside Unity/Assets/Game/ and Unity/Assets/Tests/ changes (the editor's own files, if it rewrites them, are committed as they are); the blow on a mannequin stays F-023"
       ],
       "status": "escalated",
       "attempts": 3,
       "budget_tokens": 300000,
       "owner_role": "developer-unity",
       "touches": [
-        "Unity/Assets/Game/",
-        "art/previews/"
+        "Unity/Assets/Game/ViewCapture.cs",
+        "Unity/Assets/Tests/EditMode/"
       ],
       "priority": 32,
       "iteration": 1,
@@ -345,11 +345,11 @@
         "F-024"
       ],
       "acceptance": [
-        "split from F-007 by the techlead (2026-11-10): its last criterion needed the real blow (F-004) and the mannequins (F-022), which were not in main; the build and the capture pipeline come from F-024. The demo build started with `-arena sandbox` plays design/overview.md → «Риск «скучно» №1»: «песочница замаха без правил: одна собака, два хозяина, три манекена»: the mannequins of F-022 stand idle, the pair whose dog was hit returns to its spawn after `rules.sandbox.respawn_s`, and the player sees it happen",
+        "split from F-007 by the techlead (2026-11-10): its last criterion needed the real blow (F-004) and the mannequins (F-022), which were not in main; the build and the capture pipeline come from F-024. The demo build started with `-arena sandbox` plays design/overview.md → «Риск «скучно» №1»: «песочница замаха без правил: одна собака, два хозяина, три манекена»: the mannequins of F-022 stand idle, the pair whose dog was hit returns to its spawn after `rules.sandbox.respawn_s` (F-022's core tests prove the return; the demo shows it to Nick)",
         "the view of F-007 shows the real hits of F-004 without changes to the core: the flash on the victim follows design/roster.md → «Удар» («Сила = масса хозяина × скорость², отброс и оглушение растут с силой»): a strong hit (RelSpeed ≥ `hits.strong_threshold_mps`) flashes fully, a weak one dimly; the thrown dog visibly slides and is not driven while stunned; nothing in Unity/ writes to the simulation",
-        "the scripted capture (`-capture <png>`, `ViewCapture`) drives a swing that connects: the owner's arc passes through a mannequin's dog on the sandbox spawns; the script may replay an inputs.txt recorded in play or by Game.Sim instead of the cosine swing of the draft",
-        "screenshots in art/previews/: f023-sandbox-mannequin-hit.png at the tick of the blow (the teen in flight at the end of a taut leash, the mannequin's dog flashing) and f023-sandbox-mannequin-slide.png about 0.5 s later (the dog sliding away, the owner landing); both from the build, not the editor",
-        "`factory tool run unity --set mode=test` and `mode=execute --set method=FactoryBuild.Demo` stay green; no new link in MODULES.md; commits on feat/F-023 before the result is written"
+        "the scripted capture (`-capture <png>`, `ViewCapture.SwingInput` of F-024) drives a swing that connects: the owner's arc passes through a mannequin's dog on the sandbox spawns; the script may replay an inputs.txt recorded by Game.Sim instead of the cosine swing of the draft; `ViewCapture` saves two pngs on one run, at the tick of the blow and about 0.5 s later, when `-capture <png>` is given (second name derived from the first), and exits by itself",
+        "the connecting swing is proven by an EditMode test, not by a screenshot (no attempt can start the built player, ARCHITECTURE.md → «Как Unity подключена к ядру»): stepping a sandbox simulation with the scripted input for player 0 yields a hit by player 0 in `HitsModule.ThisTick` with a mannequin's dog as victim no later than the capture tick, the leash of player 0 is taut at that tick, and 0.5 s later the victim's body still moves (the slide); the screenshots art/previews/f023-sandbox-mannequin-hit.png and f023-sandbox-mannequin-slide.png (the teen in flight at the end of a taut leash, the mannequin's dog flashing; then the dog sliding away, the owner landing) are taken by a person from the sprint demo build and are not committed by this feature; no stand-in png or .gitkeep in art/previews/",
+        "`factory tool run unity --set mode=test` and `mode=execute --set method=FactoryBuild.Demo` stay green, one run each, logs searched for `error CS`, `Build Failed` and the test summary, not read whole; no new link in MODULES.md; commits on feat/F-023 before the result is written; result.json validates (`decisions` empty or entries `{question, chosen, why}`)"
       ],
       "status": "todo",
       "attempts": 0,
@@ -357,7 +357,7 @@
       "owner_role": "developer-unity",
       "touches": [
         "Unity/Assets/Game/",
-        "art/previews/"
+        "Unity/Assets/Tests/EditMode/"
       ],
       "priority": 36,
       "iteration": 1,
