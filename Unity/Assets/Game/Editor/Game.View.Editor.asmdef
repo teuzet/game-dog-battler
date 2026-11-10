@@ -1,0 +1,10 @@
+{
+  "name": "Game.View.Editor",
+  "rootNamespace": "DogBattler.View",
+  "references": [ "Game.Core", "Game.View" ],
+  "includePlatforms": [ "Editor" ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "autoReferenced": false
+}

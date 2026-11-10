@@ -13,7 +13,7 @@
 
 Что где:
 - `Factory/Runtime/FactoryGame.cs` — точка входа, сама появляется в любой сцене. Шагает `Simulation` по `TicksPerSecond`, человек — участник 0, остальных ведут боты (`Game.Core/Data/bots/session.json → opponents`). R — рестарт.
-- `Factory/Runtime/InputReader.cs` — клавиатура → `PlayerInput`: WASD/стрелки — стик, пробел/Shift/E/Q — кнопки 0–3. Работает и со старым, и с новым Input System.
+- `Factory/Runtime/InputReader.cs` — мышь → `PlayerInput` (логика без вызовов Unity — в `MouseInput.cs`): Tab — режим «толчок» (мышь захвачена, сдвиг мыши копится между тиками в `AimX/AimY`, сантиметры арены, `CmPerMouseUnit` — чувствительность) или «курсор» (собака бежит к точке под курсором); ЛКМ или Q — абилка собаки, ПКМ или E — абилка хозяина; R — рестарт. Читает старый Input Manager. `FactoryGame` даёт видам событие `Stepped`, `Alpha` (доля кадра между тиками) и `MenuOpen`; аргумент `-arena <имя>` берёт другую арену из `Data/arenas`.
 - `Factory/Runtime/NickFiles.cs` — папка `nick/` рядом с exe: `survey-*.json` (вердикт, «сыграл бы ещё», где стало скучно, вариант) и `inputs-*.txt` (лог ввода для повтора `Game.Sim --replay`). Диспетчер забирает их в `playtest/nick/S-N/`.
 - `Factory/Runtime/Overlay.cs` — выбор варианта (A/B/C) и опрос, на `OnGUI`, без ассетов.
 - `Factory/Editor/FactoryBuild.cs` — `FactoryBuild.Demo`: Windows-билд в `FACTORY_BUILD_OUT`, данные ядра в `StreamingAssets/Data`. Если в Build Settings нет сцен, создаёт `Assets/Scenes/Main.unity`.
