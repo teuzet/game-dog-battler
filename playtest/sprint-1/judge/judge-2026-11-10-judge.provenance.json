@@ -1,0 +1,24 @@
+{
+  "tool": "judge",
+  "provider": "codex",
+  "model": "codex",
+  "request": {
+    "count": 5,
+    "question": "Какую из двух сессий интереснее смотреть и в какую больше хочется сыграть самому? Почему?",
+    "context": "PvP-баттлер с видом сверху на четыре собаки: собака раскручивает хозяина на поводке и бьёт им соперников, очки идут за время в круге на газоне и за выбивание соперника из круга; круг переезжает по арене, матч две минуты, никто не выбывает.",
+    "topic": "",
+    "a": [
+      "playtest/sprint-1/run-1/chronicle-1.md",
+      "playtest/sprint-1/run-1/chronicle-2.md",
+      "playtest/sprint-1/run-1/chronicle-3.md"
+    ],
+    "b": [
+      "playtest/sprint-1/run-0/chronicle-1.md",
+      "playtest/sprint-1/run-0/chronicle-2.md",
+      "playtest/sprint-1/run-0/chronicle-3.md"
+    ]
+  },
+  "request_hash": "f1398844a60b8940",
+  "created_at": "2026-11-10T14:08:42Z",
+  "usd": 0.0
+}

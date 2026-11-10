@@ -1,0 +1,91 @@
+{
+  "pace": {
+    "sessions": 240,
+    "duration_s": 120.0,
+    "decisions_per_min": 37.5,
+    "weighty_share": 0.038461538461538464,
+    "crisis_interval_s": 40.0,
+    "longest_lull_s": 14.9165,
+    "rewards_per_min": 6.75,
+    "reward_cv": 0.6393458804942745,
+    "late_swing_share": 0.10833333333333334,
+    "close_share": 0.23333333333333334,
+    "novel_per_min": 1.0,
+    "repeat_share": 0.7777777777777778,
+    "archetypes": {
+      "idle": {
+        "sessions": 40,
+        "wins": 0,
+        "winrate": 0.0
+      },
+      "random": {
+        "sessions": 40,
+        "wins": 0,
+        "winrate": 0.0
+      },
+      "smart": {
+        "sessions": 40,
+        "wins": 12,
+        "winrate": 0.3
+      },
+      "camper": {
+        "sessions": 40,
+        "wins": 25,
+        "winrate": 0.625
+      },
+      "breaker-squatter": {
+        "sessions": 40,
+        "wins": 35,
+        "winrate": 0.875
+      },
+      "breaker-orbit": {
+        "sessions": 40,
+        "wins": 23,
+        "winrate": 0.575
+      }
+    },
+    "unfinished": 0
+  },
+  "gate": {
+    "passed": false,
+    "checks": [
+      {
+        "name": "сессия заканчивается",
+        "passed": true,
+        "detail": "240 из 240 дошли до исхода"
+      },
+      {
+        "name": "бездействие не выигрывает",
+        "passed": false,
+        "detail": "idle 0%, хуже всех остальных: 0%"
+      },
+      {
+        "name": "решения значат",
+        "passed": false,
+        "detail": "умный 30% против случайного 0% (нужно +20%), весомых решений 4% (нужно 40%)"
+      },
+      {
+        "name": "нет доминирующей стратегии",
+        "passed": false,
+        "detail": "лучший архетип breaker-squatter: 88% (потолок 70%)"
+      },
+      {
+        "name": "исход не решён заранее",
+        "passed": false,
+        "detail": "перелом после середины в 11% сессий (нужно 30%)"
+      },
+      {
+        "name": "темп в целях",
+        "passed": false,
+        "detail": "в коридоре 2 из 6: награды, новизна; мимо: решения, напряжение, неопределённость, развязка"
+      }
+    ],
+    "thresholds": {
+      "smart_minus_random": 0.2,
+      "max_archetype_winrate": 0.7,
+      "late_swing_share": 0.3,
+      "pace_in_corridor_min": 4,
+      "weighty_share": 0.4
+    }
+  }
+}

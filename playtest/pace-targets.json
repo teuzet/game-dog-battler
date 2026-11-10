@@ -1,17 +1,32 @@
 {
   "corridors": {
-    "decisions_per_min": [6, 30],
-    "weighty_share": [0.5, 1],
-    "crisis_interval_s": [10, 40],
+    "decisions_per_min": [12, 20],
+    "weighty_share": [0.4, 1],
+    "crisis_interval_s": [15, 30],
     "longest_lull_s": [0, 10],
-    "rewards_per_min": [2, 12],
+    "rewards_per_min": [4, 8],
     "late_swing_share": [0.3, 1],
-    "close_share": [0.3, 0.8],
+    "close_share": [0.3, 1],
     "novel_per_min": [1, 10]
   },
-  "gate": { "smart_minus_random": 0.2, "max_archetype_winrate": 0.7 },
+  "gate": { "smart_minus_random": 0.2, "max_archetype_winrate": 0.7, "weighty_share": 0.4 },
   "archetypes": { "smart": "smart", "random": "random", "idle": "idle" },
+  "design_gate": {
+    "smart_beats_random_winrate": 0.8,
+    "camper_brawler_vs_smart_max_winrate": 0.35,
+    "close_margin": 0.1,
+    "note": "design/overview.md → «Архетипы ботов»: smart обыгрывает random в ≥ 80% матчей, camper и brawler не выигрывают у smart чаще 35% (H3, H4). Тул sim этих двух проверок не умеет: их считает плейтест из metrics.json и пишет в отчёт. Развязка в диздоке — отрыв ≤ 10% очков; тул считает близкой концовку с margin ≤ 0.2, долю при 10% плейтест считает сам из sessions.jsonl."
+  },
   "why": {
-    "_": "Пример шаблона. Коридоры этой игры ставит геймдизайнер из карты темпа в design/overview.md, причина каждого — ссылка на юзерстори."
+    "decisions_per_min": "design/overview.md → «Карта темпа»: «бить или отойти» каждые 3–4 с (US-05, US-06), плюс развилка на каждом объявлении круга (US-24, против US-09).",
+    "weighty_share": "Весомое решение меняет, кто в круге (US-06). Диздок: весомых ≥ 40%, поэтому и порог гейта weighty_share = 0.4, а не 0.5 по умолчанию.",
+    "crisis_interval_s": "Кризис каждые 15–30 с: переезд круга раз в 20 с (Р4) и удары по тебе (US-12, US-14).",
+    "longest_lull_s": "Затишье ≤ 10 с: длинное затишье = бег по краю без хозяина в деле (против US-20, против US-09).",
+    "rewards_per_min": "4–8 наград в минуту: первый удар за 30 с (US-01), но не каждые 2 с, иначе удар обесценен (US-05).",
+    "late_swing_share": "Смена лидера после 60-й секунды в ≥ 30% матчей (US-21), без камбэк-механики (Р6).",
+    "close_share": "≥ 30% матчей с близкой развязкой: S-08 «Последняя секунда», US-15, US-16, US-30; против US-22.",
+    "novel_per_min": "≥ 1 новая ситуация в минуту: переезд круга, первый сильный удар, первое выбивание (US-27, US-29).",
+    "smart_minus_random": "Порог тула по умолчанию; диздок строже (smart ≥ 80% против random), проверяется в отчёте.",
+    "max_archetype_winrate": "Порог тула по умолчанию: ни один архетип, включая взломщика, не доминирует (F-009)."
   }
 }

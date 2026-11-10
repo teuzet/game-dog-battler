@@ -1,14 +1,14 @@
 {
   "тюнить": ["zone_radius_m", "period_s", "announce_s", "move_min_m", "move_max_m", "points_per_s", "knockout_points", "leader_knockout_points", "knockout_window_s"],
   "zone_radius_m": 3.5,
-  "period_s": 20,
-  "announce_s": 5,
+  "period_s": 15,
+  "announce_s": 3,
   "move_min_m": 8,
   "move_max_m": 14,
   "clearance_m": 0.5,
   "points_per_s": 1,
-  "knockout_points": 5,
-  "leader_knockout_points": 8,
+  "knockout_points": 10,
+  "leader_knockout_points": 16,
   "knockout_window_s": 1,
   "decision_window_s": 1
 }

@@ -23,6 +23,12 @@ namespace Game.Core.Tests.Modules
         private static Fixed F(string s) => Fixed.Parse(s);
         private static Vec2 P(string x, string y) => new Vec2(F(x), F(y));
 
+        // The rules' numbers as the data has them (the playtest tunes them in Data/rules/king_of_lawn.json).
+        private static int Ko => Repo.Data().Int("rules.king_of_lawn.knockout_points");
+        private static int LeaderKo => Repo.Data().Int("rules.king_of_lawn.leader_knockout_points");
+        private static int PeriodTicks => Repo.Data().Int("rules.king_of_lawn.period_s") * Simulation.TicksPerSecond;
+        private static int AnnounceTicks => Repo.Data().Int("rules.king_of_lawn.announce_s") * Simulation.TicksPerSecond;
+
         /// <summary>Puts blows into the list of Hits between Hits and Rules (a blow is born in the tick it is recorded).</summary>
         private sealed class ScriptedHits : IModule
         {
@@ -140,7 +146,7 @@ namespace Game.Core.Tests.Modules
             Assert.Equal(0, s.Match.Scores[0]);
             s.Place(1, "5", "0");    // thrown out 0.3 s after the blow
             s.Tick();
-            Assert.Equal(new[] { 5, 0, 0, 0 }, s.Match.Scores);
+            Assert.Equal(new[] { Ko, 0, 0, 0 }, s.Match.Scores);
             var ko = s.Events("knocked_out");
             Assert.Equal(2, ko.Count);
             Assert.Equal(0, ko[0].Actor);
@@ -148,7 +154,7 @@ namespace Game.Core.Tests.Modules
             Assert.Equal(1, ko[1].Actor);
             Assert.True(ko[1].Threat > Fixed.Zero);
             s.Tick(60); // no second award for the same blow
-            Assert.Equal(5, s.Match.Scores[0]);
+            Assert.Equal(Ko, s.Match.Scores[0]);
         }
 
         [Fact]
@@ -192,7 +198,7 @@ namespace Game.Core.Tests.Modules
         }
 
         [Fact]
-        public void KnockingOutTheSoleLeaderIsWorthEight()
+        public void KnockingOutTheSoleLeaderIsWorthTheLeaderPrize()
         {
             var s = Park();
             s.Place(0, "-5", "0");
@@ -204,7 +210,8 @@ namespace Game.Core.Tests.Modules
             s.RunTo(15);
             s.Place(1, "5", "0");
             s.Tick();
-            Assert.Equal(8, s.Match.Scores[0]);
+            Assert.True(LeaderKo > Ko);
+            Assert.Equal(LeaderKo, s.Match.Scores[0]);
         }
 
         [Fact]
@@ -224,7 +231,7 @@ namespace Game.Core.Tests.Modules
                 var koAwards = s.Match.LastTickAwards.Where(a => a.Reason != "zone").ToList();
                 var ko = Assert.Single(koAwards);
                 Assert.Equal(0, ko.Player);
-                Assert.Equal(leader ? 8 : 5, ko.Points);
+                Assert.Equal(leader ? LeaderKo : Ko, ko.Points);
                 Assert.Equal(leader ? "leader_knockout" : "knockout", ko.Reason);
                 s.Tick();
                 Assert.DoesNotContain(s.Match.LastTickAwards, a => a.Reason.EndsWith("knockout"));
@@ -244,31 +251,32 @@ namespace Game.Core.Tests.Modules
             s.RunTo(15);
             s.Place(1, "5", "0");
             s.Tick();
-            Assert.Equal(5, s.Match.Scores[0]);
+            Assert.Equal(Ko, s.Match.Scores[0]);
         }
 
         [Fact]
-        public void CircleIsAnnouncedFiveSecondsAheadAndMovesEveryTwentySeconds()
+        public void CircleIsAnnouncedAheadAndMovesEveryPeriod()
         {
             var s = Park();
+            int period = PeriodTicks, announce = AnnounceTicks;
             var first = s.Rules.Active.Zone!.Value;
             Assert.Equal(Vec2.Zero, first.Center);
             Assert.Equal(F("3.5"), first.Radius);
-            s.RunTo(449);
+            s.RunTo(period - announce - 1);
             Assert.Empty(s.Events("zone_announced"));
             Assert.Null(s.Rules.Active.NextZone);
-            s.RunTo(450);
+            s.RunTo(period - announce);
             var ann = Assert.Single(s.Events("zone_announced"));
             Assert.Equal(2, ann.DecisionOptions);
             Assert.Equal("zone_announced", ann.Novel);
             var next = s.Rules.Active.NextZone!.Value;
-            Assert.Equal(first.Center, s.Rules.Active.Zone!.Value.Center); // still here for 5 s
-            s.RunTo(599);
+            Assert.Equal(first.Center, s.Rules.Active.Zone!.Value.Center); // still here until the period ends
+            s.RunTo(period - 1);
             Assert.Equal(first.Center, s.Rules.Active.Zone!.Value.Center);
-            s.RunTo(600);
+            s.RunTo(period);
             Assert.Equal(next.Center, s.Rules.Active.Zone!.Value.Center);
             Assert.Null(s.Rules.Active.NextZone);
-            s.RunTo(1050);
+            s.RunTo(2 * period - announce);
             Assert.Equal(2, s.Events("zone_announced").Count);
         }
 
@@ -286,7 +294,7 @@ namespace Game.Core.Tests.Modules
             var prev = s.Rules.Active.Zone!.Value;
             for (int move = 1; move <= 5; move++)
             {
-                s.RunTo(move * 600);
+                s.RunTo(move * PeriodTicks);
                 var z = s.Rules.Active.Zone!.Value;
                 var d = z.Center.DistanceTo(prev.Center);
                 Assert.InRange(d.ToDouble(), 8, 14);
@@ -367,8 +375,8 @@ namespace Game.Core.Tests.Modules
             s.Place(1, "6", "0");
             s.Tick();
             var m0 = game.Metrics(s.Sim, 0);
-            Assert.Equal(5, m0["points"]);
-            Assert.Equal(5, m0["knockout_points"]);
+            Assert.Equal(Ko, m0["points"]);
+            Assert.Equal(Ko, m0["knockout_points"]);
             Assert.Equal(1.0, m0["fight_share"]);
             Assert.Equal(1 / (s.Sim.Seconds / 60.0), m0["hits_per_min"], 6);
             var m2 = game.Metrics(s.Sim, 2);
@@ -397,15 +405,15 @@ namespace Game.Core.Tests.Modules
         {
             var s = Park();
             var game = GameSetup.Game;
-            s.RunTo(449);
+            s.RunTo(PeriodTicks - AnnounceTicks - 1);
             Assert.Empty(game.DecisionOptions(s.Sim, 0)); // nothing announced, nobody near
-            s.RunTo(450);
+            s.RunTo(PeriodTicks - AnnounceTicks);
             var opts = game.DecisionOptions(s.Sim, 0);
             Assert.Equal(2, opts.Count);
             var next = s.Rules.Active.NextZone!.Value.Center;
             Assert.Equal((next.X * 100).FloorToInt(), opts[0].AimX);
             Assert.Equal((next.Y * 100).FloorToInt(), opts[0].AimY);
-            s.RunTo(481); // the moment has passed
+            s.RunTo(PeriodTicks - AnnounceTicks + Simulation.TicksPerSecond + 1); // the moment (decision_window_s) has passed
             Assert.Empty(game.DecisionOptions(s.Sim, 0));
         }
 
@@ -428,7 +436,7 @@ namespace Game.Core.Tests.Modules
         public void BotsSeeTheAnnouncedCircle()
         {
             var s = Park();
-            s.RunTo(450);
+            s.RunTo(PeriodTicks - AnnounceTicks);
             var view = GameSetup.Game.Sense(s.Sim, 0);
             Assert.Contains(view.Objects, o => o.Kind == "zone");
             Assert.Contains(view.Objects, o => o.Kind == "next_zone");
