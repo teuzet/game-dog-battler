@@ -23,6 +23,9 @@ namespace Factory.Shell
 
         public static bool PushMode => Scripted != null || Mouse.Push;
 
+        /// <summary>The mouse mode picked on the pre-match screen (Tab still switches it later).</summary>
+        public static void SetPushMode(bool push) => Mouse.SetPush(push);
+
 #if ENABLE_LEGACY_INPUT_MANAGER
         public static void Frame()
         {

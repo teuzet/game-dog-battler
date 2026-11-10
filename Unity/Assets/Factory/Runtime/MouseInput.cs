@@ -13,9 +13,12 @@ namespace Factory.Shell
 
         private Vector2 _pendingCm;
 
-        public void ToggleMode()
+        public void ToggleMode() => SetPush(!Push);
+
+        /// <summary>The player's choice before the match: push (true) or cursor (false).</summary>
+        public void SetPush(bool push)
         {
-            Push = !Push;
+            Push = push;
             _pendingCm = Vector2.zero;
         }
 

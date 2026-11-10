@@ -3,6 +3,7 @@
   "players": 4,
   "arena": "park",
   "human_owner": "teen",
+  "human_choices": ["teen", "jock"],
   "pairs": [
     { "dog": "collie" }
   ]

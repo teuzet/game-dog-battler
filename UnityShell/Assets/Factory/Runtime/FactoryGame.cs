@@ -26,7 +26,7 @@ namespace Factory.Shell
         /// <summary>0..1: how far the frame is between the last tick and the next, for interpolation.</summary>
         public float Alpha => Sim == null ? 0f : Mathf.Clamp01(_acc * Simulation.TicksPerSecond);
         /// <summary>True while a window (variant picker, survey) needs the mouse.</summary>
-        public bool MenuOpen => _overlay.Picking || _overlay.Surveying;
+        public bool MenuOpen => _overlay.Picking || _overlay.Surveying || _overlay.Preparing;
 
         private string _dataDir = "";
         private GameData _base, _data;
@@ -37,7 +37,7 @@ namespace Factory.Shell
         private readonly Overlay _overlay = new Overlay();
         private List<string> _variantNames = new List<string>();
         private string _variantSet = "", _variantLabel = "";
-        private bool _ended;
+        private bool _ended, _capture;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
@@ -58,6 +58,11 @@ namespace Factory.Shell
             if (at >= 0 && at + 1 < args.Length) _base.Get("game").Set("arena", JsonValue.Str(args[at + 1]));
             _overlay.OnPick = Pick;
             _overlay.OnSurvey = Survey;
+            _overlay.OnStart = Begin;
+            var owners = new List<string>();
+            foreach (var o in _base.Get("game.human_choices").Items) owners.Add(o.AsString());
+            _overlay.Owners = owners;
+            _capture = Array.IndexOf(args, "-capture") >= 0;
             var sets = GameData.VariantSets(_dataDir);
             if (sets.Count > 0)
             {
@@ -69,8 +74,27 @@ namespace Factory.Shell
         private void Start()
         {
             if (_variantNames.Count > 1) ShowPicker();
-            else NewSession(_base);
+            else Prepare(_base);
         }
+
+        /// <summary>The pre-match screen: owner type and mouse mode. A screenshot run (-capture) skips it
+        /// and plays the data's own pick.</summary>
+        private void Prepare(GameData data)
+        {
+            _data = data;
+            if (_capture) NewSession(data);
+            else _overlay.OpenPrepare();
+        }
+
+        private void Begin(string owner, bool push)
+        {
+            InputReader.SetPushMode(push);
+            NewSession(WithOwner(_data, owner));
+        }
+
+        /// <summary>The data with the human's owner type picked; bots keep Data/bots/session.json.</summary>
+        public static GameData WithOwner(GameData data, string owner) =>
+            new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"human_owner\":\"" + owner + "\"}}")), data.Variant);
 
         private void ShowPicker()
         {
@@ -90,7 +114,7 @@ namespace Factory.Shell
         private void Pick(int i)
         {
             _variantLabel = ((char)('A' + i)).ToString();
-            NewSession(_base.WithVariant(_dataDir, _variantSet, _variantNames[i]));
+            Prepare(_base.WithVariant(_dataDir, _variantSet, _variantNames[i]));
         }
 
         private void NewSession(GameData data)
@@ -117,7 +141,7 @@ namespace Factory.Shell
             if (Sim == null) return;
             InputReader.Frame();
             ApplyCursor();
-            if (_overlay.Picking) return;
+            if (_overlay.Picking || _overlay.Preparing) return;
             if (Sim.IsOver)
             {
                 if (!_ended)
@@ -173,6 +197,7 @@ namespace Factory.Shell
             s.Set("again", JsonValue.Bool(again));
             s.Set("boring_at", JsonValue.Str(boringAt));
             s.Set("variant", JsonValue.Str(_variantLabel.Length == 0 ? "" : $"{_variantLabel} = {_data.Variant}"));
+            s.Set("owner", JsonValue.Str(_data.Str("game.human_owner")));
             s.Set("seed", Json.Num(_seed));
             s.Set("duration_s", Json.Num(Sim.Seconds));
             var outcome = Sim.Result?.Outcomes[HumanPlayer];
@@ -185,7 +210,7 @@ namespace Factory.Shell
                 return;
             }
             if (_variantNames.Count > 1) ShowPicker();
-            else NewSession(_data);
+            else Prepare(_data);
         }
     }
 }
