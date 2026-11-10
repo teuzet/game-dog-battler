@@ -15,3 +15,4 @@
 - 2026-11-10 06:05 F-008 Unity: king of the lawn HUD and match flow (47a80d66b3)
 - 2026-11-10 07:09 F-009 Breaker: find what breaks the fun (a4f97a2ff0)
 - 2026-11-10 14:31 F-010 Playtest: sprint 1 (fc3af4a2e1)
+- 2026-11-10 15:12 F-025 Hits: the owner is the weapon, a parked owner scores nothing (fb298c72fc)
