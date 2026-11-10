@@ -1,3 +1,5 @@
 {
-  "substeps": 4
+  "substeps": 4,
+  "restitution": 0.3,
+  "drive_mass_factor": 40
 }
