@@ -1,0 +1,19 @@
+{
+  "arena": "park",
+  "seed": 2,
+  "tick": 1003,
+  "time_left_s": 86.5667,
+  "aspect": "16:9",
+  "scores": [3, 23, 1, 0],
+  "zone": { "x": -5.4583, "y": 0.5095, "radius": 3.5 },
+  "zone_screen": [0.3423, 0.5227],
+  "next_zone": null,
+  "hit": { "attacker": 2, "victim": 0, "flash": 1 },
+  "lawn_corners_screen": [[0.0877, 0.0768], [0.9123, 0.0768], [0.8041, 0.8121], [0.1959, 0.8121]],
+  "players": [
+    { "player": 0, "color": "red", "dog": { "x": 0.1521, "y": 2.063, "screen": [0.5043, 0.5892] }, "owner": { "x": -0.9126, "y": 3.1088, "speed_mps": 7.608, "airborne": 0.8453, "height_m": 1.0144, "screen": [0.474, 0.6618] }, "leash": { "tension": 0.4975, "width_m": 0.1047 } },
+    { "player": 1, "color": "blue", "dog": { "x": -3.65, "y": 0.8943, "screen": [0.3953, 0.5395] }, "owner": { "x": -2.5524, "y": -1.8989, "speed_mps": 0.1991, "airborne": 0.0221, "height_m": 0.0265, "screen": [0.4227, 0.4122] }, "leash": { "tension": 1, "width_m": 0.16 } },
+    { "player": 2, "color": "yellow", "dog": { "x": 2.8081, "y": 3.3224, "screen": [0.5771, 0.6404] }, "owner": { "x": -0.1481, "y": 2.7988, "speed_mps": 6.862, "airborne": 0.7624, "height_m": 0.9149, "screen": [0.4958, 0.6461] }, "leash": { "tension": 1, "width_m": 0.16 } },
+    { "player": 3, "color": "purple", "dog": { "x": -6, "y": 4, "screen": [0.3373, 0.667] }, "owner": { "x": -8, "y": 5.5, "speed_mps": 0, "airborne": 0, "height_m": 0, "screen": [0.2886, 0.7238] }, "leash": { "tension": 0.8333, "width_m": 0.1417 } }
+  ]
+}

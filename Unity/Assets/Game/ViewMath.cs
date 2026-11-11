@@ -48,6 +48,20 @@ namespace DogBattler.View
         public static float FlashAmount(float strength, float attackerMass, float strongThresholdMps) =>
             Mathf.Clamp01(Mathf.Sqrt(strength / attackerMass) / strongThresholdMps);
 
+        /// <summary>Where a point of the arena (sim metres, <paramref name="height"/> above the ground) falls on the screen,
+        /// as fractions 0..1 (x to the right, y up, like WorldToViewportPoint). It uses the numbers of
+        /// <c>ArenaView.PlaceCamera</c> (pitch, FOV, margin, <see cref="CameraDistance"/>) and no Camera component, so it runs in -nographics.</summary>
+        public static Vector2 ToScreen(float simX, float simY, float height, float arenaW, float arenaH, float aspect)
+        {
+            float d = CameraDistance(arenaW, arenaH, ArenaView.CameraPitch, ArenaView.CameraFov, aspect, ArenaView.CameraMargin);
+            var rot = Quaternion.Euler(ArenaView.CameraPitch, 0f, 0f);
+            // worldToCamera of a Unity camera: the inverse of its pose, with the z axis flipped (the camera looks down -z)
+            var view = Matrix4x4.Scale(new Vector3(1f, 1f, -1f)) * Matrix4x4.TRS(rot * Vector3.back * d, rot, Vector3.one).inverse;
+            var proj = Matrix4x4.Perspective(ArenaView.CameraFov, aspect, 0.3f, 1000f);
+            var clip = proj * view * new Vector4(simX, height, simY, 1f);
+            return new Vector2(clip.x / clip.w * 0.5f + 0.5f, clip.y / clip.w * 0.5f + 0.5f);
+        }
+
         /// <summary>Camera distance along its viewing axis such that the whole w×h arena
         /// (plus a margin, metres) is in frame at the given pitch and vertical field of view.</summary>
         public static float CameraDistance(float width, float height, float pitchDeg, float vFovDeg, float aspect, float margin)
