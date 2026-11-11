@@ -202,7 +202,7 @@
         "EditMode-тест в `Unity/Assets/Tests/EditMode/` (помощник `NewSim`, как в `ViewTests.cs`) гонит `park` с `ParkSeed` и теми же ботами, что в билде, до тика по тому же правилу, проверяет условия кадра и пишет лист кадра `art/frame-base.json` (путь от `Application.dataPath` вверх к корню репозитория): `tick`, `time_left_s`, `scores`, `zone` и `next_zone` (центр, радиус), `hit` (нападающий, жертва, вспышка 0..1), по игроку: позиция собаки и хозяина в метрах, скорость хозяина, `airborne`, высота (`ViewMath.OwnerHeight`), натяжение и ширина поводка, доли экрана для собаки, хозяина, центра зоны и четырёх углов газона из `ViewMath.ToScreen` при 16:9. Сгенерированный json закоммичен: по нему художник ставит фигуры в картинки, а продюсер сверяет снимок",
         "Прогоны: один `factory tool run unity --set mode=test` (итог из `.factory/unity/unity-EditMode.xml` без `failed`) и один `mode=execute --set method=FactoryBuild.Demo` на финальном коммите (в логе ищут `Build Failed` и `error CS`, целиком не читают), чтобы человек мог снять `Unity/Builds/demo/Unity.exe -arena park -seed <ParkSeed> -capture art/previews/frame-base.png`; сам png — шаг человека, не критерий (ARCHITECTURE.md → «Как Unity подключена к ядру»), точная команда — в `notes`. После прогонов `git status` чистый, `Game.Core/` не меняется, оба дерева оболочки совпадают с точностью до `.meta`. Коммит на `feat/F-034` до результата; `decisions` по схеме или пустой список"
       ],
-      "status": "review",
+      "status": "unity_check",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-unity",
