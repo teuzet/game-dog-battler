@@ -97,11 +97,47 @@ namespace Game.Core.Tests.Sim
         {
             var batch = Batch("[{\"name\":\"duel_league\",\"weight\":1}]", "[{\"id\":\"g0-00\",\"params\":{\"bots.swing.lead_m\":1}}]");
             var scores = Json.Parse(Evaluate.Score(GameSetup.Game, Repo.Data(), batch).ToString())["scores"]!.Items;
+            bool anyDealt = false, anyTaken = false;
             foreach (var s in scores)
             {
-                Assert.InRange(s["details"]!["winrate_league"]!.AsDouble(), 0, 1);
-                Assert.InRange(s["details"]!["winrate_smart"]!.AsDouble(), 0, 1);
+                var d = s["details"]!;
+                Assert.InRange(d["winrate_league"]!.AsDouble(), 0, 1);
+                Assert.InRange(d["winrate_smart"]!.AsDouble(), 0, 1);
+                // F-050: where participant 0 took and dealt its blows, by the skill it led then
+                foreach (var prefix in new[] { "taken_in_", "dealt_in_" })
+                {
+                    double sum = 0;
+                    foreach (var skill in DuelistStrategy.Skills)
+                    {
+                        var share = d[prefix + skill]!.AsDouble();
+                        Assert.InRange(share, 0, 1);
+                        sum += share;
+                    }
+                    Assert.True(System.Math.Abs(sum) < 1e-9 || System.Math.Abs(sum - 1) < 1e-6,$"{prefix}*: sum {sum}");
+                    if (sum > 0.5) { if (prefix == "taken_in_") anyTaken = true; else anyDealt = true; }
+                }
             }
+            Assert.True(anyTaken && anyDealt, "eight duels without a blow either way");
+        }
+
+        /// <summary>F-050: every rival of a league gets its own duel seed, so smart twice in "opponents" is two duels, not one twice.
+        /// Were the two duels of a seed the same, every averaged detail of [smart, smart] would equal that of [smart].</summary>
+        [Fact]
+        public void LeagueRepeatedOpponentPlaysIndependentDuelsAndRepeatsByteForByte()
+        {
+            var data = Repo.Data();
+            JsonValue Run(string opponents)
+            {
+                var d = new GameData(data.Root.MergedWith(Json.Parse("{\"playgrounds\":{\"duel_league\":{\"opponents\":" + opponents + "}}}")));
+                var batch = Json.Parse("{\"space\":\"t\",\"generation\":0,\"seeds\":[1,2,3,4],\"playgrounds\":[{\"name\":\"duel_league\",\"weight\":1}]," +
+                                       "\"base\":{},\"league\":[],\"candidates\":[{\"id\":\"c0\",\"params\":{}}]}");
+                return Evaluate.Score(GameSetup.Game, d, batch);
+            }
+            var twice = Run("[\"smart\",\"smart\"]").ToString();
+            Assert.Equal(twice, Run("[\"smart\",\"smart\"]").ToString());
+            var once = Run("[\"smart\"]");
+            Assert.NotEqual(once.ToString(), twice);
+            Assert.NotEqual(Playground.DuelSeed(1, 0), Playground.DuelSeed(1, 1));
         }
 
         [Fact]
