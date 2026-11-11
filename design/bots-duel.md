@@ -87,5 +87,6 @@
 | `moving_target` | `sandbox`, 60 с, teen и jock | `solo-strike`, манекены бегают (`random`) | `hits` + `strong_hits` в минуту |
 | `dodge` | `duel`, teen и jock | `solo-dodge` (никогда не бьёт) против `smart` | −1 × `hits_taken` + 0.25 × `near_misses_dodged`, в минуту |
 | `duel_league` | `duel`, `kind: league` | `duelist` против членов лиги (тот же архетип на их числах) и `smart` на базовых данных, одна дуэль на соперника на сид | исход (победа 1, ничья 0.5, поражение 0) плюс слагаемые `score` (пусто) минус 0.5 за каждый из `dodge`, `spin`, `strike`, выбранный реже 10% решений (`verbs`); в `details` `winrate_league`, `winrate_<архетип>`, `pick_<навык>` |
+| `duel_smart` | `duel`, `kind: league` | как `duel_league`, но `opponents` — `smart` 6 раз (столько же, сколько членов лиги): каждая запись — отдельная дуэль, так что `smart` весит половину оценки (F-048) | как у `duel_league`; `winrate_smart` — среднее по всем шести записям |
 
 Соперники плейграунда играют на базовых данных (игра ← `base`), числа кандидата получает только участник 0. Лига пуста в первом поколении — тогда соперники только из `opponents`.
