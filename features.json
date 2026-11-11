@@ -658,7 +658,7 @@
         "`art/frame-base.json` — из прогона теста, руками не правится. Числа в `art/frame.md`, переписанные из листа (тик, `time_left_s` и таймер, счёт, позиции и доли экрана), переписываются из нового листа так же, как F-040, — без пересчёта на бумаге; текст правил и промпта не меняется, если не изменились сами числа",
         "`factory tool run unity --set mode=test` — все EditMode-тесты зелёные (итог из `.factory/unity/unity-EditMode.xml`); правки оболочки, если понадобятся, зеркалятся в `UnityShell/Assets/`; `dotnet test` не задет. Коммит на `feat/F-049` до результата; `notes` — 2–3 строки для Telegram Nick (почему кадр парка теперь ищет момент сам и какой сид/тик вышел); `decisions` по схеме `{question, chosen, why}` или пустой список"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 0,
       "budget_tokens": 200000,
       "owner_role": "developer-unity",
