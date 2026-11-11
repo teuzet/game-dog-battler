@@ -53,6 +53,8 @@ namespace Game.Core.Tests.Sim
             {
                 var space = Json.Parse(File.ReadAllText(file));
                 var name = Path.GetFileName(file);
+                // F-055: a space may start from a champion of an earlier run ("start_from": "<history.jsonl>#<id>"), not from the game's numbers
+                var from = space["start_from"] is { } sf ? Champion(sf.AsString()) : null;
                 foreach (var p in space["params"]!.Fields)
                 {
                     Assert.True(data.Has(p.Key), $"{name}: no {p.Key} in the data");
@@ -61,10 +63,18 @@ namespace Game.Core.Tests.Sim
                     var start = p.Value["start"]!.AsDouble();
                     Assert.True(min < max, $"{name}: {p.Key} min {min} ≥ max {max}");
                     Assert.InRange(start, min, max);
-                    Assert.Equal(data.Num(p.Key).ToDouble(), start, 3); // start = the game's number now
+                    if (from == null) Assert.Equal(data.Num(p.Key).ToDouble(), start, 3); // start = the game's number now
+                    else Assert.Equal(from[p.Key]!.AsDouble(), start, 6); // start = the champion's number as is
                 }
                 foreach (var pg in space["playgrounds"]!.Items) Assert.Contains(pg["name"]!.AsString(), PlaygroundNames());
             }
+        }
+
+        private static JsonValue Champion(string from)
+        {
+            var parts = from.Split('#');
+            var lines = File.ReadAllLines(Path.Combine(Repo.Root, parts[0])).Where(l => l.Trim().Length > 0);
+            return lines.Select(l => Json.Parse(l)).Single(g => g["champion"]!.AsString() == parts[1])["params"]!;
         }
 
         private static JsonValue Batch(string playgrounds, string league = "[]", string seeds = "[1, 2]") => Json.Parse(
