@@ -626,7 +626,7 @@
         "`dotnet test` зелёный; пороги `DuelTests`, `SkillsTests`, `SwingBenchTests` не ослабляются. Порог побед `AgainstSmartUsesEveryVerbHitsDodgesAndWinsHalf` после переноса — то, что перенесённый чемпион даёт на сидах 1–8, но не ниже 4 и не выше 7 из 8; если F-044 опустил порог ниже 4 и комментарий `// … вернуть ≥ 4 — F-048` стоит, перенос обязан вернуть ≥ 4 и комментарий снимается, а без переноса порог остаётся как есть и это строка `notes`. `rules.duel.opponents` и `Unity/` не меняются",
         "Отчёт `playtest/evolve/duel2.md`: вызовы и поколения, таблица против `smart` до/после и против прошлых поколений, доли навыков, 2–3 строки, что бот делает иначе по весам, ссылка на `runs/duel2/report.md`. Коммит на `feat/F-048` до результата; `notes` — 4–6 строк для Telegram Nick; `decisions` по схеме `{question, chosen, why}` или пустой список"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "gamedesigner-playtest",
@@ -658,7 +658,7 @@
         "`art/frame-base.json` — из прогона теста, руками не правится. Числа в `art/frame.md`, переписанные из листа (тик, `time_left_s` и таймер, счёт, позиции и доли экрана), переписываются из нового листа так же, как F-040, — без пересчёта на бумаге; текст правил и промпта не меняется, если не изменились сами числа",
         "`factory tool run unity --set mode=test` — все EditMode-тесты зелёные (итог из `.factory/unity/unity-EditMode.xml`); правки оболочки, если понадобятся, зеркалятся в `UnityShell/Assets/`; `dotnet test` не задет. Коммит на `feat/F-049` до результата; `notes` — 2–3 строки для Telegram Nick (почему кадр парка теперь ищет момент сам и какой сид/тик вышел); `decisions` по схеме `{question, chosen, why}` или пустой список"
       ],
-      "status": "running",
+      "status": "testing",
       "attempts": 0,
       "budget_tokens": 200000,
       "owner_role": "developer-unity",
