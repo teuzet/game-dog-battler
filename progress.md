@@ -18,3 +18,4 @@
 - 2026-11-10 15:12 F-025 Hits: the owner is the weapon, a parked owner scores nothing (fb298c72fc)
 - 2026-11-10 15:16 F-026 King of the lawn: the lawn is shared, rent in fractions (9dca7c8516)
 - 2026-11-11 07:42 F-030 Дуэль: правила Duel, арена duel 1×1 с кубами и сферами, ХП у собак, матч до 3 побед (0abf81a116)
+- 2026-11-11 07:54 F-031 Unity: дуэль в билде — выбор соперника-бота, бот против бота, ХП и счёт раундов на экране (bd04e3122c)
