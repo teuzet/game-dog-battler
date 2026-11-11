@@ -91,9 +91,10 @@ namespace Game.Core.Tests.Bots
         [Fact]
         public void SwingBacksOffForARunUpWhenTheOwnerIsCloseAndAtRest()
         {
-            var skill = new SwingSkill(Repo.Data());
+            var data = Repo.Data();
+            var skill = new SwingSkill(data);
             var rng = new DetRandom(1);
-            var owner = new Vec2(F("-2"), F("0"));
+            var owner = new Vec2(-data.Num("bots.swing.run_up_m") / 2, F("0")); // closer than the run-up distance
             var aim = skill.Aim(View(owner, Vec2.Zero), Dog("0", "0"), Fixed.Zero, ref rng);
             Assert.True(aim.X <= owner.X + F("0.01") || aim.Y != Fixed.Zero,
                 "the dog does not charge at once: it runs away or round to gather speed");

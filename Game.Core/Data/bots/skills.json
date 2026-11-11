@@ -18,11 +18,11 @@
     "_": "horizon_s 0.3–1.5; danger_m 1–3 (хозяин 0.4 + собака 0.35 — касание, с запасом); step_m 1.5–4; cover_m 0–4 (0 — не прятаться); cover_gap_m 0.4–1.5; не тюнятся: min_speed_mps 3–6 (ниже порога удара хозяин не опасен), arc_slack_m (хозяин дальше поводка на столько летит прямо, а не по дуге), sample_s (шаг предсказания дуги)",
     "arc_slack_m": 0.5,
     "sample_s": 0.1,
-    "horizon_s": 0.8,
-    "danger_m": 1.6,
-    "step_m": 2.5,
-    "cover_m": 2,
-    "cover_gap_m": 0.6,
+    "horizon_s": 0.802441,
+    "danger_m": 1.797623,
+    "step_m": 4.0,
+    "cover_m": 1.141492,
+    "cover_gap_m": 1.168735,
     "min_speed_mps": 4
   },
   "brake": {

@@ -1,0 +1,31 @@
+{
+  "space": "skills",
+  "id": "g12-20",
+  "params": {
+    "bots.swing.closing_speed_mps": 11.34215,
+    "bots.swing.lead_m": 5.670498,
+    "bots.swing.drift_gain_s": 0.283228,
+    "bots.swing.run_up_m": 1.971686,
+    "bots.swing.min_lead_s": 0.245661,
+    "bots.swing.max_lead_s": 2.096997,
+    "bots.swing.moving_speed_mps": 6.0,
+    "bots.skills.dodge.horizon_s": 0.848993,
+    "bots.skills.dodge.danger_m": 1.66944,
+    "bots.skills.dodge.step_m": 1.895537,
+    "bots.skills.dodge.cover_m": 1.911661,
+    "bots.skills.dodge.cover_gap_m": 1.182126
+  },
+  "score": 29.916893,
+  "details": {
+    "bag": 17.75,
+    "bag.hits": 11,
+    "bag.strong_hits": 6.75,
+    "dodge": -0.333107,
+    "dodge.hits_taken": 0.836039,
+    "dodge.near_misses_dodged": 2.01173,
+    "moving_target": 12.5,
+    "moving_target.hits": 7.375,
+    "moving_target.strong_hits": 5.125
+  },
+  "generation": 12
+}

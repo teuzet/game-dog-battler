@@ -120,10 +120,11 @@ namespace Game.Core.Tests.Sim
         public void WithNumbersLaysNumbersOverTheData()
         {
             var data = Repo.Data();
+            var lead = data.Num("bots.swing.lead_m");
             var over = data.WithNumbers(new Dictionary<string, double> { { "bots.swing.lead_m", 1.5 }, { "bots.skills.dodge.danger_m", 2 } });
             Assert.Equal(1.5, over.Num("bots.swing.lead_m").ToDouble(), 6);
             Assert.Equal(2, over.Num("bots.skills.dodge.danger_m").ToDouble(), 6);
-            Assert.Equal(3, data.Num("bots.swing.lead_m").ToDouble(), 6); // the source is untouched
+            Assert.Equal(lead, data.Num("bots.swing.lead_m")); // the source is untouched
         }
     }
 }
