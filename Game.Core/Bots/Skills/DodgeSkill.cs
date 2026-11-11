@@ -92,6 +92,9 @@ namespace Game.Core.Bots.Skills
             return Cursor.At(me + left * (side * _step));
         }
 
+        /// <summary>Is an obstacle within <c>cover_m</c> of my dog (somewhere to hide)?</summary>
+        public bool HasCover(BotView v, Vec2 me) => NearestCover(v, me, out _);
+
         private bool NearestCover(BotView v, Vec2 me, out SeenObject best)
         {
             best = default;
