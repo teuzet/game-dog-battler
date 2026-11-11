@@ -1,0 +1,19 @@
+{
+  "tool": "evolve",
+  "provider": "local",
+  "model": "evolve",
+  "request": {
+    "population": 0,
+    "generations": "60",
+    "seeds": 0,
+    "patience": 0,
+    "max_minutes": 8,
+    "workers": 0,
+    "timeout_s": 0,
+    "seed": 1,
+    "space": "duel3"
+  },
+  "request_hash": "72409ad4591c367d",
+  "created_at": "2026-11-11T18:13:30Z",
+  "usd": 0.0
+}
