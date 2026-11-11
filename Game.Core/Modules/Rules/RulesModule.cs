@@ -6,6 +6,7 @@ using Game.Core.Modules.Bodies;
 using Game.Core.Modules.Dogs;
 using Game.Core.Modules.Hits;
 using Game.Core.Modules.Match;
+using Game.Core.Modules.Rules.Duel;
 using Game.Core.Modules.Rules.KingOfLawn;
 using Game.Core.Modules.Rules.Sandbox;
 using Game.Core.Sim;
@@ -33,6 +34,10 @@ namespace Game.Core.Modules.Rules
         bool ZoneJustAnnounced(Simulation sim);
         /// <summary>The rules' own numbers of a player for metrics.json.</summary>
         IReadOnlyDictionary<string, double> Metrics(Simulation sim, int player);
+        /// <summary>Once, when the session is built: rules that play to a score tell Match here.</summary>
+        void Init(Simulation sim, RulesModule host);
+        /// <summary>The rules' numbers that are on the screen (health, round, round clock), for <c>BotView.Hud</c>.</summary>
+        void Sense(Simulation sim, IDictionary<string, Fixed> hud);
         void Step(Simulation sim, RulesModule host, TickInputs inputs);
         void Hash(ref StateHasher h);
         IRuleSet Clone();
@@ -61,6 +66,7 @@ namespace Game.Core.Modules.Rules
         {
             var arena = sim.Need<ArenaModule>(this, ArenaModule.ModuleName);
             if (arena.RulesName != Active.Name) throw new System.InvalidOperationException($"rules '{Active.Name}' do not match arena '{arena.ArenaName}'");
+            Active.Init(sim, this);
         }
 
         public void Step(Simulation sim, TickInputs inputs) => Active.Step(sim, this, inputs);
@@ -81,6 +87,7 @@ namespace Game.Core.Modules.Rules
         {
             switch (name)
             {
+                case "Duel": return new DuelRules(data, players);
                 case "KingOfLawn": return new KingOfLawnRules(data, players);
                 case "Sandbox": return new SandboxRules(data, players);
                 default: throw new KeyNotFoundException($"no rule set '{name}' in the registry (Modules/Rules)");

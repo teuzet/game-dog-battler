@@ -43,6 +43,10 @@ namespace Game.Core.Modules.Rules.Sandbox
             _nearMisses = (int[])src._nearMisses.Clone();
         }
 
+        public void Init(Simulation sim, RulesModule host) { }
+
+        public void Sense(Simulation sim, IDictionary<string, Fixed> hud) { }
+
         public void Step(Simulation sim, RulesModule host, TickInputs inputs)
         {
             var dogs = sim.Need<DogsModule>(host, DogsModule.ModuleName);

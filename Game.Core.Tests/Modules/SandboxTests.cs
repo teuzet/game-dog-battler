@@ -27,7 +27,7 @@ namespace Game.Core.Tests.Modules
         private static GameData SandboxData(string owner = "teen")
         {
             var data = Repo.Data();
-            return new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"sandbox\",\"human_owner\":\"" + owner + "\"}}")), data.Variant);
+            return data.WithArena("sandbox").WithHumanOwner(owner);
         }
 
         /// <summary>Sets velocities of bodies every tick between Dogs and Bodies: a scripted swing at an exact speed.</summary>

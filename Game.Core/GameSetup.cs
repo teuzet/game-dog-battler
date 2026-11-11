@@ -79,6 +79,7 @@ namespace Game.Core
                 if (q != player) v.Objects.Add(new SeenObject { Kind = "dog", Id = q, X = dog.X, Y = dog.Y, VX = dogVel.X, VY = dogVel.Y });
                 v.Objects.Add(new SeenObject { Kind = "owner", Id = q, X = owner.X, Y = owner.Y, VX = ownerVel.X, VY = ownerVel.Y });
             }
+            rules.Active.Sense(sim, v.Hud);
             if (rules.Active.Zone is ZoneInfo z)
                 v.Objects.Add(new SeenObject { Kind = "zone", X = z.Center.X, Y = z.Center.Y, Value = z.Radius });
             if (rules.Active.NextZone is ZoneInfo n)

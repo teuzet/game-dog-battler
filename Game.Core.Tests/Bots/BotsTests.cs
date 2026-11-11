@@ -16,7 +16,7 @@ namespace Game.Core.Tests.Bots
         private static GameData SandboxData(string owner = "teen")
         {
             var data = Repo.Data();
-            return new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"sandbox\",\"human_owner\":\"" + owner + "\"}}")), data.Variant);
+            return data.WithArena("sandbox").WithHumanOwner(owner);
         }
 
         private static BotView View(Vec2 owner, Vec2 ownerVel)

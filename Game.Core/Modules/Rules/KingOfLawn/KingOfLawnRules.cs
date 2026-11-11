@@ -92,6 +92,10 @@ namespace Game.Core.Modules.Rules.KingOfLawn
 
         public bool ZoneJustAnnounced(Simulation sim) => _announced && sim.Tick - _announcedTick < _decisionTicks;
 
+        public void Init(Simulation sim, RulesModule host) { }
+
+        public void Sense(Simulation sim, IDictionary<string, Fixed> hud) { }
+
         public void Step(Simulation sim, RulesModule host, TickInputs inputs)
         {
             var dogs = sim.Need<DogsModule>(host, DogsModule.ModuleName);

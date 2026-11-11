@@ -19,8 +19,12 @@ namespace Game.Core.Sim
         /// <summary>The owner type the human picked before the match (game.human_owner), "" = the data's own.</summary>
         public string Owner = "";
 
-        public InputLog(int seed, int players, string variant = "", string owner = "")
+        /// <summary>The arena played (game.arena); "" in logs written before arenas were recorded: they read as the data's own.</summary>
+        public string Arena = "";
+
+        public InputLog(int seed, int players, string variant = "", string owner = "", string arena = "")
         {
+            Arena = arena;
             Seed = seed;
             Players = players;
             Variant = variant;
@@ -37,6 +41,7 @@ namespace Game.Core.Sim
             sb.Append("players ").Append(Players.ToString(CultureInfo.InvariantCulture)).Append('\n');
             sb.Append("variant ").Append(Variant).Append('\n');
             if (Owner.Length > 0) sb.Append("owner ").Append(Owner).Append('\n');
+            if (Arena.Length > 0) sb.Append("arena ").Append(Arena).Append('\n');
             sb.Append("ticks ").Append(Ticks.Count.ToString(CultureInfo.InvariantCulture)).Append('\n');
             var last = new PlayerInput[Players];
             for (int t = 0; t < Ticks.Count; t++)
@@ -55,7 +60,7 @@ namespace Game.Core.Sim
         public static InputLog Parse(string text)
         {
             int seed = 0, players = 0, ticks = 0;
-            string variant = "", owner = "";
+            string variant = "", owner = "", arena = "";
             var changes = new List<int[]>();
             foreach (var raw in text.Split('\n'))
             {
@@ -68,6 +73,7 @@ namespace Game.Core.Sim
                     case "players": players = int.Parse(parts[1], CultureInfo.InvariantCulture); break;
                     case "variant": variant = parts.Length > 1 ? parts[1] : ""; break;
                     case "owner": owner = parts[1]; break;
+                    case "arena": arena = parts[1]; break;
                     case "ticks": ticks = int.Parse(parts[1], CultureInfo.InvariantCulture); break;
                     default:
                         if (parts.Length != 5) throw new FormatException($"bad input log line: {line}");
@@ -77,7 +83,7 @@ namespace Game.Core.Sim
                         break;
                 }
             }
-            var log = new InputLog(seed, players, variant, owner);
+            var log = new InputLog(seed, players, variant, owner, arena);
             var cur = new PlayerInput[players];
             int k = 0;
             for (int t = 0; t < ticks; t++)

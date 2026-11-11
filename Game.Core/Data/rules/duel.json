@@ -1,0 +1,13 @@
+{
+  "тюнить": ["hp", "damage_per_strength", "damage_min", "strong_multiplier", "rounds_to_win", "round_s", "between_rounds_s"],
+  "_": "урон удара = max(damage_min, damage_per_strength × Hit.Strength), сильный удар × strong_multiplier; Strength = масса хозяина × квадрат скорости (1500…11760). Размер поля, препятствия и длина матча — в arenas/duel.json",
+  "hp": 40,
+  "damage_per_strength": 0.006,
+  "damage_min": 12,
+  "strong_multiplier": 1.1,
+  "rounds_to_win": 3,
+  "round_s": 30,
+  "between_rounds_s": 3,
+  "opponents": ["smart"],
+  "owner_types": ["teen", "jock"]
+}

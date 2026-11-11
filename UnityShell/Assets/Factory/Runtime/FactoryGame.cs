@@ -55,7 +55,7 @@ namespace Factory.Shell
             // "-arena <name>" on the command line plays another arena of Data/arenas (e.g. the sandbox).
             var args = Environment.GetCommandLineArgs();
             int at = Array.IndexOf(args, "-arena");
-            if (at >= 0 && at + 1 < args.Length) _base.Get("game").Set("arena", JsonValue.Str(args[at + 1]));
+            if (at >= 0 && at + 1 < args.Length) _base = _base.WithArena(args[at + 1]);
             _overlay.OnPick = Pick;
             _overlay.OnSurvey = Survey;
             _overlay.OnStart = Begin;
@@ -133,7 +133,7 @@ namespace Factory.Shell
                 var a = Archetype.Find(data, opponents[(p - 1) % opponents.Count]);
                 _bots.Add(new BotDriver(p, a, Game.Strategy(a, data), (ulong)_seed));
             }
-            _log = new InputLog(_seed, Sim.Players, data.Variant, data.Str("game.human_owner"));
+            _log = new InputLog(_seed, Sim.Players, data.Variant, data.Str("game.human_owner"), data.Str("game.arena"));
             _acc = 0;
             _ended = false;
             SessionStarted?.Invoke(Sim);
