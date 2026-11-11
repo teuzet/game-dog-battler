@@ -382,6 +382,112 @@
       "iteration": null,
       "sprint": "S-3",
       "modules": []
+    },
+    {
+      "id": "F-041",
+      "title": "Evolve: оценщик `Game.Sim evaluate`, плейграунды данными (груша, бегущая цель, уворот, лига дуэли) и пространство поиска `skills`",
+      "layer": "core",
+      "milestone": "S-1",
+      "depends_on": [],
+      "acceptance": [
+        "Команда `Game.Sim evaluate --batch <json> --scores <json>` по карте тула `evolve` (SKILL.md тула): читает пачку `{space, generation, seeds[], playgrounds[{name, weight}], base{путь: число}, league[{id, params}], candidates[{id, params}]}` и пишет `{\"scores\": [{id, score, details{...}}]}` для каждого кандидата. Данные кандидата = данные игры ← `base` ← `params`, где ключи — пути как в `GameData.Num` (`bots.swing.lead_m`, `bots.skills.dodge.danger_m`); помощник `GameData.WithNumbers(IReadOnlyDictionary<string, double>)` (сначала `grep` — нет ли готового) кладёт плоский словарь поверх json. Оценка кандидата = Σ `weight` × оценка плейграунда, оценка плейграунда — среднее по сидам пачки и по сессиям внутри; в `details` — оценка каждого плейграунда и его внутренние числа. Детерминизм: одна пачка дважды → байт в байт одинаковый файл оценок. Неизвестный плейграунд, метрика или архетип, кандидат без оценки — исключение и код выхода ≠ 0, а не тихий ноль",
+        "Плейграунд — файл данных `Game.Core/Data/playgrounds/<имя>.json`, оценщик находит его по `playgrounds[].name`; новый плейграунд = новый файл (и, если нужно, арена в `Data/arenas/`), без правок `Game.Sim` и тула — это четвёртый пункт «готово, когда» спринта. Поля: `arena`; `owners` (типажи хозяина участника 0, сессия на каждый); `player` (архетип участника 0 — его числа и двигает поиск); `opponents` (архетипы участников 1.., поверх `rules.<набор>.opponents`); `seconds` (длина сессии поверх `match.seconds`, чтобы груша не шла 120 с); `score` — список слагаемых `{metric, weight, per_minute}` по `IGame.Metrics(sim, 0)` (метрики активных правил: у Sandbox `hits`, `strong_hits`, `near_misses`; у Duel `hits`, `hits_taken`, `near_misses_dodged`, `damage_dealt`, `rounds_won`). `kind: \"league\"` — самоигра на дуэли: соперники кандидата — каждый член `league` (тот же архетип `player` с его `params` поверх данных) и каждый архетип из `opponents` на базовых данных; одна дуэль на соперника на сид; оценка дуэли = исход (победа 1, ничья 0.5, поражение 0) плюс слагаемые `score`; в `details` — `winrate_league`, `winrate_<архетип>` и среднее слагаемых. Лига пуста в первом поколении — тогда соперники только из `opponents`",
+        "Четыре плейграунда из обсуждения спринта (`sprints/S-1.md`): `bag` — песочница, манекены стоят (`opponents: [\"idle\"]`), участник 0 — `solo-strike`, хозяева teen и jock, 60 с, оценка `hits` + `strong_hits` в минуту; `moving_target` — то же с бегущими манекенами (`random`); `dodge` — арена `duel`, соперник `smart`, участник 0 — `solo-dodge` (никогда не бьёт, только уворачивается), оценка −1 × `hits_taken` в минуту + 0.25 × `near_misses_dodged` в минуту; `duel_league` — `kind: league`, арена `duel`, пока `player: \"smart\"`, `opponents: [\"smart\"]` (F-042 переключит на `duelist` и добавит штраф за невыполненные глаголы). Стратегия `solo` (`Game.Core/Bots/SoloStrategy.cs`): ведёт один навык из `SkillSet` по `params.skill` архетипа, цель — ближайшая чужая собака (`Cursor.NearestRival`); архетипы `solo-strike` и `solo-dodge` в `archetypes.json` с реакцией, удержанием и разбросом как у `smart` (честность задаётся, не тюнится), в `bots.session.tracked` их не добавлять (меню Unity и прогон парка их не видят)",
+        "`playtest/evolve.json` по карте тула: `build` (`dotnet build Game.Sim -c Release`), `command` с `{batch}` и `{scores}` и `--no-build`, `workers: 0`, `timeout_s: 900`. Пространство `playtest/evolve/skills.json`: `params` — все числа из `тюнить` в `bots.swing.*` (пределы исполнитель выводит из геометрии удара и дописывает в поле `_` `swing.json`: например `lead_m` 0–6, `closing_speed_mps` 3–12, `run_up_m` 1–8, `min_lead_s` < `max_lead_s`) и из `тюнить` в `bots.skills.dodge.*` (пределы из `_` `skills.json`), у каждого `start` = текущее число игры; `playgrounds`: `bag` 1, `moving_target` 1, `dodge` 1; без лиги; `population: 24`, `generations: 30`, `seeds: 4`, `patience: 6`. `.gitignore`: `playtest/evolve/runs/**/gens/`, `playtest/evolve/runs/**/state.json`, `playtest/evolve/runs/smoke/`",
+        "Тесты `Game.Core.Tests/Sim/EvaluateTests.cs` (Game.Sim уже подключён к тестам, как в `SwingBenchTests`): каждый `Game.Core/Data/playgrounds/*.json` грузится — арена и архетипы существуют, каждая метрика из `score` есть в `IGame.Metrics` сессии на этой арене; каждый `playtest/evolve/*.json` — каждый путь из `params` есть в данных (`data.Has`), `min` < `max`, `start` внутри, имена плейграундов существуют (`base_from` не обязан существовать: его делает прогон); пачка из двух кандидатов (текущие числа и `bots.swing.lead_m` на минимуме) на сидах [1, 2] с `bag` и `dodge` даёт оценки обоим, `details` содержат `bag` и `dodge`, повтор пачки даёт тот же файл; пачка `kind: league` с лигой из одного члена даёт `winrate_league` и `winrate_smart` в 0..1",
+        "Дымовой прогон тулом: `factory tool run evolve --set space=skills --set population=4 --set generations=2 --set seeds=2 --out playtest/evolve/runs/smoke` → `ok: true`, `generation: 2`; ответ `best` и время на поколение — в `notes` (по нему F-043 решает, сколько вызовов нужно); папка smoke не коммитится. `dotnet test` зелёный, контрактные тесты не тронуты, `MODULES.md` не меняется; `ARCHITECTURE.md` → «Боты» получает 3–4 строки про оценщик и плейграунды, `design/bots-duel.md` — раздел «Плейграунды» (таблица: имя, арена, кто играет, оценка). Коммит на `feat/F-041` до результата; `decisions` по схеме `{question, chosen, why}` или пустой список"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 500000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Sim/Program.cs",
+        "Game.Sim/Evaluate.cs",
+        "Game.Core/Bots/SoloStrategy.cs",
+        "Game.Core/GameSetup.cs",
+        "Game.Core/Data/GameData.cs",
+        "Game.Core/Data/playgrounds/",
+        "Game.Core/Data/bots/archetypes.json",
+        "Game.Core/Data/bots/swing.json",
+        "playtest/evolve.json",
+        "playtest/evolve/skills.json",
+        ".gitignore",
+        "Game.Core.Tests/Sim/EvaluateTests.cs",
+        "ARCHITECTURE.md",
+        "design/bots-duel.md"
+      ],
+      "priority": 12,
+      "iteration": null,
+      "sprint": "S-1",
+      "modules": []
+    },
+    {
+      "id": "F-042",
+      "title": "Боты: слой решений — `duelist` выбирает навык по весам из данных и делает все три глагола в дуэли; плейграунд лиги под него и пространство `duel`",
+      "layer": "core",
+      "milestone": "S-1",
+      "depends_on": [
+        "F-041"
+      ],
+      "acceptance": [
+        "Верхний слой бота дуэли из `design/bots-duel.md` → «Что будет взвешивать слой решений»: `Game.Core/Bots/DuelistStrategy.cs` раз в `decide_period_s` считает полезность каждого из пяти навыков `SkillSet` как `bias_<навык>` + Σ `w_<навык>_<признак>` × признак и ведёт выбранный навык до следующего решения; переключается, только если лучший обгоняет текущий на `switch_margin`. Признаки 0..1 только из `BotView`: `dist` (до ближайшей чужой собаки, делённая на диагональ арены), `in_reach` (чужая собака в пределах `leash_m`), `my_owner_speed` и `rival_owner_speed` (делённые на `hits.threshold_mps`, потолок 1), `threat` (из `DodgeSkill.Pass`: 1 при пролёте вплотную, 0 при −1 или дальше 2 × `danger_m`), `cover` (препятствие в `cover_m`), `my_hp` и `rival_hp` (`Hud[\"hp_<q>\"]`), `my_speed` (скорость собаки, делённая на её максимум из данных породы), `round_time` (`round_time_left` / `round_s`). Цели навыков: `Strike` и `Dodge` — ближайшая чужая собака, `Move` — точка на `approach_m` от неё с моей стороны, `Spin` и `Brake` — без цели. Все числа — `Game.Core/Data/bots/decide.json` с `тюнить` и пределами в `_` (веса −2..2, смещения −1..1, `decide_period_s` 0.2–0.6, `switch_margin` 0–0.5, `approach_m` 1–4); стартовые веса подобраны руками только чтобы бот был осмыслен (одна фраза почему у каждого навыка в `_`), сильным его делает поиск",
+        "Архетип `duelist` в `archetypes.json` (`strategy: \"duelist\"`, реакция 250 мс, удержание 300 мс, `aim_error_m` 0.6 — та же честность, что у `smart`; `about` — два предложения), строка в `DogBattlerGame.Strategy`, имя в `bots.session.tracked` (так `Game.Sim --arena duel` пишет его винрейт против `smart`, а меню Unity предлагает его соперником). `rules.duel.opponents` остаётся `smart`, пока числа чемпиона не легли в данные (следующая задача после поиска)",
+        "Защита от кружения из обсуждения спринта: интерфейс `IPicks` в `Bots/` (`IReadOnlyDictionary<string, int> Picks` — сколько раз выбран каждый навык), `DuelistStrategy` его реализует; оценщик `Game.Sim evaluate` (F-041) в плейграунде `kind: league` пишет в `details` доли `pick_<навык>`, когда стратегия участника 0 реализует `IPicks`, и читает из json плейграунда блок `verbs: {\"dodge\": 0.1, \"spin\": 0.1, \"strike\": 0.1, \"penalty\": 0.5}`: каждый названный навык с долей ниже порога снимает `penalty` с оценки дуэли. `Game.Core/Data/playgrounds/duel_league.json` переключается на `player: \"duelist\"`, `opponents: [\"smart\"]` и получает блок `verbs`",
+        "Пространство `playtest/evolve/duel.json`: `params` — все `тюнить` из `bots.decide.*` плюс `тюнить` из `bots.skills.spin.*`, `bots.skills.move.*`, `bots.skills.brake.*` (пределы из `_` `skills.json`), у каждого `start` = текущее число; `base_from: \"playtest/evolve/runs/skills/best.json\"` (замах и уворот заморожены числами чемпиона F-043); `playgrounds`: `duel_league` 1; `league: {size: 6}`; `population: 24`, `generations: 30`, `seeds: 4`, `patience: 6`. Тест данных пространств из F-041 покрывает файл; тулом не гонять — `base_from` появится после F-043",
+        "Тесты `Game.Core.Tests/Bots/DuelistTests.cs`: в `decide.json` есть смещение и веса по всем признакам для каждого из пяти навыков и пределы для всех «тюнить»; дуэли `duelist` против `smart` на `duel`, сиды 1–8, через `BotDriver` (как `Runner.Play` в `Game.Sim`): в каждой дуэли каждый из `dodge`, `spin`, `strike` выбран не меньше чем в 10% решений (`IPicks`), в среднем ≥ 1 удар `duelist` за дуэль (`Metrics[\"hits\"]`), сумма `near_misses_dodged` > 0, выигранных дуэлей ≥ 4 из 8 (80% — работа поиска, не этой задачи); против `idle` — 8 из 8 нокаутами; форк (`sim.Fork` + `BotDriver.Clone`) ведёт бота так же, как оригинал, 5 с подряд (навык и счётчики клонируются)",
+        "`dotnet test` зелёный, контрактные тесты не тронуты, `MODULES.md` не меняется (всё живёт в `Bots/`, `Game.Sim` и данных); `design/bots-duel.md` — раздел «Слой решений» (признаки, формула, числа и пределы, защита глаголов). Коммит на `feat/F-042` до результата; `decisions` по схеме `{question, chosen, why}` или пустой список"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 500000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Bots/DuelistStrategy.cs",
+        "Game.Core/Bots/Bots.cs",
+        "Game.Core/GameSetup.cs",
+        "Game.Core/Data/bots/decide.json",
+        "Game.Core/Data/bots/archetypes.json",
+        "Game.Core/Data/bots/session.json",
+        "Game.Core/Data/playgrounds/duel_league.json",
+        "Game.Sim/Evaluate.cs",
+        "playtest/evolve/duel.json",
+        "Game.Core.Tests/Bots/DuelistTests.cs",
+        "design/bots-duel.md"
+      ],
+      "priority": 14,
+      "iteration": null,
+      "sprint": "S-1",
+      "modules": []
+    },
+    {
+      "id": "F-043",
+      "title": "Evolve: поиск чисел замаха и уворота на плейграундах `skills`, числа чемпиона в данные, замер до/после",
+      "layer": "playtest",
+      "milestone": "S-1",
+      "depends_on": [
+        "F-041"
+      ],
+      "acceptance": [
+        "Прогон `factory tool run evolve --set space=skills --out playtest/evolve/runs/skills` повторяется с той же `--out`, пока не придёт `done: true` или не кончатся 6 вызовов (у роли час; время на поколение известно из `notes` F-041 — если 30 поколений не укладываются, сократить `--set generations=` заранее, а не обрывать на середине). Из `--out` коммитятся `best.json`, `league.json`, `history.jsonl`, `report.md` (`gens/` и `state.json` в `.gitignore`); `best.json` нужен F-042 как `base_from`",
+        "Числа чемпиона (`best.json` → `params`) переносятся в `Game.Core/Data/bots/swing.json` и `Game.Core/Data/bots/skills.json` → `dodge` (округление до двух знаков, если это не меняет оценку больше чем на шум; списки `тюнить` и заметки `_` не трогать). Числа, не вошедшие в пространство, не меняются; руками ничего не подкручивается — только чемпион или чемпион предыдущего поколения из `history.jsonl`, если последний проваливает проверки ниже",
+        "Проверка на свежих сидах, не тех, что были в поиске: `Game.Sim --bench swing --seeds 8 --first-seed 101` до (на `main` с данными до переноса) и после — `smart` попаданий в минуту в каждой из четырёх ячеек (standing/running × teen/jock) не ниже, чем до; `Game.Sim evaluate` пачкой из двух кандидатов (старые числа и новые) на сидах 101–108 с `bag`, `moving_target`, `dodge` — новые не хуже в сумме и в `dodge` отдельно. Если какая-то ячейка стала хуже при лучшей сумме — записать числа и решение в `decisions`. `dotnet test` зелёный на новых числах: пороги `SkillsTests` и `SwingBenchTests` не ослабляются; если чемпион их не проходит, берётся чемпион раньше по `history.jsonl`, и это записывается",
+        "Отчёт `playtest/evolve/skills.md`: сколько поколений и вызовов, таблица до/после по плейграундам и по ячейкам стенда замаха на свежих сидах, 2–3 строки, что бот теперь делает иначе (из чисел: куда сдвинулись опережение, дистанция разбега, запас уворота), ссылка на `report.md`. Коммит на `feat/F-043` до результата; `notes` — 4–6 строк для Telegram Nick (лучшая оценка, до/после, что изменилось в поведении); `decisions` по схеме `{question, chosen, why}` или пустой список"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 300000,
+      "owner_role": "gamedesigner-playtest",
+      "touches": [
+        "playtest/evolve/runs/skills/",
+        "playtest/evolve/skills.md",
+        "Game.Core/Data/bots/swing.json",
+        "Game.Core/Data/bots/skills.json"
+      ],
+      "priority": 16,
+      "iteration": null,
+      "sprint": "S-1",
+      "modules": []
     }
   ]
 }
