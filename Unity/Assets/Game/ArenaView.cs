@@ -20,7 +20,7 @@ namespace DogBattler.View
     {
         public const float CameraPitch = 60f; // art/style.md → «Камера»
         public const float CameraFov = 40f;
-        const float CameraMargin = 1.2f;
+        public const float CameraMargin = 1.2f;
         const float FlashDecayPerS = 5f;
 
         private sealed class DogItem

@@ -38,10 +38,14 @@ namespace Factory.Shell
         private List<string> _variantNames = new List<string>();
         private string _variantSet = "", _variantLabel = "", _variantName = "";
         private bool _ended, _capture;
+        private int? _fixedSeed;
         private MatchSetup _setup = new MatchSetup();
 
         /// <summary>The human only watches: participant 0 is a bot.</summary>
         public bool BotVsBot => _setup.BotVsBot;
+        /// <summary>The seed and the data of the running session, for a capture that drives a bot itself.</summary>
+        public int Seed => _seed;
+        public GameData Data => _data;
         /// <summary>The player the screen is about; -1 when nobody plays (bot against bot).</summary>
         public int ViewedPlayer => _setup.BotVsBot ? -1 : HumanPlayer;
 
@@ -81,6 +85,9 @@ namespace Factory.Shell
             _overlay.Owners = owners;
             _overlay.OwnerLabels = ownerLabels;
             _capture = Array.IndexOf(args, "-capture") >= 0;
+            // "-seed <N>" fixes the seed of the session (a screenshot of a known moment); without it every session gets a new one.
+            int seedAt = Array.IndexOf(args, "-seed");
+            if (seedAt >= 0 && seedAt + 1 < args.Length) _fixedSeed = int.Parse(args[seedAt + 1], System.Globalization.CultureInfo.InvariantCulture);
             var sets = GameData.VariantSets(_dataDir);
             if (sets.Count > 0)
             {
@@ -139,7 +146,7 @@ namespace Factory.Shell
         private void NewSession(GameData data)
         {
             _data = data;
-            _seed = Environment.TickCount & 0x7fffffff;
+            _seed = _fixedSeed ?? (Environment.TickCount & 0x7fffffff);
             Sim = Game.Create(_seed, data);
             _bots = new List<BotDriver>();
             _bots = _setup.Drivers(Game, data, Sim.Players, _seed);
