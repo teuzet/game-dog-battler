@@ -397,7 +397,7 @@
         "Тесты `Game.Core.Tests/Sim/EvaluateTests.cs` (Game.Sim уже подключён к тестам, как в `SwingBenchTests`): каждый `Game.Core/Data/playgrounds/*.json` грузится — арена и архетипы существуют, каждая метрика из `score` есть в `IGame.Metrics` сессии на этой арене; каждый `playtest/evolve/*.json` — каждый путь из `params` есть в данных (`data.Has`), `min` < `max`, `start` внутри, имена плейграундов существуют (`base_from` не обязан существовать: его делает прогон); пачка из двух кандидатов (текущие числа и `bots.swing.lead_m` на минимуме) на сидах [1, 2] с `bag` и `dodge` даёт оценки обоим, `details` содержат `bag` и `dodge`, повтор пачки даёт тот же файл; пачка `kind: league` с лигой из одного члена даёт `winrate_league` и `winrate_smart` в 0..1",
         "Дымовой прогон тулом: `factory tool run evolve --set space=skills --set population=4 --set generations=2 --set seeds=2 --out playtest/evolve/runs/smoke` → `ok: true`, `generation: 2`; ответ `best` и время на поколение — в `notes` (по нему F-043 решает, сколько вызовов нужно); папка smoke не коммитится. `dotnet test` зелёный, контрактные тесты не тронуты, `MODULES.md` не меняется; `ARCHITECTURE.md` → «Боты» получает 3–4 строки про оценщик и плейграунды, `design/bots-duel.md` — раздел «Плейграунды» (таблица: имя, арена, кто играет, оценка). Коммит на `feat/F-041` до результата; `decisions` по схеме `{question, chosen, why}` или пустой список"
       ],
-      "status": "unity_check",
+      "status": "done",
       "attempts": 0,
       "budget_tokens": 500000,
       "owner_role": "developer-core",
