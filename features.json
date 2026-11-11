@@ -596,7 +596,7 @@
         "Фейк-скрин `screen.png`: абзац сцены `art/frame.md` → «Промпт» дословно + абзац направления 2 + «figures and HUD exactly as on the attached sheets»; `refs` — `assets.png`, `hud.png` и `art/previews/frame-base.png`, если он есть в `main` (нет — записать). Чеклист `art/frame.md` пройден; несовпадения — до трёх строк в «Что не совпало», без ретуши",
         "Вне `art/` ничего не меняется; коммит на `feat/F-047` до результата; `notes` — 3–5 строк для Telegram Nick: пути к трём png, чем проработка отличается от картинки F-035 и что дорого для простого 3D, плюс одна строка-сравнение трёх проработанных направлений (03, 06, 02) без выбора за Nick; `decisions` по схеме `{question, chosen, why}` или пустой список"
       ],
-      "status": "unity_check",
+      "status": "done",
       "attempts": 1,
       "budget_tokens": 300000,
       "owner_role": "artist",
