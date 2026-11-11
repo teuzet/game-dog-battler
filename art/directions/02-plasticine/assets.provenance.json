@@ -1,0 +1,17 @@
+{
+  "tool": "image-gen",
+  "provider": "codex",
+  "model": "codex:$imagegen",
+  "request": {
+    "size": "1536x1024",
+    "n": 1,
+    "prompt": "Game asset sheet for a 4-player top-down party brawler: every figure and arena piece laid out separately in a clean grid on a plain neutral warm-grey background, no scene, no ground except the swatches listed. Every item is seen from the same in-game camera: perspective view tilted 60° down from above, no rotation, so we see the tops of heads and backs a lot and the fronts only a little. Each item is a simple 3D game model with one matte material, big readable silhouette, slightly big head, dot eyes, no fur, no hair strands, no cloth folds, no particles, no small details, no text labels. One still pose per item: no motion trails, no animation frames, no repeated poses.\n\nTop row, three dogs standing, each with a collar in its player colour and a short straight stub of leash in the same colour: a black-and-white border collie with a red collar; a fawn great dane (tall and long) with a purple collar; The Stack — four small tan chihuahuas standing close together, each with its own blue collar and its own short blue leash stub.\nMiddle row, three dog owners standing calm and busy with their own thing, each wearing muted everyday clothes with one patch of the player colour stuck on top (a scarf, a cap or a sleeve band) and no other player colours, the hand holding a short straight leash stub of the same colour: a teenager staring at a phone, red patch; a granny holding an open umbrella and pulling a wheeled shopping bag, yellow patch, umbrella and bag muted brown and grey; a muscular gym guy drinking from a shaker, blue patch, shaker muted grey.\nBottom row, arena pieces of the park, all also seen from 60° above: one tree (thick trunk with one ball crown); one short wooden bench; one square swatch of olive lawn with an ochre sand border strip along one side; on a separate olive lawn swatch, one pale light-green flat filled circle on the ground (the scoring zone) and next to it a paler, fainter filled circle of the same size (the next zone).\n\nStyle direction «Plasticine stop-motion»: shapes — the same simple forms but hand-sculpted from modelling clay, slightly uneven silhouettes, thick sausage legs, dents and smears sculpted into the form itself, not painted on; materials — matte clay with a faint greasy highlight, collars as rolled clay rings and the owner's colour patch as a clay patch stuck on top of the clothes, leash stubs as clay sausages; light — warm studio light, soft shadows slightly wider than usual; palette — warm and slightly earthy: olive grass, ochre sand, brick-brown wood, player colours (red, blue, yellow, purple) like clean pieces of clay straight from the box; outline — none.",
+    "refs": [
+      "art/directions/02-plasticine.png"
+    ],
+    "name": "assets"
+  },
+  "request_hash": "43c8a51cc21702e7",
+  "created_at": "2026-11-11T18:18:23Z",
+  "usd": 0.0
+}
