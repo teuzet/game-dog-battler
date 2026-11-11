@@ -18,6 +18,10 @@ var opts = Args.Parse(args);
 var dataDir = GameData.FindDataDir(AppContext.BaseDirectory);
 if (!Directory.Exists(dataDir)) dataDir = GameData.FindDataDir(Directory.GetCurrentDirectory());
 var data = GameData.Load(dataDir);
+var replayLog = opts.Replay.Length > 0 ? InputLog.Load(opts.Replay) : null;
+// the arena (and its own "data": players, match length) goes under the variant: "--arena X", or the one a replayed log was played on
+var arenaName = opts.Arena.Length > 0 ? opts.Arena : replayLog?.Arena ?? "";
+if (arenaName.Length > 0) data = data.WithArena(arenaName);
 if (opts.Variant.Length > 0)
 {
     var parts = opts.Variant.Split('/');
@@ -28,7 +32,7 @@ Directory.CreateDirectory(opts.Out);
 
 if (opts.Replay.Length > 0)
 {
-    var replay = Runner.Replay(game, data, InputLog.Load(opts.Replay));
+    var replay = Runner.Replay(game, data, replayLog!);
     File.WriteAllText(Path.Combine(opts.Out, "replay.md"), replay, new UTF8Encoding(false));
     Console.WriteLine($"replayed {opts.Replay}");
     return 0;
@@ -47,7 +51,6 @@ var tracked = data.Get("bots.session.tracked").Items.Select(i => i.AsString()).T
 var ownerTypes = new List<string>();
 if (opts.Arena.Length > 0)
 {
-    data = new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"" + opts.Arena + "\"}}")), data.Variant);
     foreach (var o in data.Get("rules." + opts.Arena + ".owner_types").Items) ownerTypes.Add(o.AsString());
 }
 var opponents = Archetype.Opponents(data);

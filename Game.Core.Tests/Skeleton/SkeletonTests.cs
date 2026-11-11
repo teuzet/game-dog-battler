@@ -45,13 +45,15 @@ namespace Game.Core.Tests.Skeleton
         [Theory]
         [InlineData("park")]
         [InlineData("sandbox")]
+        [InlineData("duel")]
         public void EveryArenaBuildsASession(string arena)
         {
             var data = Repo.Data();
-            data = new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"" + arena + "\"}}")));
+            data = data.WithArena(arena);
             var sim = GameSetup.Game.Create(1, data);
             Assert.Equal(arena, sim.Get<ArenaModule>("Arena").ArenaName);
-            Assert.Equal(arena == "park" ? "KingOfLawn" : "Sandbox", sim.Get<RulesModule>("Rules").Active.Name);
+            Assert.Equal(arena == "park" ? "KingOfLawn" : arena == "duel" ? "Duel" : "Sandbox", sim.Get<RulesModule>("Rules").Active.Name);
+            if (arena == "duel") Assert.Equal(2, sim.Players);
             for (int i = 0; i < 60; i++) sim.Step(TickInputs.Empty(sim.Players));
         }
 
@@ -243,7 +245,7 @@ namespace Game.Core.Tests.Skeleton
             Assert.Equal(120 * Simulation.TicksPerSecond, sim.Tick);
 
             // the tie on the sandbox: no circle there, so none can land on one tied player's spawn and break it
-            var sandbox = new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"sandbox\"}}")), data.Variant);
+            var sandbox = data.WithArena("sandbox");
             var tie = GameSetup.Game.Create(1, sandbox);
             tie.Get<MatchModule>("Match").Award(0, 400, "test");
             tie.Get<MatchModule>("Match").Award(3, 400, "test");

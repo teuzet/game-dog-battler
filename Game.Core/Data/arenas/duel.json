@@ -1,0 +1,23 @@
+{
+  "title": "Дуэль",
+  "rules": "Duel",
+  "width": 16,
+  "height": 12,
+  "тюнить": ["width", "height", "obstacles", "spawns", "data"],
+  "_": "data кладётся поверх данных игры через GameData.WithArena: 2 участника; 5 раундов по rules.duel.round_s с паузами (162 с) ≤ match.seconds ≤ game.session.max_seconds",
+  "data": {
+    "game": { "players": 2, "session": { "max_seconds": 180 } },
+    "match": { "seconds": 170 }
+  },
+  "spawns": [
+    { "dog": { "x": -4, "y": 0 }, "owner": { "x": -6.5, "y": -1.5 } },
+    { "dog": { "x": 4, "y": 0 }, "owner": { "x": 6.5, "y": 1.5 } }
+  ],
+  "obstacles": [
+    { "shape": "rect", "x": 0, "y": -3.5, "width": 1.6, "height": 1.2 },
+    { "shape": "rect", "x": 0, "y": 3.5, "width": 1.6, "height": 1.2 },
+    { "shape": "circle", "x": -2.5, "y": 2, "radius": 0.5 },
+    { "shape": "circle", "x": 2.5, "y": -2, "radius": 0.5 }
+  ],
+  "props": []
+}

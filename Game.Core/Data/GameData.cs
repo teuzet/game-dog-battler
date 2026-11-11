@@ -82,6 +82,16 @@ namespace Game.Core.Data
         public GameData WithHumanOwner(string owner) =>
             new GameData(Root.MergedWith(Json.Parse("{\"game\":{\"human_owner\":\"" + owner + "\"}}")), Variant);
 
+        /// <summary>The same data playing arena <paramref name="name"/>: <c>game.arena</c> and, laid on top, the arena's own
+        /// "data" block (Data/arenas/&lt;name&gt;.json → how many players, how long the match and the session run).
+        /// Apply it before a variant, so a variant's numbers still win.</summary>
+        public GameData WithArena(string name)
+        {
+            var root = Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"" + name + "\"}}"));
+            var own = Get("arenas." + name)["data"];
+            return new GameData(own == null ? root : root.MergedWith(own), Variant);
+        }
+
         public JsonValue Get(string path)
         {
             var node = Root;

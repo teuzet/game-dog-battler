@@ -26,8 +26,8 @@ static class SwingBench
         foreach (var owner in owners)
         foreach (var name in tracked)
         {
-            var d = new GameData(data.Root.MergedWith(Json.Parse(
-                "{\"game\":{\"arena\":\"sandbox\",\"human_owner\":\"" + owner + "\"},\"rules\":{\"sandbox\":{\"opponents\":[\"" + dummyArchetype + "\"]}}}")), data.Variant);
+            var d = data.WithArena("sandbox").WithHumanOwner(owner);
+            d = new GameData(d.Root.MergedWith(Json.Parse("{\"rules\":{\"sandbox\":{\"opponents\":[\"" + dummyArchetype + "\"]}}}")), d.Variant);
             var cell = new Cell(dummy, owner, name);
             for (int seed = firstSeed; seed < firstSeed + seeds; seed++) Play(game, d, seed, name, cell);
             cells.Add(cell);

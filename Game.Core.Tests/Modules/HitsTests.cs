@@ -71,7 +71,7 @@ namespace Game.Core.Tests.Modules
         private static Scene Sandbox(string owner = "teen")
         {
             var data = Repo.Data();
-            data = new GameData(data.Root.MergedWith(Json.Parse("{\"game\":{\"arena\":\"sandbox\",\"human_owner\":\"" + owner + "\"}}")), data.Variant);
+            data = data.WithArena("sandbox").WithHumanOwner(owner);
             int players = data.Int("game.players");
             var shove = new Shove();
             var modules = new List<IModule>
