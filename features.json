@@ -112,7 +112,7 @@
         "Проверка одним-двумя прогонами: `factory tool run unity --set mode=open` без `error CS`; EditMode-тесты в `Unity/Assets/Tests/` (логика меню и модели HUD без вызовов UnityEngine, как `MouseInput.cs`): конфигурация меню (duel, соперник smart, бот против бота с smart за участника 0) даёт `Simulation` на duel с 2 участниками и двумя `BotDriver`; скриптованная дуэль бот против бота идёт до первого `knocked_out`, модель HUD показывает ХП жертвы 0 и счёт 1:0; `mode=test` — итог `passed`/`failed` в `.factory/unity/unity-EditMode.xml` без `failed`. Билд `FactoryBuild.Demo` и скриншоты — не критерий (их собирает диспетчер на демо спринта)",
         "`UnityShell/README.md` — пара строк про новые пункты меню и режим бот против бота; в `Game.Core/` после прогона Unity дерево чистое (`.meta` не коммитятся)"
       ],
-      "status": "todo",
+      "status": "running",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-unity",
