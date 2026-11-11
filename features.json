@@ -488,6 +488,40 @@
       "iteration": null,
       "sprint": "S-1",
       "modules": []
+    },
+    {
+      "id": "F-044",
+      "title": "Evolve: поиск слоя решений `duelist` в самоигре с лигой (пространство `duel`), числа чемпиона в данные, замер против `smart` и прошлых поколений",
+      "layer": "playtest",
+      "milestone": "S-1",
+      "depends_on": [
+        "F-042",
+        "F-043"
+      ],
+      "acceptance": [
+        "Перед прогоном в `playtest/evolve/duel.json` убирается `base_from`: в `best.json` поиска `skills` лежит g12-20, а в игре — g3-13 (`playtest/evolve/skills.md`), поэтому замах и уворот замораживаются числами данных игры, а не файла. Других правок пространства нет, кроме `generations`, если время не укладывается (см. ниже). Первый вызов — дымовой (`--set population=4 --set generations=1 --set seeds=2 --out playtest/evolve/runs/smoke-duel`, не коммитится): по его времени решить, сколько поколений влезает в 6 вызовов и час роли, и сократить `--set generations=` заранее, а не обрывать на середине",
+        "Прогон `factory tool run evolve --set space=duel --out playtest/evolve/runs/duel` повторяется с той же `--out`, пока не придёт `done: true` или не кончатся вызовы. Из `--out` коммитятся `best.json`, `league.json`, `history.jsonl`, `report.md` (`gens/` и `state.json` в `.gitignore`)",
+        "Числа чемпиона переносятся в `Game.Core/Data/bots/decide.json` и `skills.json` → `spin`, `move`, `brake` (списки `тюнить` и заметки `_` не трогать; округление — только если не сдвигает оценку больше шума, как в F-043). Руками ничего не подкручивается: только чемпион или более ранний чемпион из `history.jsonl`, если последний проваливает проверки ниже; выбор и причина — в `decisions`",
+        "Проверка на свежих сидах 101–120 (не из поиска), всё — `Game.Sim evaluate` или `Game.Sim --arena duel`, числа переписываются из вывода: (1) `duelist` с новыми числами против `smart` — доля выигранных дуэлей (матч до 3 побед) ≥ 0.8, до и после переноса; (2) против прошлых поколений: пачка `kind: league` с лигой из чемпионов g0 (стартовые числа), ~25%, ~50% и ~75% прогона по `history.jsonl` — `winrate_league` чемпиона > 0.5 против каждого по отдельности (по одному члену лиги на пачку или из `details`), таблица винрейтов; (3) доли `pick_dodge`, `pick_spin`, `pick_strike` ≥ 0.1 и `hits` ≥ 1 за дуэль — глаголы не потеряны. Если (1) или (2) не проходит ни у одного чемпиона — числа не переносятся, отчёт честно пишет, чего не хватило (сколько процентов, какой глагол), и это `notes`, а не ослабленный порог",
+        "`dotnet test` зелёный на новых числах; пороги `DuelistTests`, `DuelTests`, `SkillsTests`, `SwingBenchTests` не ослабляются. Порог выигрышей `DuelistTests` против `smart` (сейчас 4 из 8) поднимается до того, что чемпион стабильно даёт на сидах 1–8, но не выше 7 из 8, если перенос прошёл; `rules.duel.opponents` и `Unity/` не меняются",
+        "Отчёт `playtest/evolve/duel.md`: вызовы и поколения, таблица винрейтов (против `smart` до/после, против прошлых поколений), доли выбора навыков, 2–3 строки, что бот теперь делает иначе (из весов: когда раскручивает, когда бьёт, когда уворачивается), ссылка на `report.md`. Коммит на `feat/F-044` до результата; `notes` — 4–6 строк для Telegram Nick (винрейт против smart, против прошлых поколений, поведение); `decisions` по схеме `{question, chosen, why}` или пустой список"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "gamedesigner-playtest",
+      "touches": [
+        "playtest/evolve/duel.json",
+        "playtest/evolve/runs/duel/",
+        "playtest/evolve/duel.md",
+        "Game.Core/Data/bots/decide.json",
+        "Game.Core/Data/bots/skills.json",
+        "Game.Core.Tests/Bots/DuelistTests.cs"
+      ],
+      "priority": 18,
+      "iteration": null,
+      "sprint": "S-1",
+      "modules": []
     }
   ]
 }
