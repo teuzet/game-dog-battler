@@ -7,8 +7,12 @@ using Game.Core;
 using Game.Core.Bots;
 using Game.Core.Data;
 using Game.Core.Modules.Bodies;
+using Game.Core.Modules.Dogs;
 using Game.Core.Modules.Hits;
+using Game.Core.Modules.Leashes;
+using Game.Core.Modules.Match;
 using Game.Core.Modules.Owners;
+using Game.Core.Modules.Rules;
 using Game.Core.Sim;
 using UnityEngine;
 
@@ -17,9 +21,10 @@ namespace DogBattler.View
     /// <summary>Screenshots for the project's previews. "Unity.exe -arena sandbox -capture shot.png" plays a
     /// scripted swing (the dog runs at the mannequin of player 3, then circles and whirls its owner through
     /// it), saves the screen at the tick of the blow and <see cref="SlideTicks"/> later (shot-slide.png) and
-    /// quits. "Unity.exe -arena park -seed <see cref="ParkSeed"/> -capture shot.png" plays a park match of four
-    /// bots (participant 0 is a "smart" bot fed through the scripted input) and saves the screen at the first
-    /// strong blow of the match, and again <see cref="SlideTicks"/> later. It does nothing without -capture.</summary>
+    /// quits. "Unity.exe -arena park -capture shot.png" plays a park match of four bots (participant 0 is a
+    /// "smart" bot fed through the scripted input) on the seed found by <see cref="FindParkMoment"/> (or the one
+    /// given by -seed) and saves the screen at the first strong blow of the match, and again
+    /// <see cref="SlideTicks"/> later. It does nothing without -capture.</summary>
     public sealed class ViewCapture : MonoBehaviour
     {
         public const int SwingTick = 60;   // the blow lands by this tick on the sandbox spawns (the test proves it)
@@ -32,16 +37,75 @@ namespace DogBattler.View
         public const int ParkGiveUpTick = 100 * Simulation.TicksPerSecond;
         public const string ParkArena = "park";
 
-        // Found by running the park with four bots (ParkBots: "smart" for participant 0, the data's opponents for
-        // the rest) over seeds 1, 2, 3… and taking the first whose first strong blow met the conditions of the frame
-        // (a dog inside the circle, the next circle announced or the circle visible, 30..100 s left, not all scores
-        // zero, the attacker's leash taut ≥ 0.9 at the blow or the tick before). ParkCaptureTick is the tick after
-        // which that blow was recorded; the park frame test replays both and writes art/frame-base.json.
-        // Seed 1 qualified too, but at 99.6 s left, on the edge of the range; seed 2 is the first comfortable one.
-        public const int ParkSeed = 2;
-        public const int ParkCaptureTick = 1003; // 86.6 s left
+        /// <summary>The seeds the park frame is looked for in: 1..ParkMaxSeed.</summary>
+        public const int ParkMaxSeed = 10;
 
         private string _path = "";
+
+        /// <summary>The moment of the park frame: the seed, and the simulation stepped up to the tick of the blow.</summary>
+        public sealed class ParkMoment
+        {
+            public int Seed;
+            public Simulation Sim;
+            public Hit Blow;
+            /// <summary>The attacker's leash tension on the tick before the blow.</summary>
+            public float AttackerTensionBefore;
+        }
+
+        /// <summary>The park frame is searched for, not kept as numbers that any bot tuning moves: the park is
+        /// played with four bots (ParkBots: "smart" for participant 0, the data's opponents for the rest) over seeds
+        /// 1, 2, 3… up to ParkMaxSeed, and the first seed whose first strong blow meets the conditions of the frame
+        /// is taken (a dog inside the circle, the next circle announced or the circle visible, 30..100 s left, not
+        /// all scores zero, the attacker's leash taut ≥ 0.9 at the blow or the tick before). The park frame test
+        /// writes its seed and tick to art/frame-base.json; the capture build plays that seed without -seed.</summary>
+        public static ParkMoment FindParkMoment(GameData data)
+        {
+            for (int seed = 1; seed <= ParkMaxSeed; seed++)
+            {
+                var m = FirstStrongBlow(data, seed);
+                if (m != null && FrameConditions(m)) return m;
+            }
+            throw new InvalidOperationException($"no park seed 1–{ParkMaxSeed} has a first strong blow that meets the conditions of the frame");
+        }
+
+        /// <summary>The seed of the park frame (see FindParkMoment).</summary>
+        public static int ParkSeed(GameData data) => FindParkMoment(data).Seed;
+
+        private static ParkMoment FirstStrongBlow(GameData data, int seed)
+        {
+            var game = GameSetup.Game;
+            var sim = game.Create(seed, data);
+            var bots = ParkBots(data, sim.Players, seed);
+            var leashes = sim.Get<LeashesModule>(LeashesModule.ModuleName);
+            var prevTension = new float[sim.Players];
+            while (sim.Tick < ParkGiveUpTick && !sim.IsOver)
+            {
+                sim.Step(Forks.Inputs(game, sim, bots, -1, PlayerInput.None));
+                if (StrongBlow(sim, out var blow))
+                    return new ParkMoment { Seed = seed, Sim = sim, Blow = blow, AttackerTensionBefore = prevTension[blow.Attacker] };
+                for (int p = 0; p < sim.Players; p++) prevTension[p] = (float)leashes.Tension(sim, p).ToDouble();
+            }
+            return null;
+        }
+
+        private static bool FrameConditions(ParkMoment m)
+        {
+            var sim = m.Sim;
+            var rules = sim.Get<RulesModule>(RulesModule.ModuleName);
+            var dogs = sim.Get<DogsModule>(DogsModule.ModuleName);
+            var match = sim.Get<MatchModule>(MatchModule.ModuleName);
+            var leashes = sim.Get<LeashesModule>(LeashesModule.ModuleName);
+            float tension = (float)leashes.Tension(sim, m.Blow.Attacker).ToDouble();
+            if (Mathf.Max(tension, m.AttackerTensionBefore) < 0.9f) return false;
+            var zone = rules.Active.Zone;
+            if (!zone.HasValue) return false;
+            bool inside = false;
+            for (int p = 0; p < sim.Players; p++) inside |= dogs.InZone(sim, p, zone.Value.Center, zone.Value.Radius);
+            float left = (float)match.TimeLeft.ToDouble();
+            bool anyScore = false;
+            foreach (var s in match.Scores) anyScore |= s != 0;
+            return inside && (rules.Active.NextZone.HasValue || zone.HasValue) && left >= 30f && left <= 100f && anyScore;
+        }
 
         /// <summary>Push-mode input of the scripted swing at a tick: the mouse shift (arena cm) runs the dog
         /// toward +Y (the mannequin at (-6, 4)), then turns on a circle that swings the owner into that dog.</summary>
@@ -90,6 +154,8 @@ namespace DogBattler.View
             int at = Array.IndexOf(args, "-capture");
             if (at < 0 || at + 1 >= args.Length) return;
             new GameObject("ViewCapture").AddComponent<ViewCapture>()._path = args[at + 1];
+            // the park without -seed plays the seed of the park frame, searched on the session's own data
+            if (ParkRequested()) FactoryGame.CaptureSeed = ParkSeed;
         }
 
         private static bool ParkRequested()
