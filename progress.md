@@ -17,3 +17,4 @@
 - 2026-11-10 14:31 F-010 Playtest: sprint 1 (fc3af4a2e1)
 - 2026-11-10 15:12 F-025 Hits: the owner is the weapon, a parked owner scores nothing (fb298c72fc)
 - 2026-11-10 15:16 F-026 King of the lawn: the lawn is shared, rent in fractions (9dca7c8516)
+- 2026-11-11 07:42 F-030 Дуэль: правила Duel, арена duel 1×1 с кубами и сферами, ХП у собак, матч до 3 побед (0abf81a116)
