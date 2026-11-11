@@ -828,7 +828,7 @@
         "`dotnet test` зелёный; пороги `DuelTests`, `SkillsTests`, `SwingBenchTests` не ослабляются. Порог побед `AgainstSmartUsesEveryVerbHitsDodgesAndWinsHalf` после переноса — то, что чемпион даёт на сидах 1–8, не ниже 4 и не выше 7, комментарий `// … вернуть ≥ 4 — F-048` снимается; без переноса порог остаётся как есть и это строка `notes`. `rules.duel.opponents` и `Unity/` не меняются",
         "Отчёт `playtest/evolve/duel4.md`: вызовы и поколения; таблица своих сидов против свежих для каждого разного чемпиона (видно ли ещё подгонку); таблицы (1) и (2) с шумом зеркала; доли навыков и `taken_in_*` / `dealt_in_*` до (числа игры, g3-12) и после; 2–3 строки, что бот делает иначе по весам; если 0.8 не достигнуто — «Чего не хватило» по числам, без предложений правок кода; ссылка на `runs/duel4/report.md`. Коммит на `feat/F-055` до результата; `notes` — 4–6 строк для Telegram Nick; `decisions` по схеме `{question, chosen, why}` или пустой список"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 1,
       "budget_tokens": 400000,
       "owner_role": "gamedesigner-playtest",
