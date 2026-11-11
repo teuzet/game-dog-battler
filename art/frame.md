@@ -130,7 +130,7 @@ public static float CameraDistance(float width, float height, float pitchDeg, fl
 
 ## Промпт
 
-Каркас запроса для `image-gen`. Размер — `1536x1024` (так тул пишет `size` в `art/refs/arena-park-overview-01.provenance.json`; ближайший к 16:9 альбомный). Плейсхолдеры `{timer}`, `{score_0}`…`{score_3}`, `{attacker}`, `{victim}`, `{in_zone}` заменяются значениями из «Кадра-основы» (F-040); до F-040 запрос не отправляется.
+Каркас запроса для `image-gen`. Размер — `1536x1024` (так тул пишет `size` в `art/refs/arena-park-overview-01.provenance.json`; ближайший к 16:9 альбомный). Плейсхолдеры каркаса F-039 (таймер, четыре числа счёта, нападающий, жертва, кто в круге) заменены значениями из «Кадра-основы» (F-040): таймер «1:27», счёт 3 / 23 / 1 / 0, нападающий жёлтый, жертва красный, в круге синий. Там, где лист кадра расходится с «Моментом» (нет следующего круга, хозяин летит на 0.91 м, а не 1.2 м, летят два хозяина), абзац следует листу кадра; «+N» убран — его текста в листе нет.
 
 ```json
 {
@@ -142,9 +142,9 @@ public static float CameraDistance(float width, float height, float pitchDeg, fl
 }
 ```
 
-**Абзац сцены** (одинаковый для всех направлений, меняются только плейсхолдеры):
+**Абзац сцены — итоговый, литеральный** (одинаковый для всех направлений; F-035 копирует его без правок):
 
-> In-game screenshot of a 4-player top-down party brawler, 16:9 landscape. Perspective camera tilted 60° down, vertical field of view 40°, no rotation: it looks straight along the lawn, the whole lawn plus a narrow 1.2 m margin fits the frame, near edge at the bottom, far edge at the top, slightly narrower by perspective. Arena: a flat rectangular green lawn 24 × 16 m surrounded by a sand-coloured border; on it exactly four round tree trunks with ball crowns (two near the centre placed diagonally, one at the middle of the left edge, one at the middle of the right edge), exactly three short wooden benches (one at the middle of the near edge, one at the middle of the far edge, one standing lengthwise just left of the centre); nothing else. On the ground a pale light-green circle 3.5 m in radius (the scoring zone) and a second, fainter circle of the same size elsewhere on the lawn (the next zone). Four dog-and-owner pairs, each joined by one straight leash; player colour only on the collar, the leash and a band on the owner's shirt: red — border collie with a teenager staring at his phone; blue — a pack of four chihuahuas on four leashes to one muscular gym guy with a shaker; yellow — border collie with a granny holding an umbrella and pulling a wheeled shopping bag; purple — great dane with a teenager staring at his phone. Moment: the first strong hit of the match — the {attacker} owner is flying through the air about 1.2 m above the lawn, the owner's stretched, paler shadow on the grass below, the owner's leash pulled taut, thicker and lighter; the flying owner slams into the {victim} dog, which flashes white. The {in_zone} dog stands inside the scoring circle. The owners stay calm and busy with their own thing. HUD overlay, bold white text with a dark outline: top centre the timer "{timer}" in white; under it a row of four dark semi-transparent score tiles left to right red {score_0}, blue {score_1}, yellow {score_2}, purple {score_3}, each with a colour strip on the left and the number in the player's colour, the leader's tile with a thin white frame, the red tile marked "ТЫ"; under the tiles a light-green line "Круг скоро переедет — следующий уже отмечен на газоне"; above one dog a floating "+N" in that player's colour; bottom left two small lines "Режим мыши: КУРСОР (собака бежит к точке)   [Tab — переключить]" and "ЛКМ/Q — абилка собаки   ПКМ/E — абилка хозяина   R — заново". No other UI. Sunny weekday daylight, one directional sun, soft short shadows. No crowd, no weather, no extra objects (no stalls, fountains, fences, lamps, buildings), no particles beyond the white flash, no blood, no angry faces, no fur or cloth simulation.
+> In-game screenshot of a 4-player top-down party brawler, 16:9 landscape. Perspective camera tilted 60° down, vertical field of view 40°, no rotation: it looks straight along the lawn, the whole lawn plus a narrow 1.2 m margin fits the frame, near edge at the bottom, far edge at the top, slightly narrower by perspective. Arena: a flat rectangular green lawn 24 × 16 m surrounded by a sand-coloured border; on it exactly four round tree trunks with ball crowns (two near the centre placed diagonally, one at the middle of the left edge, one at the middle of the right edge), exactly three short wooden benches (one at the middle of the near edge, one at the middle of the far edge, one standing lengthwise just left of the centre); nothing else. On the ground one pale light-green circle 3.5 m in radius (the scoring zone), centred left of the middle of the frame at mid-height; no second circle. Four dog-and-owner pairs, each joined by straight leashes; player colour only on the collar, the leash and a band on the owner's shirt: red — border collie with a teenager staring at his phone; blue — a pack of four chihuahuas on four leashes to one muscular gym guy with a shaker; yellow — border collie with a granny holding an umbrella and pulling a wheeled shopping bag; purple — great dane with a teenager staring at his phone. Where they are: the blue chihuahuas stand inside the scoring circle near its centre, their gym guy stands on the grass in the lower middle of the frame, all four leashes pulled taut; the purple great dane stands at the upper-left rim of the circle, its teenager standing still further left and higher, near the far-left part of the lawn; the red collie is in the centre of the frame just above the middle, the yellow collie right of the centre in the upper half. Moment: the first strong hit of the match — the yellow owner, the granny, is flying through the air about 0.9 m above the lawn in the very centre of the frame, her stretched, paler shadow on the grass below, her leash pulled taut, thicker and lighter; the flying granny slams into the red dog, which flashes white; the red teenager is also lifted about 1 m off the ground just left of and above his dog, his leash half-taut. The blue dogs stand inside the scoring circle. The owners stay calm and busy with their own thing. HUD overlay, bold white text with a dark outline: top centre the timer "1:27" in white; under it a row of four dark semi-transparent score tiles left to right red 3, blue 23, yellow 1, purple 0, each with a colour strip on the left and the number in the player's colour, the blue tile (the leader) with a thin white frame, the red tile marked "ТЫ"; bottom left two small lines "Режим мыши: КУРСОР (собака бежит к точке)   [Tab — переключить]" and "ЛКМ/Q — абилка собаки   ПКМ/E — абилка хозяина   R — заново". No other UI. Sunny weekday daylight, one directional sun, soft short shadows. No crowd, no weather, no extra objects (no stalls, fountains, fences, lamps, buildings), no particles beyond the white flash, no blood, no angry faces, no fur or cloth simulation.
 
 **Абзац направления** (слот; меняет только форму, материалы, свет, палитру и контур — ничего из сцены, камеры, момента и HUD):
 
@@ -159,23 +159,56 @@ F-035 сверяет каждую картинку по пунктам; кажд
 - [ ] **Камера:** вид сверху под наклоном ~60°, перспектива, без поворота; весь газон с узким полем в кадре, 16:9 (файл 1536×1024).
 - [ ] **Арена:** газон с песочной окантовкой; ровно 4 дерева и 3 лавочки на местах из «Сцены» (две у центра по диагонали, по одному у середин левого и правого края; лавочки у ближнего и дальнего края по центру и одна вдоль левее центра).
 - [ ] **Четыре пары в своих цветах:** красный, синий, жёлтый, фиолетовый на ошейнике, поводке и акценте хозяина; собаки и хозяева по «Парам»; цвет игрока нигде больше.
-- [ ] **Полёт на натянутом поводке:** хозяин нападающего в воздухе, под ним растянутая бледная тень, поводок прямой, толстый и светлый; жертва вспыхнула белым.
-- [ ] **Круг и следующий круг:** светлый круг зоны и бледнее — следующий; в круге стоит собака из `{in_zone}`.
-- [ ] **HUD с числами из листа кадра:** таймер, четыре числа счёта, рамка лидера, «ТЫ» на красной табличке, подсказка про круг, «+N», строка помощи — значения совпадают с «Кадром-основой»; нет элементов, которых нет в `HudView.cs`, и нет дуэльных.
+- [ ] **Полёт на натянутом поводке:** летит **жёлтая** бабка (~0.9 м) в центре кадра, под ней растянутая бледная тень, жёлтый поводок прямой, толстый и светлый; **красная** колли вспыхнула белым; красный подросток тоже в воздухе (~1 м) рядом с ней. Синий качок, фиолетовый подросток на земле.
+- [ ] **Круг:** один светлый круг левее центра кадра на середине высоты; в круге стоят **синие** чихуахуа, фиолетовый дог у края; **следующего круга нет** (`next_zone: null`).
+- [ ] **HUD с числами из листа кадра:** таймер **«1:27»** белый; таблички слева направо **красный 3, синий 23, жёлтый 1, фиолетовый 0**; белая рамка на **синей**; «ТЫ» на красной; строка помощи; **нет** подсказки про круг и нет «+N» (в листе кадра их нет); нет элементов, которых нет в `HudView.cs`, и нет дуэльных.
 - [ ] **Ничего лишнего:** ни одного пункта из «Запрещено».
 
 ## Кадр-основа
 
-_Заполняет F-040 из `art/frame-base.json`._
+Источник — лист кадра `art/frame-base.json` (F-034: `-arena park -capture` на ботах, фиксированный сид; экранные доли — `ViewMath.ToScreen`). Все числа переписаны из него как есть. Доли экрана — как у вьюпорта Unity: x слева направо, y **снизу вверх** (0 — нижний край кадра, 1 — верхний). Чего в листе нет, так и помечено.
 
 ### Момент и HUD
 
+- Арена `park`, сид `2`, кадр `16:9`.
+- Тик `1003`, `time_left_s` = 86.5667 → таймер **«1:27»** (`HudMath.Clock` округляет секунды вверх, формат `м:сс`). Белый, без «ФИНАЛ!»: до финальных 10 с далеко.
+- Счёт `scores` = **[3, 23, 1, 0]**: красный 3, синий 23, жёлтый 1, фиолетовый 0. Четыре разных числа; лидер — синий (23), рамка на его табличке.
+- Всплывающее «+N» (текст и над кем) — в листе кадра нет.
+- Режим мыши для строки помощи — в листе кадра нет (кадр снят на ботах).
+
 ### Удар
+
+- `hit`: `attacker` = **2 → жёлтый → бордер-колли с бабкой**; `victim` = **0 → красный → бордер-колли с подростком (игрок «ТЫ»)**; `flash` = 1 — полная белая вспышка жертвы.
+- Сила удара и тип события (`hit` или `strong_hit`) — в листе кадра нет.
+- The Stack (синий) в ударе не участвует; назначение пар из «Пар» не менялось.
 
 ### Круг и следующий круг
 
+- Круг `zone`: центр (−5.4583, 0.5095) м, `radius` 3.5 м; центр на экране `zone_screen` = (0.3423, 0.5227) — левее центра кадра, по высоте посередине.
+- Следующий круг: `next_zone` = `null` — **в листе кадра нет**, то есть бледный круг не отмечен и подсказки «Круг скоро переедет…» в этом кадре нет.
+- Флаг «кто в круге» — в листе кадра нет. Из позиций собак ниже внутри круга, ближе всех к его центру, стоит синяя (The Stack); фиолетовая — у края круга.
+
 ### Пары в кадре
+
+| Игрок | Цвет → пара | Собака x, y (м) | Собака на экране | Хозяин x, y (м) | Хозяин на экране | `height_m` | `airborne` | `speed_mps` | `tension` | `width_m` |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | красный → колли + подросток | (0.1521, 2.063) | (0.5043, 0.5892) | (−0.9126, 3.1088) | (0.474, 0.6618) | 1.0144 | 0.8453 | 7.608 | 0.4975 | 0.1047 |
+| 1 | синий → The Stack + качок | (−3.65, 0.8943) | (0.3953, 0.5395) | (−2.5524, −1.8989) | (0.4227, 0.4122) | 0.0265 | 0.0221 | 0.1991 | 1 | 0.16 |
+| 2 | жёлтый → колли + бабка | (2.8081, 3.3224) | (0.5771, 0.6404) | (−0.1481, 2.7988) | (0.4958, 0.6461) | 0.9149 | 0.7624 | 6.862 | 1 | 0.16 |
+| 3 | фиолетовый → дог + подросток | (−6, 4) | (0.3373, 0.667) | (−8, 5.5) | (0.2886, 0.7238) | 0 | 0 | 0 | 0.8333 | 0.1417 |
+
+Словами по долям экрана:
+- **Жёлтая пара** (нападающий): собака правее центра в верхней половине; хозяйка-бабка в воздухе почти точно в центре кадра чуть выше середины, на 0.91 м, поводок натянут до предела (0.16 м).
+- **Красная пара** (жертва): собака в центре чуть выше середины, рядом с летящей бабкой; её хозяин-подросток **тоже в воздухе** (1.01 м) чуть левее и выше собаки, поводок натянут наполовину.
+- **Синяя пара:** The Stack в круге левее центра; качок стоит на земле в центре нижней половины кадра, поводки натянуты до предела.
+- **Фиолетовая пара:** дог в левой верхней четверти у края круга, подросток стоит неподвижно ещё левее и выше — на своём спавне.
+- Для The Stack лист кадра даёт одну точку собаки: раскладка четырёх чихуахуа вокруг неё — в листе кадра нет.
 
 ### Газон на экране
 
+- Углы газона `lawn_corners_screen`: ближние (низ кадра) (0.0877, 0.0768) и (0.9123, 0.0768); дальние (верх кадра) (0.8041, 0.8121) и (0.1959, 0.8121) — газон трапецией, сужается вглубь.
+- Центр газона на экране — в листе кадра нет.
+
 ### Снимок из билда
+
+Снимок из билда ещё не снят (`art/previews/frame-base.png` нет).
