@@ -25,6 +25,7 @@ namespace Game.Core.Bots
         public Fixed X, Y;
         public Fixed VX, VY; // seen velocity (zero for what stands still)
         public Fixed Value;
+        public Fixed Value2; // second measure: the half-height of an obstacle_rect (Value is its half-width)
 
         public Vec2 Pos => new Vec2(X, Y);
         public Vec2 Vel => new Vec2(VX, VY);
