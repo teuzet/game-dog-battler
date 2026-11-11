@@ -9,3 +9,7 @@ Unity/Builds/
 Unity/UserSettings/
 # Unity imports Game.Core as a local package and writes .meta files into it; the core is pure C#, nothing references its GUIDs
 Game.Core/**/*.meta
+# evolve: поколения, состояние поиска и дымовой прогон не коммитим
+playtest/evolve/runs/**/gens/
+playtest/evolve/runs/**/state.json
+playtest/evolve/runs/smoke/

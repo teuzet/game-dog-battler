@@ -14,6 +14,7 @@ using Game.Core.Bots;
 using Game.Core.Data;
 using Game.Core.Sim;
 
+if (args.Length > 0 && args[0] == "evaluate") return Evaluate.Run(args); // the scorer of the tool evolve, see Evaluate.cs
 var opts = Args.Parse(args);
 var dataDir = GameData.FindDataDir(AppContext.BaseDirectory);
 if (!Directory.Exists(dataDir)) dataDir = GameData.FindDataDir(Directory.GetCurrentDirectory());

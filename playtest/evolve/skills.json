@@ -1,0 +1,26 @@
+{
+  "about": "Навыки замаха (bots.swing.*) и уворота (bots.skills.dodge.*) на плейграундах bag, moving_target и dodge. Пределы — в поле «_» swing.json и skills.json (Game.Core/Data/bots/).",
+  "params": {
+    "bots.swing.closing_speed_mps": { "min": 3, "max": 12, "start": 6 },
+    "bots.swing.lead_m": { "min": 0, "max": 6, "start": 3 },
+    "bots.swing.drift_gain_s": { "min": 0, "max": 0.6, "start": 0.25 },
+    "bots.swing.run_up_m": { "min": 1, "max": 8, "start": 4 },
+    "bots.swing.min_lead_s": { "min": 0.1, "max": 0.6, "start": 0.3 },
+    "bots.swing.max_lead_s": { "min": 0.7, "max": 3, "start": 1.5 },
+    "bots.swing.moving_speed_mps": { "min": 0, "max": 6, "start": 2 },
+    "bots.skills.dodge.horizon_s": { "min": 0.3, "max": 1.5, "start": 0.8 },
+    "bots.skills.dodge.danger_m": { "min": 1, "max": 3, "start": 1.6 },
+    "bots.skills.dodge.step_m": { "min": 1.5, "max": 4, "start": 2.5 },
+    "bots.skills.dodge.cover_m": { "min": 0, "max": 4, "start": 2 },
+    "bots.skills.dodge.cover_gap_m": { "min": 0.4, "max": 1.5, "start": 0.6 }
+  },
+  "playgrounds": [
+    { "name": "bag", "weight": 1 },
+    { "name": "moving_target", "weight": 1 },
+    { "name": "dodge", "weight": 1 }
+  ],
+  "population": 24,
+  "generations": 30,
+  "seeds": 4,
+  "patience": 6
+}

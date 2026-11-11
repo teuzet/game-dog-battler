@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using Game.Core.Bots;
+using Game.Core.Bots.Skills;
 using Game.Core.Data;
 using Game.Core.Math;
 using Game.Core.Modules.Arena;
@@ -100,6 +101,7 @@ namespace Game.Core
                 case "idle": return new IdleStrategy();
                 case "random": return new WanderStrategy(a.Params["repick_min_s"]!.AsFixed(), a.Params["repick_max_s"]!.AsFixed());
                 case "smart": return new SmartStrategy(new SwingSkill(data), a.AimError);
+                case "solo": return new SoloStrategy(new SkillSet(data, a.AimError), a.Params["skill"]!.AsString());
                 case "camper": return new CamperStrategy(a.AimError, data);
                 case "breaker-squatter": return new SquatterStrategy(a.AimError);
                 case "breaker-orbit": return new OrbitStrategy(a.AimError, data);

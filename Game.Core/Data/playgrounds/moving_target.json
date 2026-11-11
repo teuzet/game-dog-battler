@@ -1,0 +1,12 @@
+{
+  "_": "Бегущая цель: та же песочница, манекены бегают (random). Оценка та же, что у груши.",
+  "arena": "sandbox",
+  "owners": ["teen", "jock"],
+  "player": "solo-strike",
+  "opponents": ["random"],
+  "seconds": 60,
+  "score": [
+    { "metric": "hits", "weight": 1, "per_minute": true },
+    { "metric": "strong_hits", "weight": 1, "per_minute": true }
+  ]
+}

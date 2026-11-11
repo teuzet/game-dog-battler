@@ -1,0 +1,12 @@
+{
+  "_": "Груша: песочница, манекены стоят. Участник 0 ведёт один навык Strike; оценка — удары и сильные удары в минуту.",
+  "arena": "sandbox",
+  "owners": ["teen", "jock"],
+  "player": "solo-strike",
+  "opponents": ["idle"],
+  "seconds": 60,
+  "score": [
+    { "metric": "hits", "weight": 1, "per_minute": true },
+    { "metric": "strong_hits", "weight": 1, "per_minute": true }
+  ]
+}
