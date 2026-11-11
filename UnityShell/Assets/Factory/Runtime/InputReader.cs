@@ -44,11 +44,13 @@ namespace Factory.Shell
         }
 
         public static bool RestartPressed() => Input.GetKeyDown(KeyCode.R);
+        public static bool BackPressed() => Input.GetKeyDown(KeyCode.Escape);
 #else
         // The shell reads the legacy Input Manager only; a dead input must not be silent.
         public static void Frame() => throw new System.NotSupportedException("InputReader needs the legacy Input Manager (Active Input Handling: Input Manager or Both)");
         public static PlayerInput Read() => throw new System.NotSupportedException("InputReader needs the legacy Input Manager");
         public static bool RestartPressed() => throw new System.NotSupportedException("InputReader needs the legacy Input Manager");
+        public static bool BackPressed() => throw new System.NotSupportedException("InputReader needs the legacy Input Manager");
 #endif
     }
 }

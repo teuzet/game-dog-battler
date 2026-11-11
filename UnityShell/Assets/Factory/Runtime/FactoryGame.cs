@@ -36,8 +36,14 @@ namespace Factory.Shell
         private int _seed;
         private readonly Overlay _overlay = new Overlay();
         private List<string> _variantNames = new List<string>();
-        private string _variantSet = "", _variantLabel = "";
+        private string _variantSet = "", _variantLabel = "", _variantName = "";
         private bool _ended, _capture;
+        private MatchSetup _setup = new MatchSetup();
+
+        /// <summary>The human only watches: participant 0 is a bot.</summary>
+        public bool BotVsBot => _setup.BotVsBot;
+        /// <summary>The player the screen is about; -1 when nobody plays (bot against bot).</summary>
+        public int ViewedPlayer => _setup.BotVsBot ? -1 : HumanPlayer;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
@@ -59,6 +65,11 @@ namespace Factory.Shell
             _overlay.OnPick = Pick;
             _overlay.OnSurvey = Survey;
             _overlay.OnStart = Begin;
+            _overlay.Arenas = MatchSetup.Arenas(_base);
+            _overlay.Bots = MatchSetup.Archetypes(_base);
+            _overlay.Setup = MatchSetup.Defaults(_base, _base.Str("game.arena"));
+            _overlay.DefaultOpponent = a => Archetype.Opponents(_base.WithArena(a))[0];
+            _setup = _overlay.Setup.Copy();
             var owners = new List<string>();
             var ownerLabels = new List<string>();
             foreach (var o in _base.Get("game.human_choices").Items)
@@ -81,22 +92,26 @@ namespace Factory.Shell
         private void Start()
         {
             if (_variantNames.Count > 1) ShowPicker();
-            else Prepare(_base);
+            else Prepare();
         }
 
-        /// <summary>The pre-match screen: owner type and mouse mode. A screenshot run (-capture) skips it
-        /// and plays the data's own pick.</summary>
-        private void Prepare(GameData data)
+        /// <summary>The pre-match screen: arena, opponent, who plays, owner type and mouse mode. A screenshot
+        /// run (-capture) skips it and plays the data's own pick.</summary>
+        private void Prepare()
         {
-            _data = data;
-            if (_capture) NewSession(data);
+            if (_capture) NewSession(_setup.Data(_base, WithVariant));
             else _overlay.OpenPrepare();
         }
 
-        private void Begin(string owner, bool push)
+        /// <summary>The picked variant on top of the data (none picked: the data as it is).</summary>
+        private GameData WithVariant(GameData data) =>
+            _variantName.Length == 0 ? data : data.WithVariant(_dataDir, _variantSet, _variantName);
+
+        private void Begin(MatchSetup setup, bool push)
         {
             InputReader.SetPushMode(push);
-            NewSession(_data.WithHumanOwner(owner)); // bots keep Data/bots/session.json
+            _setup = setup.Copy();
+            NewSession(_setup.Data(_base, WithVariant));
         }
 
         private void ShowPicker()
@@ -117,7 +132,8 @@ namespace Factory.Shell
         private void Pick(int i)
         {
             _variantLabel = ((char)('A' + i)).ToString();
-            Prepare(_base.WithVariant(_dataDir, _variantSet, _variantNames[i]));
+            _variantName = _variantNames[i];
+            Prepare();
         }
 
         private void NewSession(GameData data)
@@ -126,13 +142,7 @@ namespace Factory.Shell
             _seed = Environment.TickCount & 0x7fffffff;
             Sim = Game.Create(_seed, data);
             _bots = new List<BotDriver>();
-            var opponents = Archetype.Opponents(data);
-            for (int p = 0; p < Sim.Players; p++)
-            {
-                if (p == HumanPlayer) continue;
-                var a = Archetype.Find(data, opponents[(p - 1) % opponents.Count]);
-                _bots.Add(new BotDriver(p, a, Game.Strategy(a, data), (ulong)_seed));
-            }
+            _bots = _setup.Drivers(Game, data, Sim.Players, _seed);
             _log = new InputLog(_seed, Sim.Players, data.Variant, data.Str("game.human_owner"), data.Str("game.arena"));
             _acc = 0;
             _ended = false;
@@ -145,6 +155,12 @@ namespace Factory.Shell
             InputReader.Frame();
             ApplyCursor();
             if (_overlay.Picking || _overlay.Preparing) return;
+            if (_setup.BotVsBot && !Sim.IsOver && InputReader.BackPressed())
+            {
+                SaveLog();
+                _overlay.OpenPrepare();
+                return;
+            }
             if (Sim.IsOver)
             {
                 if (!_ended)
@@ -167,7 +183,7 @@ namespace Factory.Shell
             while (_acc >= dt && steps < MaxStepsPerFrame && !Sim.IsOver)
             {
                 var inputs = Forks.Inputs(Game, Sim, _bots, -1, PlayerInput.None);
-                inputs[HumanPlayer] = InputReader.Read();
+                if (!_setup.BotVsBot) inputs[HumanPlayer] = InputReader.Read();
                 _log.Record(inputs);
                 Sim.Step(inputs);
                 Stepped?.Invoke(Sim);
@@ -201,6 +217,10 @@ namespace Factory.Shell
             s.Set("boring_at", JsonValue.Str(boringAt));
             s.Set("variant", JsonValue.Str(_variantLabel.Length == 0 ? "" : $"{_variantLabel} = {_data.Variant}"));
             s.Set("owner", JsonValue.Str(_data.Str("game.human_owner")));
+            s.Set("arena", JsonValue.Str(_data.Str("game.arena")));
+            s.Set("mode", JsonValue.Str(_setup.BotVsBot ? "bot_vs_bot" : "human"));
+            s.Set("opponent", JsonValue.Str(_setup.Opponent));
+            s.Set("bot0", JsonValue.Str(_setup.BotVsBot ? _setup.Bot0 : ""));
             s.Set("seed", Json.Num(_seed));
             s.Set("duration_s", Json.Num(Sim.Seconds));
             var outcome = Sim.Result?.Outcomes[HumanPlayer];
@@ -213,7 +233,7 @@ namespace Factory.Shell
                 return;
             }
             if (_variantNames.Count > 1) ShowPicker();
-            else Prepare(_data);
+            else Prepare();
         }
     }
 }
