@@ -134,6 +134,9 @@ namespace Game.Core.Bots
 
         public BotDriver Clone() => new BotDriver(this);
 
+        /// <summary>The strategy it runs: a runner reads what the strategy reports about itself (<see cref="IPicks"/>).</summary>
+        public IBotStrategy Strategy => _strategy;
+
         /// <summary>Feeds this tick's view; returns the input for this tick.</summary>
         public PlayerInput Next(BotView now)
         {

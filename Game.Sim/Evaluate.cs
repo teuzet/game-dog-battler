@@ -92,6 +92,10 @@ sealed class Playground
     public readonly IReadOnlyList<string> Owners, Opponents;
     public readonly double? Seconds;
     public readonly IReadOnlyList<Term> Terms;
+    /// <summary>The verbs a league duel must use (block "verbs": skill → the least share of decisions, and "penalty"): each skill of
+    /// participant 0 chosen in a smaller share of its decisions takes <see cref="VerbPenalty"/> off the duel's score. Empty: no check.</summary>
+    public readonly IReadOnlyList<(string Skill, double MinShare)> Verbs;
+    public readonly double VerbPenalty;
 
     public sealed record Term(string Metric, double Weight, bool PerMinute);
 
@@ -107,6 +111,10 @@ sealed class Playground
         Owners = j["owners"]?.Items.Select(o => o.AsString()).ToList() ?? new List<string>();
         Seconds = j["seconds"]?.AsDouble();
         Terms = j["score"]!.Items.Select(t => new Term(t["metric"]!.AsString(), t["weight"]!.AsDouble(), t["per_minute"]?.AsBool() ?? false)).ToList();
+        var verbs = j["verbs"];
+        Verbs = verbs?.Fields.Where(f => f.Key != "penalty").Select(f => (f.Key, f.Value.AsDouble())).ToList() ?? new List<(string, double)>();
+        VerbPenalty = verbs == null ? 0 : verbs["penalty"]?.AsDouble() ?? throw new ArgumentException($"playground {name}: verbs without penalty");
+        if (verbs != null && !League) throw new ArgumentException($"playground {name}: verbs are checked only in a league");
         if (!League && Owners.Count == 0) throw new ArgumentException($"playground {name}: no owners");
     }
 
@@ -167,6 +175,7 @@ sealed class Playground
         {
             // rivals: every league member (the same archetype on its own numbers), then every archetype of "opponents" on the base data
             var outcomes = new SortedDictionary<string, List<double>>(StringComparer.Ordinal);
+            var shares = new SortedDictionary<string, List<double>>(StringComparer.Ordinal); // skill → its share of the decisions, per duel
             var simData = SessionData(data, mine, "");
             var rivals = new List<(string Archetype, GameData Data, string Bucket)>();
             foreach (var member in league) rivals.Add((Player, SessionData(data, Merge(baseNumbers, member), ""), "winrate_league"));
@@ -179,12 +188,37 @@ sealed class Playground
                 double outcome = s.Outcome == Outcome.Win ? 1 : s.Outcome == Outcome.Draw ? 0.5 : 0;
                 if (!outcomes.TryGetValue(bucket, out var list)) outcomes[bucket] = list = new List<double>();
                 list.Add(outcome);
-                sessionScores.Add(outcome + s.Sum(termSums, Terms));
+                sessionScores.Add(outcome + s.Sum(termSums, Terms) - VerbFine(s, shares));
             }
             foreach (var kv in outcomes) Evaluate.Put(details, kv.Key, kv.Value.Average());
+            foreach (var kv in shares) Evaluate.Put(details, "pick_" + kv.Key, kv.Value.Average());
         }
         for (int i = 0; i < Terms.Count; i++) Evaluate.Put(details, Name + "." + Terms[i].Metric, termSums[i] / sessionScores.Count);
         return sessionScores.Average();
+    }
+
+    /// <summary>Notes the shares of the skills participant 0 chose (when its strategy tells them) and returns the fine for the verbs
+    /// it left out: <see cref="VerbPenalty"/> per named skill below its share.</summary>
+    private double VerbFine(Played s, SortedDictionary<string, List<double>> shares)
+    {
+        if (s.Picks == null)
+        {
+            if (Verbs.Count > 0) throw new InvalidOperationException($"playground {Name}: verbs are checked, but {Player} does not tell its picks (IPicks)");
+            return 0;
+        }
+        double total = s.Picks.Values.Sum();
+        foreach (var kv in s.Picks)
+        {
+            if (!shares.TryGetValue(kv.Key, out var list)) shares[kv.Key] = list = new List<double>();
+            list.Add(total == 0 ? 0 : kv.Value / total);
+        }
+        double fine = 0;
+        foreach (var (skill, min) in Verbs)
+        {
+            if (!s.Picks.TryGetValue(skill, out var n)) throw new KeyNotFoundException($"playground {Name}: no skill '{skill}' (the bot has: {string.Join(", ", s.Picks.Keys)})");
+            if (total == 0 || n / total < min) fine += VerbPenalty;
+        }
+        return fine;
     }
 
     /// <summary>One session: participant 0 plays <paramref name="player"/> on <paramref name="playerData"/>, participants 1.. play
@@ -199,10 +233,11 @@ sealed class Playground
             bots.Add(new BotDriver(p, a, game.Strategy(a, p == 0 ? playerData : rivalData), (ulong)seed));
         }
         while (!sim.IsOver) sim.Step(Forks.Inputs(game, sim, bots, -1, PlayerInput.None));
-        return new Played(sim.Result!.Outcomes[0], game.Metrics(sim, 0), sim.Seconds);
+        return new Played(sim.Result!.Outcomes[0], game.Metrics(sim, 0), sim.Seconds, (bots[0].Strategy as IPicks)?.Picks);
     }
 
-    private sealed record Played(Outcome Outcome, IReadOnlyDictionary<string, double> Metrics, double Seconds)
+    /// <summary><paramref name="Picks"/>: how often participant 0 chose each skill, null when its strategy does not tell (no <see cref="IPicks"/>).</summary>
+    private sealed record Played(Outcome Outcome, IReadOnlyDictionary<string, double> Metrics, double Seconds, IReadOnlyDictionary<string, int>? Picks)
     {
         /// <summary>Σ weight × metric of the score terms; the unweighted term values are added to <paramref name="termSums"/>.</summary>
         public double Sum(double[] termSums, IReadOnlyList<Term> terms)
