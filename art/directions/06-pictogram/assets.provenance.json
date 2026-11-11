@@ -1,0 +1,17 @@
+{
+  "tool": "image-gen",
+  "provider": "codex",
+  "model": "codex:$imagegen",
+  "request": {
+    "size": "1536x1024",
+    "n": 1,
+    "prompt": "Game asset sheet for a 4-player top-down party brawler: every figure and arena piece laid out separately in a clean grid on a plain neutral light-grey background, no scene, no ground except the swatches listed. Every item is seen from the same in-game camera: perspective view tilted 60° down from above, no rotation, so we see the tops of heads and backs a lot and the fronts only a little. Each item is a simple 3D game model built from a few primitives (spheres, capsules, cylinders, boxes) with one matte material, big readable silhouette, no fur, no hair, no cloth folds, no particles, no small details, no text labels.\n\nTop row, three dogs standing, every dog body plain white with no markings and no face details, each with a collar in its player colour and a short straight stub of leash in the same colour: a border collie with a red collar; a great dane (tall and long) with a purple collar; The Stack — four small chihuahuas standing close together, each with its own blue collar and its own short blue leash stub.\nMiddle row, three dog owners standing calm and busy with their own thing, each a faceless pictogram figure (ball head, capsule body, no clothing details) entirely in the player colour from head to feet, recognisable only by silhouette and one object, the hand holding a short straight leash stub of the same colour: a teenager staring at a phone, the whole figure red; a granny holding an open umbrella and pulling a wheeled shopping bag, the whole figure yellow, umbrella and bag light grey, no other player colours on her; a muscular gym guy drinking from a shaker, the whole figure blue, shaker light grey.\nBottom row, arena pieces of the park, all also seen from 60° above: one tree (light-grey cylinder trunk with one white ball crown); one short bench (light-grey box seat with a flat backrest plank); one square swatch of very pale muted grey-green lawn with a thin sand-coloured border line along one side; on a separate pale lawn swatch, one light pale-green flat filled circle on the ground (the scoring zone) and next to it a paler, fainter filled circle of the same size (the next zone).\n\nStyle direction «Park-sign pictogram»: shapes — characters like park-sign pictograms come to life: smooth streamlined figures with no faces and no clothing details, ball head, capsule body; trees and benches simple light volumes; materials — clean matte fills; every dog plain white, every owner a solid figure entirely in the player colour, collar and leash in the same colour; light — soft diffuse light with soft ambient occlusion in the corners, a bright clean look; palette — the environment almost white and light grey with a muted pale lawn, colour only on the players (red, blue, yellow, purple) and the scoring circle; outline — one thin uniform dark-grey outline on everything.",
+    "refs": [
+      "art/directions/06-pictogram.png"
+    ],
+    "name": "assets"
+  },
+  "request_hash": "7d1f27a92dcc8a5d",
+  "created_at": "2026-11-11T18:08:15Z",
+  "usd": 0.0
+}

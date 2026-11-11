@@ -1,0 +1,17 @@
+{
+  "tool": "image-gen",
+  "provider": "codex",
+  "model": "codex:$imagegen",
+  "request": {
+    "size": "1536x1024",
+    "n": 1,
+    "prompt": "HUD element sheet for a 4-player top-down party brawler, every element laid out separately in a clean grid on a plain neutral light-grey background, each with a small plain grey caption under it. Draw exactly these elements and nothing else, all text exactly as quoted (Russian):\n\n1. Match timer: big bold white \"1:27\" with a thin dark-grey outline. Caption \"таймер\".\n2. Final-seconds timer: big bold red \"0:07\", slightly larger, and under it a smaller bold red \"ФИНАЛ!\". Caption \"финал\".\n3. A row of four score tiles side by side, left to right: red 3, blue 23, yellow 1, purple 0. Each tile is a rectangular plate with a thin vertical colour strip on its left edge and the number in that player's colour; the blue tile (the leader) has a frame; the red tile has a small \"ТЫ\" in its top-left corner. Caption \"счёт, рамка лидера\".\n4. One line of light-green bold text: \"Круг скоро переедет — следующий уже отмечен на газоне\". Caption \"подсказка круга\".\n5. Two floating popups in the player's colour: blue \"+1 в круге\" (smaller) and yellow \"ВЫБИЛ! +10\" (bigger). Caption \"всплывающие\".\n6. Two red leash segments side by side, straight lines like lines on a diagram: a slack one — thin and dark red; a taut one — thick and light red, almost pinkish-white. Caption \"поводок: слабый / натянутый\".\n7. Duel panel: a white round clock \"0:42\", under it a big score \"1 : 0\", under it a small grey \"Раунд 2\"; next to it two health bars, each a plate with a coloured fill — a red bar three-quarters full and a blue bar one-third full; and a big yellow \"Нокаут!\". Caption \"дуэль\".\n\nNo icons, no portraits, no buttons, no minimap, no extra panels or words beyond the quoted ones.\n\nStyle direction «Park-sign pictogram»: clean, minimal signage look like park information signs; plain geometric bold sans-serif lettering (like wayfinding signs) with one thin uniform dark-grey outline; plates flat, white or very light grey with a thin uniform dark-grey outline and slightly rounded corners, no gradients, no glow, no shadows; colour only for the players (red, blue, yellow, purple) and the light-green hint, everything else white and light grey.",
+    "refs": [
+      "art/directions/06-pictogram.png"
+    ],
+    "name": "hud"
+  },
+  "request_hash": "88d45e279955ba4a",
+  "created_at": "2026-11-11T18:09:46Z",
+  "usd": 0.0
+}
