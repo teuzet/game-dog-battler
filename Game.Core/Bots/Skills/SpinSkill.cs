@@ -28,11 +28,10 @@ namespace Game.Core.Bots.Skills
 
         public PlayerInput Act(BotView v, SeenObject target, ref DetRandom rng)
         {
-            var owner = Seen.OwnerOf(v, v.Self);
+            var owner = SwingSkill.Owner(v, v.Self);
             var me = Seen.Me(v);
             if (owner.Vel.Length >= _targetSpeed) return Cursor.At(me);
-            var r = me - owner.Pos;
-            var u = r.LengthSq < Fixed.Half * Fixed.Half ? new Vec2(Fixed.One, Fixed.Zero) : r.Normalized();
+            var u = (me - owner.Pos).Normalized(); // the dog is never on its owner: the bodies push apart
             if (_dir == 0) _dir = u.Cross(owner.Vel) < Fixed.Zero ? -1 : 1; // the owner already drifts one way: join it
             var s = _dir > 0 ? _sin : -_sin;
             var ahead = new Vec2(u.X * _cos - u.Y * s, u.X * s + u.Y * _cos);

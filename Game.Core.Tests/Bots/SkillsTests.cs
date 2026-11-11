@@ -65,6 +65,7 @@ namespace Game.Core.Tests.Bots
             public HitsModule Hits = null!;
             public SkillSet Skills = null!;
             public BotDriver? Driver;
+            public Action? Script; // runs before every tick: the scripted rival
             public readonly List<Hit> Blows = new List<Hit>();
             public int Dog(int p) => Dogs.BodyOf(p);
             public int Owner(int p) => Owners.BodyOf(p);
@@ -78,6 +79,7 @@ namespace Game.Core.Tests.Bots
             /// <summary>One tick; the led participant 0 sees the screen through the driver, the rival gives no input.</summary>
             public void Tick()
             {
+                Script?.Invoke();
                 var t = TickInputs.Empty(Sim.Players);
                 if (Driver != null) t[0] = Driver.Next(GameSetup.Game.Sense(Sim, 0));
                 Sim.Step(t);
@@ -105,6 +107,8 @@ namespace Game.Core.Tests.Bots
             };
         }
 
+        private static SeenObject Rival(BotView v) => v.Objects.First(o => o.Kind == "dog" && o.Id == 1);
+
         private static SeenObject Point(Vec2 p) => new SeenObject { Kind = "point", X = p.X, Y = p.Y };
 
         [Fact]
@@ -113,7 +117,7 @@ namespace Game.Core.Tests.Bots
             var d = Repo.Data();
             foreach (var (skill, keys) in new[]
             {
-                ("move", new[] { "clearance_m" }),
+                ("move", new[] { "clearance_m", "wide_k" }),
                 ("spin", new[] { "ring_m", "lead_deg", "target_speed_mps" }),
                 ("dodge", new[] { "horizon_s", "danger_m", "step_m", "cover_m" }),
                 ("brake", new[] { "stop_gain_s" }),
@@ -212,11 +216,7 @@ namespace Game.Core.Tests.Bots
             s.Put(s.Owner(1), "7", "0.3"); s.Put(s.Dog(1), "7.8", "0.3");
             s.Shove.Velocities[s.Owner(1)] = P("-9", "0");
             s.Shove.Velocities[s.Dog(1)] = P("-9", "0");
-            if (dodge)
-            {
-                var rival = new SeenObject { Kind = "dog", Id = 1 };
-                s.Lead((BotView v, ref DetRandom rng) => s.Skills.Dodge.Act(v, rival, ref rng));
-            }
+            if (dodge) s.Lead((BotView v, ref DetRandom rng) => s.Skills.Dodge.Act(v, Rival(v), ref rng));
             var nearest = Fixed.FromInt(100);
             for (int i = 0; i < 2 * Simulation.TicksPerSecond; i++)
             {
@@ -249,15 +249,49 @@ namespace Game.Core.Tests.Bots
         {
             var s = Duel();
             // the dog stands 1 m from the circle at (-2.5, 2) on the side of the rival
-            s.Put(s.Dog(0), "-1.5", "2.2"); s.Put(s.Owner(1), "6", "2.4"); s.Put(s.Dog(1), "7", "2.4");
+            s.Put(s.Dog(0), "-1.5", "2.2"); s.Put(s.Owner(0), "-1.5", "0.8"); s.Put(s.Owner(1), "6", "2.4"); s.Put(s.Dog(1), "7", "2.4");
             s.Shove.Velocities[s.Owner(1)] = P("-9", "0");
-            var v = GameSetup.Game.Sense(s.Sim, 0);
-            s.Shove.Velocities[s.Owner(1)] = P("-9", "0");
+            s.Shove.Velocities[s.Dog(1)] = P("-9", "0");
             s.Tick(); // the velocity shows up in the view
-            v = GameSetup.Game.Sense(s.Sim, 0);
+            var v = GameSetup.Game.Sense(s.Sim, 0);
             var rng = new DetRandom(1);
-            var input = s.Skills.Dodge.Act(v, new SeenObject { Kind = "dog", Id = 1 }, ref rng);
+            var input = s.Skills.Dodge.Act(v, Rival(v), ref rng);
             Assert.True(input.AimX < -250 - 50, $"the cursor is at x={input.AimX} cm: not behind the circle");
+        }
+
+        /// <summary>The rival's owner swings round his dog standing at (4.5, 2) on a 3 m leash at 9 m/s (3 rad/s, counter-clockwise),
+        /// starting at 100° (the long way round to my dog); my dog stands on his circle 60° above it, not on a tangent of it.</summary>
+        private static List<Hit> RivalSwings(Scene s, bool dodge)
+        {
+            var centre = P("4.5", "2");
+            s.Put(s.Dog(1), "4.5", "2"); s.Put(s.Owner(1), "4", "4.95"); // 100°: 320° of arc to go, 1.9 s: the bot reacts slowly (reaction and hold)
+            s.Put(s.Dog(0), "6", "4.6"); s.Put(s.Owner(0), "5.5", "3.2"); // on the circle at 60° above it
+            var radius = F("3");
+            s.Script = () =>
+            {
+                var r = s.OwnerPos(1) - centre;
+                var len = r.Length;
+                var tangent = new Vec2(-r.Y, r.X) / len * F("9");
+                s.Shove.Velocities[s.Owner(1)] = tangent - r / len * ((len - radius) * Simulation.TicksPerSecond);
+                s.Shove.Velocities[s.Dog(1)] = Vec2.Zero;
+            };
+            if (dodge) s.Lead((BotView v, ref DetRandom rng) => s.Skills.Dodge.Act(v, Rival(v), ref rng));
+            for (int i = 0; i < 3 * Simulation.TicksPerSecond; i++) s.Tick();
+            return s.Blows.Where(b => b.Victim == 0).ToList();
+        }
+
+        [Fact]
+        public void DodgeLeavesTheArcOfAnOwnerSwingingRoundHisDog()
+        {
+            var s = Duel();
+            Assert.Empty(RivalSwings(s, true));
+        }
+
+        [Fact]
+        public void AStandingDogTakesTheBlowOfTheSwingingOwner()
+        {
+            var s = Duel();
+            Assert.NotEmpty(RivalSwings(s, false));
         }
 
         [Fact]
@@ -266,15 +300,19 @@ namespace Game.Core.Tests.Bots
             var s = Duel();
             var goal = P("7.5", "-1.5");
             s.Put(s.Owner(0), "-1", "-1.5"); s.Put(s.Dog(0), "-0.5", "-1.5");
-            int brakeFrom = 45; // the driver sees the screen 0.25 s late: the dog runs on a bit more before the first Brake
+            int brakeFrom = 45;
+            int braked = -1, tick = 0;
+            var speedAtBrake = Fixed.Zero;
             s.Lead((BotView v, ref DetRandom rng) =>
-                v.Tick < brakeFrom ? s.Skills.Move.Act(v, Point(goal), ref rng) : s.Skills.Brake.Act(v, default, ref rng));
-            for (int i = 0; i < brakeFrom + 8; i++) s.Tick();
-            var speed = s.Bodies.Velocity(s.Dog(0)).Length;
-            Assert.True(speed >= F("6.5"), $"the dog ran at {speed} m/s");
-            int ticks = 0;
-            while (s.Bodies.Velocity(s.Dog(0)).Length >= Fixed.One && ticks < 3 * Simulation.TicksPerSecond) { s.Tick(); ticks++; }
-            Assert.True(ticks <= Simulation.TicksPerSecond, $"it took {ticks} ticks to slow below 1 m/s");
+            {
+                if (v.Tick < brakeFrom) return s.Skills.Move.Act(v, Point(goal), ref rng);
+                if (braked < 0) { braked = tick; speedAtBrake = s.Bodies.Velocity(s.Dog(0)).Length; } // the first Brake reaches the dog now
+                return s.Skills.Brake.Act(v, default, ref rng);
+            });
+            while (braked < 0) { s.Tick(); tick++; }
+            Assert.InRange(speedAtBrake.ToDouble(), 6.8, 7.3);
+            while (s.Bodies.Velocity(s.Dog(0)).Length >= Fixed.One && tick - braked < 3 * Simulation.TicksPerSecond) { s.Tick(); tick++; }
+            Assert.True(tick - braked <= Simulation.TicksPerSecond, $"it took {tick - braked} ticks to slow below 1 m/s");
         }
 
         [Fact]

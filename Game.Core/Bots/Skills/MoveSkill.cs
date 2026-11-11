@@ -7,17 +7,21 @@ namespace Game.Core.Bots.Skills
     /// <summary>Move: go to the point (the target's X, Y) round the obstacles on the screen. If the straight path
     /// passes an obstacle nearer than <c>clearance_m</c> (a circle grown by it, a rectangle grown by it on each side), the
     /// cursor goes to the tangent point of the nearer edge on the side the goal lies, a little wider than the clearance
-    /// (a quarter more), so that once there the path is free. The side chosen for an obstacle is kept while it
+    /// (<c>wide_k</c> times it), so that once there the path is free. The side chosen for an obstacle is kept while it
     /// blocks the way (the state): the dog does not dither between the two ways round.</summary>
     public sealed class MoveSkill : ISkill
     {
-        private readonly Fixed _clearance;
+        private readonly Fixed _clearance, _wide;
         private int _obstacle = -1; // Id of the obstacle being gone round
         private int _side; // +1: pass it on the left of the heading, -1: on the right
 
-        public MoveSkill(GameData data) { _clearance = data.Num("bots.skills.move.clearance_m"); }
+        public MoveSkill(GameData data)
+        {
+            _clearance = data.Num("bots.skills.move.clearance_m");
+            _wide = data.Num("bots.skills.move.wide_k");
+        }
 
-        private MoveSkill(MoveSkill src) { _clearance = src._clearance; _obstacle = src._obstacle; _side = src._side; }
+        private MoveSkill(MoveSkill src) { _clearance = src._clearance; _wide = src._wide; _obstacle = src._obstacle; _side = src._side; }
 
         public PlayerInput Act(BotView v, SeenObject target, ref DetRandom rng)
         {
@@ -45,7 +49,7 @@ namespace Game.Core.Bots.Skills
                 _obstacle = block.Id;
                 _side = dir.Cross(block.Pos - me) > Fixed.Zero ? -1 : 1; // the obstacle is on the left: go round on the right
             }
-            return Cursor.At(Tangent(block, me, dir, _side, _clearance * Fixed.Ratio(5, 4)));
+            return Cursor.At(Tangent(block, me, dir, _side, _clearance * _wide));
         }
 
         /// <summary>Does the segment me → goal pass the obstacle grown by <paramref name="clearance"/>? A goal or a start inside the grown

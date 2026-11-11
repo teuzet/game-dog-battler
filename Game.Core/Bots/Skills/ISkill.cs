@@ -58,13 +58,6 @@ namespace Game.Core.Bots.Skills
             o.Kind == Circle ? o.Value : Fixed.Sqrt(o.Value * o.Value + o.Value2 * o.Value2);
 
         public static Vec2 Me(BotView v) => new Vec2(v.X, v.Y);
-
-        public static SeenObject OwnerOf(BotView v, int player)
-        {
-            foreach (var o in v.Objects)
-                if (o.Kind == "owner" && o.Id == player) return o;
-            throw new System.InvalidOperationException($"participant {v.Self} does not see the owner of {player}");
-        }
     }
 
     /// <summary>Sine and cosine of a small angle in degrees (the core has no trigonometry): a Taylor series, good to 90°.</summary>
