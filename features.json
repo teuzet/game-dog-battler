@@ -57,7 +57,6 @@
       "title": "Дуэль: правила Duel, арена duel 1×1 с кубами и сферами, ХП у собак, матч до 3 побед",
       "layer": "core",
       "milestone": "S-1",
-      "sprint": "S-1",
       "depends_on": [],
       "acceptance": [
         "Новый набор правил `Duel`: `Game.Core/Modules/Rules/Duel/DuelRules.cs`, строка в `RuleSetRegistry`, числа в `Game.Core/Data/rules/duel.json` со списком «тюнить»: `hp` (здоровье собаки на раунд), урон от удара (`damage_per_strength` × `Hit.Strength`, не меньше `damage_min` за засчитанный удар, сильный удар × `strong_multiplier`), `rounds_to_win: 3`, `round_s`, `between_rounds_s`, `opponents: [\"smart\"]`, `owner_types: [\"teen\", \"jock\"]`. ХП живёт только внутри набора правил Duel: `Dogs`, `Hits`, `KingOfLawn`, `Sandbox` по смыслу не меняются, у хозяина здоровья нет нигде",
@@ -70,6 +69,7 @@
         "`dotnet test` зелёный, контрактные тесты (детерминизм, форк, пустой ввод, конец сессии, лог ввода, теги) проходят и на `duel`; `MODULES.md` без новых связей (Rules уже зависит от Arena, Bodies, Dogs, Hits, Match). `design/duel.md` — полстраницы: формула урона, числа дуэли и что тюнить; `progress.md` не трогать (его пишет диспетчер)"
       ],
       "status": "todo",
+      "attempts": 0,
       "budget_tokens": 500000,
       "owner_role": "developer-core",
       "touches": [
@@ -89,6 +89,8 @@
         "design/duel.md"
       ],
       "priority": 10,
+      "iteration": null,
+      "sprint": "S-1",
       "modules": [
         "Rules",
         "Match"
@@ -99,7 +101,6 @@
       "title": "Unity: дуэль в билде — выбор соперника-бота, бот против бота, ХП и счёт раундов на экране",
       "layer": "unity",
       "milestone": "S-1",
-      "sprint": "S-1",
       "depends_on": [
         "F-030"
       ],
@@ -112,6 +113,7 @@
         "`UnityShell/README.md` — пара строк про новые пункты меню и режим бот против бота; в `Game.Core/` после прогона Unity дерево чистое (`.meta` не коммитятся)"
       ],
       "status": "todo",
+      "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-unity",
       "touches": [
@@ -124,6 +126,8 @@
         "Unity/Assets/Tests/"
       ],
       "priority": 20,
+      "iteration": null,
+      "sprint": "S-1",
       "modules": []
     },
     {
@@ -131,7 +135,6 @@
       "title": "Боты: слой навыков — двигаться с обходом, раскрутить хозяина, ударить, увернуться, затормозить; числа в данных",
       "layer": "core",
       "milestone": "S-1",
-      "sprint": "S-1",
       "depends_on": [
         "F-030"
       ],
@@ -143,6 +146,7 @@
         "`dotnet test` зелёный, контрактные тесты не тронуты, `MODULES.md` не меняется (навыки живут в `Bots/`). `design/bots-duel.md` — страница про два слоя бота: пять навыков, их числа и пределы для evolve, какие входы будет взвешивать слой решений (дистанция, скорости своего и чужого хозяина, угроза удара, укрытие, ХП)"
       ],
       "status": "todo",
+      "attempts": 0,
       "budget_tokens": 500000,
       "owner_role": "developer-core",
       "touches": [
@@ -155,6 +159,8 @@
         "design/bots-duel.md"
       ],
       "priority": 15,
+      "iteration": null,
+      "sprint": "S-1",
       "modules": []
     }
   ]
