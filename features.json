@@ -177,7 +177,7 @@
         "`art/style.md` не переписывается (договорённость с Nick 2026-11-09 и направление 1). В `notes` результата — шесть направлений по строке «NN название — одна фраза» (это уйдёт Nick в Telegram); `decisions` — по схеме `{question, chosen, why}` или пустой список. Последний коммит на `feat/F-033` до записи результата; вне `art/directions.md` ничего не меняется"
       ],
       "status": "running",
-      "attempts": 1,
+      "attempts": 2,
       "budget_tokens": 200000,
       "owner_role": "art-director",
       "touches": [
