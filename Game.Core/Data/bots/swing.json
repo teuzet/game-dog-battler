@@ -2,12 +2,12 @@
   "тюнить": ["closing_speed_mps", "lead_m", "drift_gain_s", "run_up_m", "min_lead_s", "max_lead_s", "moving_speed_mps"],
   "_": "Пределы для evolve: closing_speed_mps 3–12 (порог удара 5 м/с, сильный 9, потолок хозяина 14); lead_m 0–6 (опережение точки замаха, поводок 3 м); drift_gain_s 0–0.6 (поправка на дрейф цели); run_up_m 1–8 (разбег до цели, арена песочницы 24×16); min_lead_s 0.1–0.6 и max_lead_s 0.7–3 (опережение по времени, min < max всегда); moving_speed_mps 0–6 (скорость цели, с которой замах считает её бегущей; манекены бегут до 4–5 м/с). swing_end_share (0.5) — не число бота, а мерка стенда замаха (когда удар считается кончившимся), evolve его не двигает; wall_margin_m не тюнится.",
   "swing_end_share": 0.5,
-  "closing_speed_mps": 6,
-  "lead_m": 3,
-  "drift_gain_s": 0.25,
+  "closing_speed_mps": 8.396778,
+  "lead_m": 6.0,
+  "drift_gain_s": 0.191118,
   "wall_margin_m": 0.5,
-  "run_up_m": 4,
-  "min_lead_s": 0.3,
-  "max_lead_s": 1.5,
-  "moving_speed_mps": 2
+  "run_up_m": 2.083187,
+  "min_lead_s": 0.146354,
+  "max_lead_s": 3.0,
+  "moving_speed_mps": 4.356247
 }
