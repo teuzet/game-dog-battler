@@ -51,5 +51,111 @@
     }
   ],
   "id_floor": 29,
-  "features": []
+  "features": [
+    {
+      "id": "F-030",
+      "title": "Дуэль: правила Duel, арена duel 1×1 с кубами и сферами, ХП у собак, матч до 3 побед",
+      "layer": "core",
+      "milestone": "S-1",
+      "sprint": "S-1",
+      "depends_on": [],
+      "acceptance": [
+        "Новый набор правил `Duel`: `Game.Core/Modules/Rules/Duel/DuelRules.cs`, строка в `RuleSetRegistry`, числа в `Game.Core/Data/rules/duel.json` со списком «тюнить»: `hp` (здоровье собаки на раунд), урон от удара (`damage_per_strength` × `Hit.Strength`, не меньше `damage_min` за засчитанный удар, сильный удар × `strong_multiplier`), `rounds_to_win: 3`, `round_s`, `between_rounds_s`, `opponents: [\"smart\"]`, `owner_types: [\"teen\", \"jock\"]`. ХП живёт только внутри набора правил Duel: `Dogs`, `Hits`, `KingOfLawn`, `Sandbox` по смыслу не меняются, у хозяина здоровья нет нигде",
+        "Арена `Game.Core/Data/arenas/duel.json`: `rules: \"Duel\"`, два спавна друг напротив друга, поле меньше парка (ориентир 16×12 м, в «тюнить»), 3–5 препятствий только из форм, которые уже знает `Arena`: `rect` («кубы») и `circle` («сферы»); прямая между спавнами свободна; `props: []`. Арена задаёт число участников и длину матча: блок `\"data\"` в json арены (`game.players: 2`, `match.seconds`, `game.session.max_seconds`), который новый помощник `GameData.WithArena(name)` (рядом с `WithHumanOwner`) кладёт поверх данных вместе с `game.arena`; `Game.Sim --arena`, Unity `-arena` (`UnityShell/Assets/` и зеркало `Unity/Assets/`) и тесты, где сейчас `MergedWith(\"{game:{arena}}\")`, переводятся на него. Дуэль укладывается в свой потолок: 5 раундов по `round_s` с паузами ≤ `match.seconds` ≤ `game.session.max_seconds`",
+        "Раунд: удар по собаке снимает ХП у жертвы; ХП ≤ 0 → событие `knocked_out` (Reward 1 нападающему, Threat 1 жертве, Novel `first_blood` у первого нокаута матча), очко раунда через `Match.Award(winner, 1, \"round\")`, пауза `between_rounds_s`, затем обе пары на спавны (`Dogs.ReturnToSpawn`) с полными ХП и событие `arena_event` с Novel `round_start`. Истёк `round_s` без нокаута — очко тому, у кого больше ХП, при равенстве никому. Во время паузы ввод собак не ведёт их (как оглушение) — или пары возвращаются сразу, а пауза держит их на спавнах: выбрать и записать в `decisions`",
+        "Матч до `rounds_to_win`: `Match` получает цель по очкам (`MatchModule.SetTarget(points)` из `DuelRules.Init` или число в данных — на выбор исполнителя; цель в хеше состояния); при достижении цели матч кончается сразу обычным `Result()` (победитель, отрыв, `lead_change` как раньше), таймер `match.seconds` остаётся запасным концом; `KingOfLawn` без цели играет как прежде",
+        "Сенсоры честные (`DogBattlerGame.Sense`): `hp_<q>` — доля ХП 0..1 каждого участника (ХП будет на экране), `round` — номер раунда, `round_time_left`; очки раундов уже есть как `score_<q>`. `Metrics` дуэли на игрока: `rounds_won`, `damage_dealt`, `damage_taken`, `hits`, `hits_taken`, `near_misses_dodged` (чужие `near_miss`, где Dog — моя собака, из `HitsModule.NearMissesThisTick`)",
+        "Лог ввода повторяет дуэль точно: `InputLog` пишет имя арены, `Game.Sim --replay` и Unity-повтор применяют `WithArena` (старые логи без арены читаются как `game.arena`). `Game.Sim --arena duel` работает без правок раннера сверх `WithArena`: `metrics.json` с ключами `архетип/хозяин`, хроники; `Archetype.Opponents` берёт `rules.duel.opponents`",
+        "Тесты `Game.Core.Tests/Modules/DuelTests.cs`, скелетные тесты дополнены дуэлью (`EveryArenaBuildsASession(\"duel\")` → 2 участника, правила Duel): скриптованный удар (как в `HitsTests`) снимает ХП по формуле; серия ударов до нуля → `knocked_out`, очко, после паузы обе пары на спавнах с полными ХП; `round_s` без нокаута → очко по ХП, при равенстве нет очка; 3 очка → `sim.IsOver` с победителем раньше таймера; `smart` против `idle` на `duel` за 4 сида выигрывает все четыре дуэли (нокауты случаются, кубы не мешают прямой атаке)",
+        "`dotnet test` зелёный, контрактные тесты (детерминизм, форк, пустой ввод, конец сессии, лог ввода, теги) проходят и на `duel`; `MODULES.md` без новых связей (Rules уже зависит от Arena, Bodies, Dogs, Hits, Match). `design/duel.md` — полстраницы: формула урона, числа дуэли и что тюнить; `progress.md` не трогать (его пишет диспетчер)"
+      ],
+      "status": "todo",
+      "budget_tokens": 500000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Modules/Rules/Duel/",
+        "Game.Core/Modules/Rules/RulesModule.cs",
+        "Game.Core/Modules/Match/MatchModule.cs",
+        "Game.Core/Data/rules/duel.json",
+        "Game.Core/Data/arenas/duel.json",
+        "Game.Core/Data/GameData.cs",
+        "Game.Core/GameSetup.cs",
+        "Game.Core/Sim/InputLog.cs",
+        "Game.Sim/Program.cs",
+        "UnityShell/Assets/Factory/Runtime/FactoryGame.cs",
+        "Unity/Assets/Factory/Runtime/FactoryGame.cs",
+        "Game.Core.Tests/Modules/DuelTests.cs",
+        "Game.Core.Tests/Skeleton/SkeletonTests.cs",
+        "design/duel.md"
+      ],
+      "priority": 10,
+      "modules": [
+        "Rules",
+        "Match"
+      ]
+    },
+    {
+      "id": "F-031",
+      "title": "Unity: дуэль в билде — выбор соперника-бота, бот против бота, ХП и счёт раундов на экране",
+      "layer": "unity",
+      "milestone": "S-1",
+      "sprint": "S-1",
+      "depends_on": [
+        "F-030"
+      ],
+      "acceptance": [
+        "Меню перед матчем (`Overlay`, OnGUI, без ассетов) получает три новых выбора: арена (`park` «Царь газона» / `duel` «Дуэль», список из `Data/arenas` по полю `title`, по умолчанию `game.arena` или аргумент `-arena`), соперник-бот (архетипы из `bots.session.tracked` без `breaker-*`, по умолчанию `rules.<арена>.opponents[0]`), и переключатель «Я играю / Бот против бота» с выбором архетипа за участника 0. Выбор хозяина, режима мыши и варианта остаются как были",
+        "«Бот против бота»: участника 0 ведёт `BotDriver` выбранного архетипа, человек только смотрит; R — рестарт на тех же настройках, Esc — назад в меню. Выбор соперника действует на обе арены (в парке он заменяет первого из `opponents`). Лог ввода и опрос после матча пишутся как прежде; арена и выбранные архетипы — в лог (`InputLog` F-030 уже несёт арену) и в `survey-*.json`",
+        "HUD дуэли в виде (`Unity/Assets/Game/`): полоска ХП у каждой собаки в цвете игрока (из `DuelRules`, который вид читает через `sim.Get<RulesModule>().Active`), счёт раундов «2 : 1» и номер раунда, таймер раунда, баннер «Раунд N» на паузе, «Нокаут!» по событию `knocked_out`, итог матча «Победа 3:1» / «Поражение 1:3» или «Синий победил» в режиме бот против бота. HUD Царя газона на `park` не меняется: вид выбирает панель по имени активных правил",
+        "Правки оболочки — в `UnityShell/Assets/` и зеркалом в `Unity/Assets/`, оба дерева совпадают; логики игры в оболочке нет (ХП и раунды считает ядро)",
+        "Проверка одним-двумя прогонами: `factory tool run unity --set mode=open` без `error CS`; EditMode-тесты в `Unity/Assets/Tests/` (логика меню и модели HUD без вызовов UnityEngine, как `MouseInput.cs`): конфигурация меню (duel, соперник smart, бот против бота с smart за участника 0) даёт `Simulation` на duel с 2 участниками и двумя `BotDriver`; скриптованная дуэль бот против бота идёт до первого `knocked_out`, модель HUD показывает ХП жертвы 0 и счёт 1:0; `mode=test` — итог `passed`/`failed` в `.factory/unity/unity-EditMode.xml` без `failed`. Билд `FactoryBuild.Demo` и скриншоты — не критерий (их собирает диспетчер на демо спринта)",
+        "`UnityShell/README.md` — пара строк про новые пункты меню и режим бот против бота; в `Game.Core/` после прогона Unity дерево чистое (`.meta` не коммитятся)"
+      ],
+      "status": "todo",
+      "budget_tokens": 400000,
+      "owner_role": "developer-unity",
+      "touches": [
+        "UnityShell/Assets/Factory/Runtime/Overlay.cs",
+        "UnityShell/Assets/Factory/Runtime/FactoryGame.cs",
+        "UnityShell/Assets/Factory/Runtime/NickFiles.cs",
+        "UnityShell/README.md",
+        "Unity/Assets/Factory/Runtime/",
+        "Unity/Assets/Game/",
+        "Unity/Assets/Tests/"
+      ],
+      "priority": 20,
+      "modules": []
+    },
+    {
+      "id": "F-032",
+      "title": "Боты: слой навыков — двигаться с обходом, раскрутить хозяина, ударить, увернуться, затормозить; числа в данных",
+      "layer": "core",
+      "milestone": "S-1",
+      "sprint": "S-1",
+      "depends_on": [
+        "F-030"
+      ],
+      "acceptance": [
+        "Нижний слой бота дуэли из `sprints/S-1.md`: в `Game.Core/Bots/Skills/` пять навыков с одним интерфейсом (вход — `BotView`, цель навыка, свой `DetRandom`; выход — точка курсора `PlayerInput`, как у стратегий; состояние клонируемое): `Move` (к точке с обходом видимых препятствий: объезд по касательной с запасом `clearance_m`), `Spin` (раскрутить хозяина: курсор по кольцу вокруг хозяина радиуса `ring_m`, опережение `lead_deg`, пока скорость хозяина не дойдёт до `target_speed_mps`), `Strike` (существующий `SwingSkill` — остаётся общим замахом, его числа `bots.swing.*` не переезжают), `Dodge` (по позиции и скорости чужого хозяина предсказать, пройдёт ли его дуга через мою собаку в ближайшие `horizon_s` с запасом `danger_m`; уйти перпендикулярно дуге на `step_m`, за ближайшее препятствие, если оно в `cover_m`), `Brake` (погасить скорость: курсор в точку остановки с учётом тормозного пути `stop_gain_s`). Все числа навыков — `Game.Core/Data/bots/skills.json` (`bots.skills.<навык>.*`) со списком «тюнить» и пределами поиска в поле `_`: именно их будет двигать `evolve` следующей задачей",
+        "Сенсоры честные: навыки читают только `BotView`. Препятствия арены на экране, поэтому `DogBattlerGame.Sense` добавляет их в `Objects`: `Kind` `obstacle_circle` (Value — радиус) и `obstacle_rect` (половины сторон — новое поле `SeenObject.Value2` или два объекта-измерения, на выбор исполнителя). Реакция и удержание остаются в `BotDriver`, навыки их не трогают",
+        "Слой решений (какой навык когда) — следующая задача; в этой — только навыки и их проверка. Чтобы навыки можно было гонять раннером до слоя решений, `smart` не меняется, а тестовая стратегия не добавляется в архетипы: тесты ведут участника 0 навыком напрямую через `IBotStrategy`-обёртку внутри теста",
+        "Тесты `Game.Core.Tests/Bots/SkillsTests.cs` на арене `duel` (второй участник `idle`, либо скриптованные скорости как в `HitsTests`): `Move` — собака доходит от спавна до точки за кубом (расстояние < 0.5 м) за ≤ 6 с, а прямой курсор в ту же точку за то же время не доходит (застревает у куба); `Spin` — за 3 с скорость хозяина-подростка ≥ `hits.threshold_mps` (5 м/с); `Dodge` — хозяин соперника летит на мою собаку со скоростью 9 м/с: с `Dodge` в `HitsModule.ThisTick` нет удара по мне и расстояние пролёта ≥ `danger_m`, а стоящая собака удар получает; `Brake` — собака с 7 м/с останавливается до < 1 м/с за ≤ 1 с; `Strike` — `Game.Sim --bench swing` на 8 сидах даёт попаданий в минуту у `smart` не меньше, чем до фичи (числа до/после в заметке к ревью)",
+        "`dotnet test` зелёный, контрактные тесты не тронуты, `MODULES.md` не меняется (навыки живут в `Bots/`). `design/bots-duel.md` — страница про два слоя бота: пять навыков, их числа и пределы для evolve, какие входы будет взвешивать слой решений (дистанция, скорости своего и чужого хозяина, угроза удара, укрытие, ХП)"
+      ],
+      "status": "todo",
+      "budget_tokens": 500000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Core/Bots/Skills/",
+        "Game.Core/Bots/BotView.cs",
+        "Game.Core/Bots/SwingSkill.cs",
+        "Game.Core/GameSetup.cs",
+        "Game.Core/Data/bots/skills.json",
+        "Game.Core.Tests/Bots/SkillsTests.cs",
+        "design/bots-duel.md"
+      ],
+      "priority": 15,
+      "modules": []
+    }
+  ]
 }
