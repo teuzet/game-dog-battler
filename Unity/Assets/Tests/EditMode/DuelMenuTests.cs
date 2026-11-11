@@ -33,7 +33,7 @@ namespace DogBattler.Tests
             Assert.Contains(new KeyValuePair<string, string>("duel", "Дуэль"), arenas);
             Assert.IsTrue(arenas.Exists(a => a.Key == "park"));
             var bots = MatchSetup.Archetypes(data);
-            CollectionAssert.AreEqual(new[] { "idle", "random", "smart", "camper" }, bots);
+            CollectionAssert.AreEqual(new[] { "idle", "random", "smart", "camper", "duelist" }, bots);
         }
 
         [Test]

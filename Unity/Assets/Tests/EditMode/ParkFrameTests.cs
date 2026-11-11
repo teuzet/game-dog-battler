@@ -53,9 +53,10 @@ namespace DogBattler.Tests
         {
             var data = GameData.Load(Path.Combine(Root(), "Game.Core", "Data"));
             data = data.WithArena(ViewCapture.ParkArena).WithHumanOwner(data.Str("game.human_owner"));
-            var game = GameSetup.Game;
-            var sim = game.Create(ViewCapture.ParkSeed, data);
-            var bots = ViewCapture.ParkBots(data, sim.Players, ViewCapture.ParkSeed);
+            // the moment is searched (seeds 1..ParkMaxSeed), not kept as a constant tick that bot tuning moves
+            var moment = ViewCapture.FindParkMoment(data);
+            var sim = moment.Sim;
+            var blow = moment.Blow;
             var arena = sim.Get<ArenaModule>(ArenaModule.ModuleName);
             var bodies = sim.Get<BodiesModule>(BodiesModule.ModuleName);
             var dogs = sim.Get<DogsModule>(DogsModule.ModuleName);
@@ -65,17 +66,7 @@ namespace DogBattler.Tests
             var rules = sim.Get<RulesModule>(RulesModule.ModuleName);
             var match = sim.Get<MatchModule>(MatchModule.ModuleName);
 
-            var prevTension = new float[sim.Players];
-            Hit blow;
-            while (true)
-            {
-                Assert.Less(sim.Tick, ViewCapture.ParkGiveUpTick, "no strong blow in 100 s");
-                sim.Step(Forks.Inputs(game, sim, bots, -1, PlayerInput.None));
-                if (ViewCapture.StrongBlow(sim, out blow)) break;
-                for (int p = 0; p < sim.Players; p++) prevTension[p] = F(leashes.Tension(sim, p));
-            }
-
-            Assert.AreEqual(ViewCapture.ParkCaptureTick, sim.Tick, "ParkCaptureTick is the tick of the first strong blow of ParkSeed");
+            Assert.That(moment.Seed, Is.InRange(1, ViewCapture.ParkMaxSeed));
             var zone = rules.Active.Zone;
             Assert.IsTrue(zone.HasValue, "the circle is on the lawn");
             bool inside = false;
@@ -88,7 +79,7 @@ namespace DogBattler.Tests
             foreach (var s in match.Scores) anyScore |= s != 0;
             Assert.IsTrue(anyScore, "not all scores are zero");
             float tension = F(leashes.Tension(sim, blow.Attacker));
-            Assert.GreaterOrEqual(Mathf.Max(tension, prevTension[blow.Attacker]), 0.9f, "the attacker's leash is taut");
+            Assert.GreaterOrEqual(Mathf.Max(tension, moment.AttackerTensionBefore), 0.9f, "the attacker's leash is taut");
 
             float W = F(arena.Width), H = F(arena.Height);
             float strong = F(hits.StrongThreshold);
@@ -97,7 +88,7 @@ namespace DogBattler.Tests
             var sb = new StringBuilder();
             sb.Append("{\n");
             sb.Append("  \"arena\": \"park\",\n");
-            sb.Append($"  \"seed\": {ViewCapture.ParkSeed},\n");
+            sb.Append($"  \"seed\": {moment.Seed},\n");
             sb.Append($"  \"tick\": {sim.Tick},\n");
             sb.Append($"  \"time_left_s\": {N(left)},\n");
             sb.Append($"  \"aspect\": \"16:9\",\n");
