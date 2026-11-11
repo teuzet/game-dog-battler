@@ -506,7 +506,7 @@
         "`dotnet test` зелёный на новых числах; пороги `DuelistTests`, `DuelTests`, `SkillsTests`, `SwingBenchTests` не ослабляются. Порог выигрышей `DuelistTests` против `smart` (сейчас 4 из 8) поднимается до того, что чемпион стабильно даёт на сидах 1–8, но не выше 7 из 8, если перенос прошёл; `rules.duel.opponents` и `Unity/` не меняются",
         "Отчёт `playtest/evolve/duel.md`: вызовы и поколения, таблица винрейтов (против `smart` до/после, против прошлых поколений), доли выбора навыков, 2–3 строки, что бот теперь делает иначе (из весов: когда раскручивает, когда бьёт, когда уворачивается), ссылка на `report.md`. Коммит на `feat/F-044` до результата; `notes` — 4–6 строк для Telegram Nick (винрейт против smart, против прошлых поколений, поведение); `decisions` по схеме `{question, chosen, why}` или пустой список"
       ],
-      "status": "running",
+      "status": "testing",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "gamedesigner-playtest",
