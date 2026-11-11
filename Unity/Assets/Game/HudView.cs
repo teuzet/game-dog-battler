@@ -22,6 +22,9 @@ namespace DogBattler.View
         private ArenaView _arena;
         private readonly List<Live> _popups = new List<Live>();
         private float _finalSeconds;
+        private DuelHudModel _duel; // set when the active rules are the duel's: that panel replaces the King of the Lawn one
+
+        public DuelHudModel Duel => _duel;
 
         public IReadOnlyList<Popup> ActivePopups
         {
@@ -61,11 +64,14 @@ namespace DogBattler.View
             _sim = sim;
             _popups.Clear();
             _finalSeconds = sim.Data.Int("match.final_seconds");
+            _duel = DuelHudModel.Applies(sim) ? new DuelHudModel() : null;
+            _duel?.Take(sim);
         }
 
         /// <summary>The state after a tick: popups for the points the rules awarded in it.</summary>
         public void Take(Simulation sim)
         {
+            if (_duel != null) { _duel.Take(sim); return; }
             foreach (var p in HudMath.Popups(sim.Get<MatchModule>(MatchModule.ModuleName).LastTickAwards))
                 _popups.Add(new Live { Popup = p, Born = Time.unscaledTime });
         }
@@ -77,6 +83,12 @@ namespace DogBattler.View
             if (_sim == null) return;
             if (_arena == null) _arena = FindAnyObjectByType<ArenaView>();
             float k = Screen.height / 720f;
+            if (_duel != null)
+            {
+                DrawDuel(k);
+                DrawHelp(k);
+                return;
+            }
             var match = _sim.Get<MatchModule>(MatchModule.ModuleName);
             DrawTimer(match, k);
             DrawScores(match, k);
@@ -84,6 +96,39 @@ namespace DogBattler.View
             DrawHelp(k);
             DrawPopups(k);
             if (_sim.IsOver) DrawWinner(match, k);
+        }
+
+        /// <summary>The duel panel: round clock and number, the round score, a health bar over each dog,
+        /// the banner («Раунд N», «Нокаут!») and the end of the match.</summary>
+        private void DrawDuel(float k)
+        {
+            var d = _duel;
+            var center = TextAnchor.UpperCenter;
+            Outlined(new Rect(0, 4 * k, Screen.width, 50 * k), d.Pause || d.Over ? "" : HudMath.Clock(d.RoundTimeLeft), Style(Mathf.RoundToInt(40 * k), center));
+            Outlined(new Rect(0, 54 * k, Screen.width, 40 * k), d.Score(), Style(Mathf.RoundToInt(34 * k), center));
+            if (d.Round > 0) Outlined(new Rect(0, 96 * k, Screen.width, 26 * k), $"Раунд {d.Round}", Colored(Style(Mathf.RoundToInt(20 * k), center), new Color(0.85f, 0.85f, 0.85f)));
+            if (_arena != null && _arena.ViewCamera != null && !d.Over)
+                for (int p = 0; p < d.Hp.Length; p++) DrawHpBar(p, d.Hp[p], k);
+            string banner = d.Banner();
+            if (banner.Length > 0)
+                Outlined(new Rect(0, Screen.height * 0.3f, Screen.width, 80 * k), banner, Colored(Style(Mathf.RoundToInt(64 * k), TextAnchor.MiddleCenter), new Color(1f, 0.9f, 0.3f)));
+            if (!d.Over) return;
+            float w = Mathf.Min(520 * k, Screen.width - 40), h = 110 * k;
+            var rect = new Rect((Screen.width - w) / 2, 130 * k, w, h);
+            Fill(rect, new Color(0f, 0f, 0f, 0.7f));
+            Outlined(new Rect(rect.x, rect.y + 10 * k, rect.width, 50 * k), d.Result(_sim.Result!, FactoryGame.Instance.ViewedPlayer), Style(Mathf.RoundToInt(40 * k), center));
+            Outlined(new Rect(rect.x, rect.y + 64 * k, rect.width, 36 * k), d.Score(), Colored(Style(Mathf.RoundToInt(28 * k), center), new Color(0.85f, 0.85f, 0.85f)));
+        }
+
+        private void DrawHpBar(int player, float share, float k)
+        {
+            var world = _arena.DogOf(player).position + Vector3.up * 1.6f;
+            var screen = _arena.ViewCamera.WorldToScreenPoint(world);
+            if (screen.z <= 0f) return;
+            float w = 110 * k, h = 14 * k;
+            var rect = new Rect(screen.x - w / 2, Screen.height - screen.y - h / 2, w, h);
+            Fill(new Rect(rect.x - 2 * k, rect.y - 2 * k, rect.width + 4 * k, rect.height + 4 * k), new Color(0f, 0f, 0f, 0.7f));
+            Fill(new Rect(rect.x, rect.y, rect.width * Mathf.Clamp01(share), rect.height), ViewMath.PlayerColor(player));
         }
 
         private void DrawTimer(MatchModule match, float k)
@@ -130,6 +175,7 @@ namespace DogBattler.View
             string mode = InputReader.PushMode ? "ТОЛЧОК (курсор скрыт, двигай мышь)" : "КУРСОР (собака бежит к точке)";
             Outlined(new Rect(12 * k, Screen.height - 62 * k, Screen.width, 26 * k), $"Режим мыши: {mode}   [Tab — переключить]", s);
             string keys = _sim.IsOver ? "Матч окончен: «Ещё раз» в опросе — новая игра (R работает только в матче)"
+                : FactoryGame.Instance.BotVsBot ? "Бот против бота: ты смотришь   R — заново   Esc — в меню"
                 : "ЛКМ/Q — абилка собаки   ПКМ/E — абилка хозяина   R — заново";
             Outlined(new Rect(12 * k, Screen.height - 36 * k, Screen.width, 26 * k), keys, s);
         }

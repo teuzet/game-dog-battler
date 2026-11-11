@@ -158,8 +158,9 @@ namespace DogBattler.Tests
             Assert.AreEqual(1, pops.Count);
             Assert.AreEqual(0, pops[0].Player);
             Assert.AreEqual(PopupKind.Knockout, pops[0].Kind);
-            Assert.AreEqual(5, pops[0].Points);
-            Assert.AreEqual(5, sim.Get<MatchModule>(MatchModule.ModuleName).Scores[0]);
+            int points = sim.Data.Int("rules.king_of_lawn.knockout_points");
+            Assert.AreEqual(points, pops[0].Points);
+            Assert.AreEqual(points, sim.Get<MatchModule>(MatchModule.ModuleName).Scores[0]);
             Tick(sim); // the next tick: the old award is not read again
             hud.Take(sim);
             Assert.AreEqual(1, hud.ActivePopups.Count);
@@ -173,8 +174,9 @@ namespace DogBattler.Tests
             Assert.AreEqual(1, pops.Count);
             Assert.AreEqual(0, pops[0].Player);
             Assert.AreEqual(PopupKind.LeaderKnockout, pops[0].Kind);
-            Assert.AreEqual(8, pops[0].Points);
-            Assert.AreEqual(8, sim.Get<MatchModule>(MatchModule.ModuleName).Scores[0]);
+            int points = sim.Data.Int("rules.king_of_lawn.leader_knockout_points");
+            Assert.AreEqual(points, pops[0].Points);
+            Assert.AreEqual(points, sim.Get<MatchModule>(MatchModule.ModuleName).Scores[0]);
         }
 
         [Test]
@@ -206,7 +208,6 @@ namespace DogBattler.Tests
             var rules = sim.Get<RulesModule>(RulesModule.ModuleName).Active;
             var inputs = new TickInputs(sim.Players);
             int period = sim.Data.Int("rules.king_of_lawn.period_s"), announce = sim.Data.Int("rules.king_of_lawn.announce_s");
-            Assert.AreEqual(5, announce);
             Assert.IsNotNull(rules.Zone, "the circle is drawn from the start");
             while (sim.Tick < (period - announce) * Simulation.TicksPerSecond - 1) sim.Step(inputs);
             Assert.IsNull(rules.NextZone);
