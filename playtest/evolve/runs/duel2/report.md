@@ -1,0 +1,106 @@
+# evolve: duel2
+
+Поколений: 15, закончен; без улучшения подряд: 10.
+Чемпион последнего поколения: g14-20, оценка 0.5521. Лучшая оценка за прогон: 0.575 (g4-00, на своих сидах).
+
+| поколение | лучший | средний |
+|---|---|---|
+| 0 | 0.25 | -0.7135 |
+| 1 | 0.375 | -0.3947 |
+| 2 | 0.375 | -0.3724 |
+| 3 | 0.4792 | -0.2731 |
+| 4 | 0.575 | -0.1286 |
+| 5 | 0.4943 | -0.1394 |
+| 6 | 0.5521 | -0.07639 |
+| 7 | 0.5052 | -0.05881 |
+| 8 | 0.4688 | -0.01888 |
+| 9 | 0.5521 | 0.05946 |
+| 10 | 0.5156 | 0.1124 |
+| 11 | 0.5573 | 0.2075 |
+| 12 | 0.4375 | 0.1847 |
+| 13 | 0.5365 | 0.2422 |
+| 14 | 0.5521 | 0.3053 |
+
+## Параметры чемпиона
+
+| параметр | значение |
+|---|---|
+| `bots.decide.decide_period_s` | 0.307088 |
+| `bots.decide.switch_margin` | 0.5 |
+| `bots.decide.approach_m` | 2.997409 |
+| `bots.decide.bias_move` | -1.0 |
+| `bots.decide.w_move_dist` | -1.166863 |
+| `bots.decide.w_move_in_reach` | -1.727825 |
+| `bots.decide.w_move_my_owner_speed` | -0.668206 |
+| `bots.decide.w_move_rival_owner_speed` | 1.068796 |
+| `bots.decide.w_move_threat` | -0.016324 |
+| `bots.decide.w_move_cover` | 0.501529 |
+| `bots.decide.w_move_my_hp` | 0.717271 |
+| `bots.decide.w_move_rival_hp` | -1.888157 |
+| `bots.decide.w_move_my_speed` | 0.140734 |
+| `bots.decide.w_move_round_time` | 0.791921 |
+| `bots.decide.bias_spin` | 0.19561 |
+| `bots.decide.w_spin_dist` | 0.168323 |
+| `bots.decide.w_spin_in_reach` | 1.293815 |
+| `bots.decide.w_spin_my_owner_speed` | -0.0065 |
+| `bots.decide.w_spin_rival_owner_speed` | -2.0 |
+| `bots.decide.w_spin_threat` | -0.168914 |
+| `bots.decide.w_spin_cover` | 0.065405 |
+| `bots.decide.w_spin_my_hp` | 1.296628 |
+| `bots.decide.w_spin_rival_hp` | 0.66171 |
+| `bots.decide.w_spin_my_speed` | 0.629808 |
+| `bots.decide.w_spin_round_time` | -0.319432 |
+| `bots.decide.bias_strike` | 0.124348 |
+| `bots.decide.w_strike_dist` | -0.314219 |
+| `bots.decide.w_strike_in_reach` | -1.010966 |
+| `bots.decide.w_strike_my_owner_speed` | -0.622964 |
+| `bots.decide.w_strike_rival_owner_speed` | -0.130605 |
+| `bots.decide.w_strike_threat` | 0.761195 |
+| `bots.decide.w_strike_cover` | 0.11882 |
+| `bots.decide.w_strike_my_hp` | 1.307624 |
+| `bots.decide.w_strike_rival_hp` | 1.449156 |
+| `bots.decide.w_strike_my_speed` | -1.856901 |
+| `bots.decide.w_strike_round_time` | -0.410774 |
+| `bots.decide.bias_dodge` | 0.473708 |
+| `bots.decide.w_dodge_dist` | -0.565226 |
+| `bots.decide.w_dodge_in_reach` | -1.533694 |
+| `bots.decide.w_dodge_my_owner_speed` | 1.290076 |
+| `bots.decide.w_dodge_rival_owner_speed` | 1.423688 |
+| `bots.decide.w_dodge_threat` | 1.62314 |
+| `bots.decide.w_dodge_cover` | -1.42181 |
+| `bots.decide.w_dodge_my_hp` | 0.200352 |
+| `bots.decide.w_dodge_rival_hp` | -1.16464 |
+| `bots.decide.w_dodge_my_speed` | 0.345999 |
+| `bots.decide.w_dodge_round_time` | 0.249601 |
+| `bots.decide.bias_brake` | -0.693205 |
+| `bots.decide.w_brake_dist` | 0.091034 |
+| `bots.decide.w_brake_in_reach` | -0.165261 |
+| `bots.decide.w_brake_my_owner_speed` | 0.40664 |
+| `bots.decide.w_brake_rival_owner_speed` | 1.689238 |
+| `bots.decide.w_brake_threat` | -0.705735 |
+| `bots.decide.w_brake_cover` | -1.050569 |
+| `bots.decide.w_brake_my_hp` | -0.745993 |
+| `bots.decide.w_brake_rival_hp` | 0.71145 |
+| `bots.decide.w_brake_my_speed` | -0.976803 |
+| `bots.decide.w_brake_round_time` | -2.0 |
+| `bots.skills.spin.ring_m` | 7.653578 |
+| `bots.skills.spin.lead_deg` | 37.173746 |
+| `bots.skills.spin.target_speed_mps` | 11.33948 |
+| `bots.skills.move.clearance_m` | 0.933242 |
+| `bots.skills.move.wide_k` | 1.367211 |
+| `bots.skills.brake.stop_gain_s` | 0.103383 |
+
+## Разбор оценки чемпиона
+
+```json
+{
+  "duel_smart": 0.552083,
+  "pick_brake": 0,
+  "pick_dodge": 0.219704,
+  "pick_move": 0.000292,
+  "pick_spin": 0.609325,
+  "pick_strike": 0.170678,
+  "winrate_league": 0.71875,
+  "winrate_smart": 0.5
+}
+```
