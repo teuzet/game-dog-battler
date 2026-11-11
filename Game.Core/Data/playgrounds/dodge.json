@@ -1,0 +1,11 @@
+{
+  "_": "Уворот: дуэль против smart, участник 0 ведёт один навык Dodge и никогда не бьёт. Оценка: минус полученные удары и плюс четверть пролётов мимо, всё в минуту.",
+  "arena": "duel",
+  "owners": ["teen", "jock"],
+  "player": "solo-dodge",
+  "opponents": ["smart"],
+  "score": [
+    { "metric": "hits_taken", "weight": -1, "per_minute": true },
+    { "metric": "near_misses_dodged", "weight": 0.25, "per_minute": true }
+  ]
+}

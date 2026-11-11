@@ -1,0 +1,6 @@
+{
+  "build": ["dotnet", "build", "Game.Sim", "-c", "Release"],
+  "command": ["dotnet", "run", "--project", "Game.Sim", "-c", "Release", "--no-build", "--", "evaluate", "--batch", "{batch}", "--scores", "{scores}"],
+  "workers": 0,
+  "timeout_s": 900
+}

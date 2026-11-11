@@ -92,6 +92,23 @@ namespace Game.Core.Data
             return new GameData(own == null ? root : root.MergedWith(own), Variant);
         }
 
+        /// <summary>The same data with a flat dictionary of numbers laid on top: keys are paths as in <see cref="Num"/>
+        /// ("bots.swing.lead_m"), each must exist (a number that is not in the data is a typo, not a new number).
+        /// How evolve puts a candidate's numbers over the game.</summary>
+        public GameData WithNumbers(IReadOnlyDictionary<string, double> numbers)
+        {
+            var root = Root.Copy();
+            foreach (var kv in numbers)
+            {
+                int dot = kv.Key.LastIndexOf('.');
+                var parent = new GameData(root).Get(kv.Key.Substring(0, dot));
+                var leaf = kv.Key.Substring(dot + 1);
+                if (parent[leaf] == null) throw new KeyNotFoundException($"no '{kv.Key}' in Game.Core/Data (missing '{leaf}')");
+                parent.Set(leaf, Json.Num(kv.Value));
+            }
+            return new GameData(root, Variant);
+        }
+
         public JsonValue Get(string path)
         {
             var node = Root;

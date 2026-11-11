@@ -48,6 +48,15 @@ namespace Game.Core.Bots
         /// (Data/rules/sandbox.json → "opponents": mannequins), otherwise Data/bots/session.json → "opponents".</summary>
         public static IReadOnlyList<string> Opponents(GameData data)
         {
+            var path = RulesKey(data) + ".opponents";
+            var names = new List<string>();
+            foreach (var n in data.Get(data.Has(path) ? path : "bots.session.opponents").Items) names.Add(n.AsString());
+            return names;
+        }
+
+        /// <summary>The data path of the active rule set of the arena in <c>game.arena</c> ("Duel" → "rules.duel", "KingOfLawn" → "rules.king_of_lawn").</summary>
+        public static string RulesKey(GameData data)
+        {
             var rules = data.Get("arenas." + data.Str("game.arena"))["rules"]!.AsString();
             var key = new System.Text.StringBuilder();
             foreach (var c in rules)
@@ -55,10 +64,7 @@ namespace Game.Core.Bots
                 if (char.IsUpper(c) && key.Length > 0) key.Append('_');
                 key.Append(char.ToLowerInvariant(c));
             }
-            var path = "rules." + key + ".opponents";
-            var names = new List<string>();
-            foreach (var n in data.Get(data.Has(path) ? path : "bots.session.opponents").Items) names.Add(n.AsString());
-            return names;
+            return "rules." + key;
         }
 
         public static Archetype Find(GameData data, string name)
