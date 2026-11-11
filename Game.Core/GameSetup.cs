@@ -79,6 +79,12 @@ namespace Game.Core
                 if (q != player) v.Objects.Add(new SeenObject { Kind = "dog", Id = q, X = dog.X, Y = dog.Y, VX = dogVel.X, VY = dogVel.Y });
                 v.Objects.Add(new SeenObject { Kind = "owner", Id = q, X = owner.X, Y = owner.Y, VX = ownerVel.X, VY = ownerVel.Y });
             }
+            // the obstacles are on the screen too; Ids run through circles then rectangles, so each is unique
+            int obstacle = 0;
+            foreach (var c in arena.CircleObstacles)
+                v.Objects.Add(new SeenObject { Kind = "obstacle_circle", Id = obstacle++, X = c.Pos.X, Y = c.Pos.Y, Value = c.Radius });
+            foreach (var r in arena.RectObstacles)
+                v.Objects.Add(new SeenObject { Kind = "obstacle_rect", Id = obstacle++, X = r.Center.X, Y = r.Center.Y, Value = r.HalfWidth, Value2 = r.HalfHeight });
             rules.Active.Sense(sim, v.Hud);
             if (rules.Active.Zone is ZoneInfo z)
                 v.Objects.Add(new SeenObject { Kind = "zone", X = z.Center.X, Y = z.Center.Y, Value = z.Radius });
