@@ -202,7 +202,7 @@
         "EditMode-тест в `Unity/Assets/Tests/EditMode/` (помощник `NewSim`, как в `ViewTests.cs`) гонит `park` с `ParkSeed` и теми же ботами, что в билде, до тика по тому же правилу, проверяет условия кадра и пишет лист кадра `art/frame-base.json` (путь от `Application.dataPath` вверх к корню репозитория): `tick`, `time_left_s`, `scores`, `zone` и `next_zone` (центр, радиус), `hit` (нападающий, жертва, вспышка 0..1), по игроку: позиция собаки и хозяина в метрах, скорость хозяина, `airborne`, высота (`ViewMath.OwnerHeight`), натяжение и ширина поводка, доли экрана для собаки, хозяина, центра зоны и четырёх углов газона из `ViewMath.ToScreen` при 16:9. Сгенерированный json закоммичен: по нему художник ставит фигуры в картинки, а продюсер сверяет снимок",
         "Прогоны: один `factory tool run unity --set mode=test` (итог из `.factory/unity/unity-EditMode.xml` без `failed`) и один `mode=execute --set method=FactoryBuild.Demo` на финальном коммите (в логе ищут `Build Failed` и `error CS`, целиком не читают), чтобы человек мог снять `Unity/Builds/demo/Unity.exe -arena park -seed <ParkSeed> -capture art/previews/frame-base.png`; сам png — шаг человека, не критерий (ARCHITECTURE.md → «Как Unity подключена к ядру»), точная команда — в `notes`. После прогонов `git status` чистый, `Game.Core/` не меняется, оба дерева оболочки совпадают с точностью до `.meta`. Коммит на `feat/F-034` до результата; `decisions` по схеме или пустой список"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-unity",
@@ -397,7 +397,7 @@
         "Тесты `Game.Core.Tests/Sim/EvaluateTests.cs` (Game.Sim уже подключён к тестам, как в `SwingBenchTests`): каждый `Game.Core/Data/playgrounds/*.json` грузится — арена и архетипы существуют, каждая метрика из `score` есть в `IGame.Metrics` сессии на этой арене; каждый `playtest/evolve/*.json` — каждый путь из `params` есть в данных (`data.Has`), `min` < `max`, `start` внутри, имена плейграундов существуют (`base_from` не обязан существовать: его делает прогон); пачка из двух кандидатов (текущие числа и `bots.swing.lead_m` на минимуме) на сидах [1, 2] с `bag` и `dodge` даёт оценки обоим, `details` содержат `bag` и `dodge`, повтор пачки даёт тот же файл; пачка `kind: league` с лигой из одного члена даёт `winrate_league` и `winrate_smart` в 0..1",
         "Дымовой прогон тулом: `factory tool run evolve --set space=skills --set population=4 --set generations=2 --set seeds=2 --out playtest/evolve/runs/smoke` → `ok: true`, `generation: 2`; ответ `best` и время на поколение — в `notes` (по нему F-043 решает, сколько вызовов нужно); папка smoke не коммитится. `dotnet test` зелёный, контрактные тесты не тронуты, `MODULES.md` не меняется; `ARCHITECTURE.md` → «Боты» получает 3–4 строки про оценщик и плейграунды, `design/bots-duel.md` — раздел «Плейграунды» (таблица: имя, арена, кто играет, оценка). Коммит на `feat/F-041` до результата; `decisions` по схеме `{question, chosen, why}` или пустой список"
       ],
-      "status": "running",
+      "status": "testing",
       "attempts": 0,
       "budget_tokens": 500000,
       "owner_role": "developer-core",
