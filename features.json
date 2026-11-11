@@ -673,6 +673,68 @@
       "iteration": null,
       "sprint": "S-3",
       "modules": []
+    },
+    {
+      "id": "F-050",
+      "title": "Оценщик дуэли: свой сид каждой дуэли пачки, разбор «в каком навыке получил и нанёс удар», признаки «мой и чужой хозяин летит в цель» у `duelist`",
+      "layer": "core",
+      "milestone": "S-1",
+      "depends_on": [],
+      "acceptance": [
+        "Зачем: F-048 (`playtest/evolve/duel2.md` → «Почему не дотянули») упёрся в 0.4–0.475 против `smart`. Три причины, которые чинит код, а не данные: (а) в `Game.Sim/Evaluate.cs` (`kind: league`, цикл `foreach (var seed in seeds) foreach (var (archetype, rivalData, bucket) in rivals)`) каждая дуэль сида идёт на одном сиде, и `smart` ×6 в `duel_smart` — одна дуэль шесть раз; (б) поиск не знает, где бот теряет: в каком навыке он получает удары и в каком наносит; (в) признаки `my_owner_speed` и `rival_owner_speed` — модуль скорости хозяина, а не то, летит ли он в цель, поэтому слой решений не отличает замах в соперника от кружения рядом",
+        "(а) В `kind: league` дуэль с i-м соперником списка соперников (сначала члены лиги, потом `opponents`) на сиде `s` играется на сиде, выведенном детерминированно из (`s`, i) чистой функцией в `Evaluate.cs` (например `s * 1000 + i`; одна строка в `design/bots-duel.md` → «Плейграунды»), так что повтор архетипа в `opponents` даёт независимые дуэли. Детерминизм прежний: одна пачка дважды → тот же файл оценок байт в байт. Плейграунды других видов (`bag`, `moving_target`, `dodge`) и их оценки не меняются",
+        "(б) Когда стратегия участника 0 реализует `IPicks`, в `IPicks` добавляется `string? Current` (у `DuelistStrategy` он уже есть), и оценщик в `kind: league` пишет в `details` доли `taken_in_<навык>` (доля ударов по собаке участника 0 из `HitsModule.ThisTick`, пришедших, пока вёлся этот навык) и `dealt_in_<навык>` (то же для его ударов по чужой собаке), по пяти навыкам `DuelistStrategy.Skills`; в оценку они не входят. `Game.Sim evaluate` с `duel_league`, лигой пустой и числами игры на сидах 101–120 — таблица `taken_in_*`, `dealt_in_*` и `winrate_smart` в `notes` (это база для F-051)",
+        "(в) Два признака 0..1 в `DuelistStrategy.Features` после десяти существующих: `my_owner_closing` — составляющая скорости моего хозяина вдоль направления от него к чужой собаке, делённая на `hits.threshold_mps`, 0 при удалении, потолок 1; `rival_owner_closing` — то же для чужого хозяина и моей собаки. Только из `BotView` (`SwingSkill.Owner`). В `Game.Core/Data/bots/decide.json` — `w_<навык>_my_owner_closing` и `w_<навык>_rival_owner_closing` для всех пяти навыков со стартом 0, в `тюнить` и с пределами −2..2 в `_`: при нулевых весах поведение бота не меняется — `DuelistTests` (сиды 1–8: победы, удары, доли глаголов) дают ровно те же числа, что до фичи, пороги не трогаются. `playtest/evolve/duel.json` и `duel2.json` не меняются (тест данных пространств требует только, чтобы их пути были в данных)",
+        "Тесты: `EvaluateTests` — пачка `kind: league` с `opponents` из двух `smart` на одном сиде даёт две разные дуэли (разные хеши состояния конца или разные исходы/метрики хотя бы на одном из сидов 1–4 — исполнитель выбирает проверку, которая не хрупкая), повтор пачки — тот же файл; `details` содержат все `taken_in_*` и `dealt_in_*`, каждая доля в 0..1 и сумма по навыкам 1 там, где удары были; `DuelistTests` — `Sense` возвращает 12 признаков в 0..1, у `my_owner_closing` 0, когда хозяин стоит, и > 0, когда он летит в чужую собаку (собранный руками `BotView`). `dotnet test` зелёный, контрактные тесты не тронуты, `MODULES.md` не меняется, `design/bots-duel.md` → «Слой решений» и «Плейграунды» дописаны (признаки, сиды дуэлей, разбор). Коммит на `feat/F-050` до результата; `decisions` по схеме `{question, chosen, why}` или пустой список"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 300000,
+      "owner_role": "developer-core",
+      "touches": [
+        "Game.Sim/Evaluate.cs",
+        "Game.Core/Bots/DuelistStrategy.cs",
+        "Game.Core/Data/bots/decide.json",
+        "Game.Core.Tests/Sim/EvaluateTests.cs",
+        "Game.Core.Tests/Bots/DuelistTests.cs",
+        "design/bots-duel.md"
+      ],
+      "priority": 19,
+      "iteration": null,
+      "sprint": "S-1",
+      "modules": []
+    },
+    {
+      "id": "F-051",
+      "title": "Evolve `duel3`: поиск слоя решений на независимых дуэлях против `smart` с новыми признаками до 0.8 на свежих сидах",
+      "layer": "playtest",
+      "milestone": "S-1",
+      "depends_on": [
+        "F-050"
+      ],
+      "acceptance": [
+        "Зачем: F-048 на 8 сидах видел против `smart` 8 независимых дуэлей (шесть копий `smart` играли одну и ту же дуэль), без признаков «хозяин летит в цель». F-050 даёт каждой дуэли свой сид, разбор `taken_in_*` / `dealt_in_*` и признаки `my_owner_closing`, `rival_owner_closing`. Новое пространство `playtest/evolve/duel3.json` — копия `duel2.json` с `main` после F-050: `start` каждого числа = число данных игры сейчас (переписать из `decide.json` и `skills.json`, не из `duel2.json`), плюс десять новых весов `w_<навык>_my_owner_closing|rival_owner_closing` (−2..2, `start` 0); плейграунд `duel_smart`; `league: {size: 3}` (лига остаётся против кружения, как велит обсуждение спринта, но весит меньше `smart` ×6); `seeds: 12`, `patience: 10`. `Game.Sim` и тул evolve не правятся — это четвёртый пункт «готово, когда»",
+        "Первый вызов — дымовой (`--set population=4 --set generations=1 --set seeds=2 --out playtest/evolve/runs/smoke-duel3`, не коммитится); по его времени заранее выбрать `--set generations=`, чтобы прогон влез в 6 вызовов. Прогон `factory tool run evolve --set space=duel3 --out playtest/evolve/runs/duel3` повторяется с той же `--out`, пока не придёт `done: true` или не кончатся вызовы; коммитятся `best.json`, `league.json`, `history.jsonl`, `report.md`",
+        "Проверка на свежих сидах 101–120 — как в F-048 (`Game.Sim evaluate`, плейграунд `duel_league`, лига пустая, числа переписываются из вывода): (1) против `smart` ≥ 0.8; (2) пачки `kind: league` по одному члену: стартовые числа этой фичи и чемпионы ~25%, ~50%, ~75% прогона — `winrate_league` > 0.5 против каждого; (3) `pick_dodge`, `pick_spin`, `pick_strike` ≥ 0.1. Переносится последний чемпион или более ранний из `history.jsonl`, первый, кто проходит (1)–(3); числа — в `decide.json` и `skills.json` как есть, без ручной подкрутки и округления. Если (1) не проходит никто, но есть чемпион, который проходит (2) и (3), против `smart` на 101–120 даёт больше 0.475 и на сидах 1–8 `DuelistTests` ≥ 4 побед — переносится он; иначе числа не переносятся",
+        "`dotnet test` зелёный; пороги `DuelTests`, `SkillsTests`, `SwingBenchTests` не ослабляются. Порог побед `AgainstSmartUsesEveryVerbHitsDodgesAndWinsHalf` после переноса — то, что чемпион даёт на сидах 1–8, не ниже 4 и не выше 7; комментарий `// … вернуть ≥ 4 — F-048` снимается; без переноса порог остаётся как есть и это строка `notes`. `rules.duel.opponents` и `Unity/` не меняются",
+        "Отчёт `playtest/evolve/duel3.md`: вызовы и поколения; таблица против `smart` до/после и против прошлых поколений; доли навыков и разбор `taken_in_*` / `dealt_in_*` до/после (в каком навыке бот теперь реже получает и чаще наносит удары); 2–3 строки, что бот делает иначе по весам, в первую очередь по новым признакам; если 0.8 не достигнуто — раздел «Чего не хватило» по числам разбора (какой навык теряет больше всего ХП), без предложений правок кода; ссылка на `runs/duel3/report.md`. Коммит на `feat/F-051` до результата; `notes` — 4–6 строк для Telegram Nick; `decisions` по схеме `{question, chosen, why}` или пустой список"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "budget_tokens": 400000,
+      "owner_role": "gamedesigner-playtest",
+      "touches": [
+        "playtest/evolve/duel3.json",
+        "playtest/evolve/runs/duel3/",
+        "playtest/evolve/duel3.md",
+        "Game.Core/Data/bots/decide.json",
+        "Game.Core/Data/bots/skills.json",
+        "Game.Core.Tests/Bots/DuelistTests.cs"
+      ],
+      "priority": 20,
+      "iteration": null,
+      "sprint": "S-1",
+      "modules": []
     }
   ]
 }
