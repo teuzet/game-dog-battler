@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Game.Core.Bots;
 using Game.Core.Data;
+using Game.Core.Math;
 using Game.Core.Sim;
 using Game.Core.Tests.Contract;
 using Xunit;
@@ -74,7 +75,8 @@ namespace Game.Core.Tests.Bots
             var data = Repo.Data();
             var space = Json.Parse(File.ReadAllText(Path.Combine(Repo.Root, "playtest", "evolve", "duel.json")));
             var ps = space["params"]!;
-            foreach (var t in data.Get("bots.decide")["тюнить"]!.Items.Select(i => i.AsString()))
+            // the closing weights (F-050) came after duel.json, which stays as it was run: they are searched by F-051
+            foreach (var t in data.Get("bots.decide")["тюнить"]!.Items.Select(i => i.AsString()).Where(t => !t.EndsWith("_closing")))
             {
                 var p = ps["bots.decide." + t]!;
                 var (min, max) = Limits(t);
@@ -161,6 +163,55 @@ namespace Game.Core.Tests.Bots
                 // F-044: g26-15 бьёт с разбега, и раунд с idle чаще кончается по здоровью (1 нокаут на сидах 3 и 6); вернуть rounds_to_win − 1 — F-048
                 Assert.True(d.Knockouts >= data.Int("rules.duel.rounds_to_win") - 2, $"seed {seed}: {d.Knockouts} knockouts");
             }
+        }
+
+        /// <summary>F-050: a hand-made view on the duel arena — my dog at the centre, my owner 2 m behind it, the rival dog 4 m ahead,
+        /// its owner beyond it; nothing else on the screen.</summary>
+        private static (DuelistStrategy Bot, BotView View, SeenObject Rival) HandView(Fixed myOwnerVX, Fixed rivalOwnerVX)
+        {
+            var data = Repo.Data().WithArena("duel");
+            var game = GameSetup.Game;
+            var sensed = game.Sense(game.Create(1, data), 0); // only for the HUD numbers (arena size, leash, time, health)
+            var v = new BotView { Tick = 0, Self = 0, X = Fixed.Zero, Y = Fixed.Zero };
+            foreach (var kv in sensed.Hud) v.Hud[kv.Key] = kv.Value;
+            var rival = new SeenObject { Kind = "dog", Id = 1, X = Fixed.FromInt(4), Y = Fixed.Zero };
+            v.Objects.Add(rival);
+            v.Objects.Add(new SeenObject { Kind = "owner", Id = 0, X = Fixed.FromInt(-2), Y = Fixed.Zero, VX = myOwnerVX });
+            v.Objects.Add(new SeenObject { Kind = "owner", Id = 1, X = Fixed.FromInt(7), Y = Fixed.Zero, VX = rivalOwnerVX });
+            var bot = (DuelistStrategy)game.Strategy(Archetype.Find(data, "duelist"), data);
+            return (bot, v, rival);
+        }
+
+        [Fact]
+        public void SenseGivesTwelveFeaturesAndClosingOnlyWhenTheOwnerFliesAtTheDog()
+        {
+            var data = Repo.Data();
+            var blow = data.Num("hits.threshold_mps");
+            int my = System.Array.IndexOf(DuelistStrategy.Features, "my_owner_closing");
+            int rv = System.Array.IndexOf(DuelistStrategy.Features, "rival_owner_closing");
+            Assert.Equal(new[] { 10, 11 }, new[] { my, rv }); // after the ten old features
+            Fixed[] Features(Fixed myVX, Fixed rivalVX)
+            {
+                var (bot, v, rival) = HandView(myVX, rivalVX);
+                var f = bot.Sense(v, new Game.Core.Math.Vec2(v.X, v.Y), rival);
+                Assert.Equal(12, f.Length);
+                foreach (var x in f) Assert.InRange(x.ToDouble(), 0, 1);
+                return f;
+            }
+            var still = Features(Fixed.Zero, Fixed.Zero);
+            Assert.Equal(Fixed.Zero, still[my]);
+            Assert.Equal(Fixed.Zero, still[rv]);
+            var half = blow / 2;
+            var flying = Features(half, -half); // my owner flies at the rival dog (+x), the rival owner at my dog (−x)
+            Assert.True(flying[my] > Fixed.Zero);
+            Assert.Equal(0.5, flying[my].ToDouble(), 2);
+            Assert.Equal(0.5, flying[rv].ToDouble(), 2);
+            var away = Features(-blow * 2, blow * 2); // both owners fly away, fast: the speed features see it, closing does not
+            Assert.Equal(Fixed.Zero, away[my]);
+            Assert.Equal(Fixed.Zero, away[rv]);
+            Assert.Equal(Fixed.One, away[System.Array.IndexOf(DuelistStrategy.Features, "my_owner_speed")]);
+            var fast = Features(blow * 3, Fixed.Zero);
+            Assert.Equal(Fixed.One, fast[my]); // the ceiling
         }
 
         [Fact]

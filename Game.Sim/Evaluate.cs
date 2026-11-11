@@ -3,6 +3,7 @@ using System.Text;
 using Game.Core;
 using Game.Core.Bots;
 using Game.Core.Data;
+using Game.Core.Modules.Hits;
 using Game.Core.Sim;
 
 /// <summary>The scorer of the factory's tool `evolve` (playtest/evolve.json): `Game.Sim evaluate --batch b.json --scores s.json`.
@@ -181,21 +182,41 @@ sealed class Playground
             foreach (var member in league) rivals.Add((Player, SessionData(data, Merge(baseNumbers, member), ""), "winrate_league"));
             var baseData = SessionData(data, baseNumbers, "");
             foreach (var o in Opponents) rivals.Add((o, baseData, "winrate_" + o));
+            var taken = new SortedDictionary<string, int>(StringComparer.Ordinal); // skill → blows on participant 0's dog while it led it
+            var dealt = new SortedDictionary<string, int>(StringComparer.Ordinal); // skill → its blows on the rival dog
             foreach (var seed in seeds)
-            foreach (var (archetype, rivalData, bucket) in rivals)
+            for (int i = 0; i < rivals.Count; i++)
             {
-                var s = Play(game, simData, seed, Player, simData, new[] { archetype }, rivalData);
+                var (archetype, rivalData, bucket) = rivals[i];
+                var s = Play(game, simData, DuelSeed(seed, i), Player, simData, new[] { archetype }, rivalData);
                 double outcome = s.Outcome == Outcome.Win ? 1 : s.Outcome == Outcome.Draw ? 0.5 : 0;
                 if (!outcomes.TryGetValue(bucket, out var list)) outcomes[bucket] = list = new List<double>();
                 list.Add(outcome);
                 sessionScores.Add(outcome + s.Sum(termSums, Terms) - VerbFine(s, shares));
+                if (s.Blows != null)
+                    foreach (var (skill, wasTaken) in s.Blows)
+                    {
+                        var into = wasTaken ? taken : dealt;
+                        into[skill] = into.GetValueOrDefault(skill) + 1;
+                    }
             }
             foreach (var kv in outcomes) Evaluate.Put(details, kv.Key, kv.Value.Average());
             foreach (var kv in shares) Evaluate.Put(details, "pick_" + kv.Key, kv.Value.Average());
+            // the blows of all duels pooled: a share is the part of every blow taken (dealt) while that skill was led
+            int t = taken.Values.Sum(), d = dealt.Values.Sum();
+            foreach (var skill in shares.Keys)
+            {
+                Evaluate.Put(details, "taken_in_" + skill, t == 0 ? 0 : (double)taken.GetValueOrDefault(skill) / t);
+                Evaluate.Put(details, "dealt_in_" + skill, d == 0 ? 0 : (double)dealt.GetValueOrDefault(skill) / d);
+            }
         }
         for (int i = 0; i < Terms.Count; i++) Evaluate.Put(details, Name + "." + Terms[i].Metric, termSums[i] / sessionScores.Count);
         return sessionScores.Average();
     }
+
+    /// <summary>The seed of the league duel with rival <paramref name="rival"/> (league members first, then "opponents") on the
+    /// batch seed <paramref name="seed"/>: every rival gets its own duel, so an archetype repeated in "opponents" plays new duels.</summary>
+    internal static int DuelSeed(int seed, int rival) => unchecked(seed * 1000 + rival);
 
     /// <summary>Notes the shares of the skills participant 0 chose (when its strategy tells them) and returns the fine for the verbs
     /// it left out: <see cref="VerbPenalty"/> per named skill below its share.</summary>
@@ -232,12 +253,28 @@ sealed class Playground
             var a = Archetype.Find(p == 0 ? playerData : rivalData, p == 0 ? player : opponents[(p - 1) % opponents.Count]);
             bots.Add(new BotDriver(p, a, game.Strategy(a, p == 0 ? playerData : rivalData), (ulong)seed));
         }
-        while (!sim.IsOver) sim.Step(Forks.Inputs(game, sim, bots, -1, PlayerInput.None));
-        return new Played(sim.Result!.Outcomes[0], game.Metrics(sim, 0), sim.Seconds, (bots[0].Strategy as IPicks)?.Picks);
+        var picks = bots[0].Strategy as IPicks;
+        var hits = sim.Get<HitsModule>(HitsModule.ModuleName);
+        var blows = picks == null ? null : new List<(string Skill, bool Taken)>();
+        while (!sim.IsOver)
+        {
+            sim.Step(Forks.Inputs(game, sim, bots, -1, PlayerInput.None));
+            if (blows == null) continue;
+            foreach (var h in hits.ThisTick)
+            {
+                bool taken = h.Victim == 0, dealtByMe = h.Attacker == 0;
+                if (!taken && !dealtByMe) continue;
+                var skill = picks!.Current ?? throw new InvalidOperationException($"seed {seed}: a blow on tick {sim.Tick} before participant 0's first decision");
+                blows.Add((skill, taken));
+            }
+        }
+        return new Played(sim.Result!.Outcomes[0], game.Metrics(sim, 0), sim.Seconds, picks?.Picks, blows);
     }
 
-    /// <summary><paramref name="Picks"/>: how often participant 0 chose each skill, null when its strategy does not tell (no <see cref="IPicks"/>).</summary>
-    private sealed record Played(Outcome Outcome, IReadOnlyDictionary<string, double> Metrics, double Seconds, IReadOnlyDictionary<string, int>? Picks)
+    /// <summary><paramref name="Picks"/>: how often participant 0 chose each skill, null when its strategy does not tell (no <see cref="IPicks"/>);
+    /// <paramref name="Blows"/>: every blow on participant 0's dog (Taken) and by it, with the skill it led then (null without IPicks).</summary>
+    private sealed record Played(Outcome Outcome, IReadOnlyDictionary<string, double> Metrics, double Seconds, IReadOnlyDictionary<string, int>? Picks,
+        IReadOnlyList<(string Skill, bool Taken)>? Blows)
     {
         /// <summary>Σ weight × metric of the score terms; the unweighted term values are added to <paramref name="termSums"/>.</summary>
         public double Sum(double[] termSums, IReadOnlyList<Term> terms)

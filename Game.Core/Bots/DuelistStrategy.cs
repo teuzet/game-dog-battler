@@ -13,18 +13,22 @@ namespace Game.Core.Bots
     {
         /// <summary>Skill name → how many decisions chose it.</summary>
         IReadOnlyDictionary<string, int> Picks { get; }
+
+        /// <summary>The skill being led now, or null before the first decision: the scorer splits the blows of a duel by it.</summary>
+        string? Current { get; }
     }
 
     /// <summary>The decision layer of the duel bot (design/bots-duel.md → «Слой решений»): every <c>decide_period_s</c> it scores
     /// the five skills of the <see cref="SkillSet"/> as <c>bias_&lt;skill&gt;</c> + Σ <c>w_&lt;skill&gt;_&lt;feature&gt;</c> × feature over
-    /// ten features 0..1 read off the view, and leads the chosen skill until the next decision; it changes skill only when the best
+    /// twelve features 0..1 read off the view, and leads the chosen skill until the next decision; it changes skill only when the best
     /// beats the current one by more than <c>switch_margin</c>. Strike and Dodge work against the nearest rival dog, Move goes to the
     /// point <c>approach_m</c> from it on my side, Spin and Brake have no target. Numbers: Game.Core/Data/bots/decide.json.</summary>
     public sealed class DuelistStrategy : IBotStrategy, IPicks
     {
         public static readonly string[] Skills = { "move", "spin", "strike", "dodge", "brake" };
         public static readonly string[] Features =
-            { "dist", "in_reach", "my_owner_speed", "rival_owner_speed", "threat", "cover", "my_hp", "rival_hp", "my_speed", "round_time" };
+            { "dist", "in_reach", "my_owner_speed", "rival_owner_speed", "threat", "cover", "my_hp", "rival_hp", "my_speed", "round_time",
+              "my_owner_closing", "rival_owner_closing" };
         private const int Move = 0, Spin = 1, Strike = 2, Dodge = 3, Brake = 4;
 
         private readonly SkillSet _skills;
@@ -116,7 +120,7 @@ namespace Game.Core.Bots
             }
         }
 
-        /// <summary>The ten features, each 0..1, in the order of <see cref="Features"/>.</summary>
+        /// <summary>The twelve features, each 0..1, in the order of <see cref="Features"/>.</summary>
         public Fixed[] Sense(BotView v, Vec2 me, SeenObject rival)
         {
             var hw = v.Hud["arena_half_width"];
@@ -126,12 +130,14 @@ namespace Game.Core.Bots
             var pass = _skills.Dodge.Pass(v, rival);
             var far = _skills.Dodge.Danger * 2;
             int myPair = v.Self % _maxSpeed.Length;
+            var myOwner = SwingSkill.Owner(v, v.Self);
+            var rivalOwner = SwingSkill.Owner(v, rival.Id);
             return new[]
             {
                 Fixed.Clamp01(dist / diagonal),
                 dist <= v.Hud["leash_m"] ? Fixed.One : Fixed.Zero,
-                Fixed.Clamp01(SwingSkill.Owner(v, v.Self).Vel.Length / _blowSpeed),
-                Fixed.Clamp01(SwingSkill.Owner(v, rival.Id).Vel.Length / _blowSpeed),
+                Fixed.Clamp01(myOwner.Vel.Length / _blowSpeed),
+                Fixed.Clamp01(rivalOwner.Vel.Length / _blowSpeed),
                 pass < Fixed.Zero ? Fixed.Zero : Fixed.Clamp01(Fixed.One - pass / far),
                 _skills.Dodge.HasCover(v, me) ? Fixed.One : Fixed.Zero,
                 // no health bars on the screen (the park, the sandbox): nobody can be hurt, everybody is whole
@@ -139,7 +145,17 @@ namespace Game.Core.Bots
                 v.HudOr("hp_" + rival.Id, Fixed.One),
                 Fixed.Clamp01(new Vec2(v.VX, v.VY).Length / _maxSpeed[myPair]),
                 Fixed.Clamp01(v.HudOr("round_time_left", v.Hud["time_left"]) / _roundS),
+                Closing(myOwner, rival.Pos),
+                Closing(rivalOwner, me),
             };
+        }
+
+        /// <summary>How fast the owner flies at the dog: his velocity along the line from him to it / <c>hits.threshold_mps</c>,
+        /// 0 when he moves away (or stands on it), at most 1.</summary>
+        private Fixed Closing(SeenObject owner, Vec2 dog)
+        {
+            var along = owner.Vel.Dot((dog - owner.Pos).Normalized());
+            return along <= Fixed.Zero ? Fixed.Zero : Fixed.Clamp01(along / _blowSpeed);
         }
 
         /// <summary>The utility of each skill for these features.</summary>
