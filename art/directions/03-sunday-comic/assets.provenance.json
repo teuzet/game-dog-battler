@@ -1,0 +1,17 @@
+{
+  "tool": "image-gen",
+  "provider": "codex",
+  "model": "codex:$imagegen",
+  "request": {
+    "size": "1536x1024",
+    "n": 1,
+    "prompt": "Game asset sheet for a 4-player top-down party brawler: every figure and arena piece laid out separately in a clean grid on a plain neutral light-grey background, no scene, no ground except the swatches listed. Every item is seen from the same in-game camera: perspective view tilted 60° down from above, no rotation, so we see the tops of heads and backs a lot and faces only a little. Each item is a simple 3D game model built from a few primitives (spheres, capsules, cylinders, boxes) with one toon material, big readable silhouette, no fur, no hair strands, no cloth folds, no particles, no small details, no text labels.\n\nTop row, three dogs standing, each with a collar in its player colour and a short straight stub of leash in the same colour: a red-collared border collie (black-and-white body); a purple-collared great dane (grey body, tall and long); The Stack — four small tan chihuahuas standing close together, each with its own blue collar and its own short blue leash stub.\nMiddle row, three dog owners standing calm and busy with their own thing, each with one band of the player colour on the clothes and the hand holding a short straight leash stub of that colour: a teenager in a hoodie staring at his phone, red band; a granny with an open umbrella pulling a wheeled shopping bag, yellow band, no other player colours on her; a muscular gym guy in a tank top drinking from a shaker, blue band.\nBottom row, arena pieces of the park: one tree (round brown cylinder trunk with one ball crown); one short wooden bench (box seat with a flat backrest plank); one square swatch of grass lawn with a strip of sand-coloured border along one side; on a separate grass swatch, one light pale-green flat circle on the ground (the scoring zone) and next to it a paler, fainter circle of the same size (the next zone).\n\nStyle direction «Sunday comic»: shapes — simpler and chunkier than toy-like, big rounded volumes like newspaper comic characters, still no visible polygon facets, dot eyes; materials — flat toon fill, player colour as a flat patch on collar, leash and shirt band inside the shared outline; light — two-step cel shading (lit and shadow, no gradients), the shadow under each object a solid dark blob; palette — bright and flat: juicy grass green, cream sand border, saturated player colours (red, blue, yellow, purple) only on collars, leashes and shirt bands; outline — thick dark-navy outline on all characters and props, thinner on the ground swatches.",
+    "refs": [
+      "art/directions/03-sunday-comic.png"
+    ],
+    "name": "assets"
+  },
+  "request_hash": "70e4e64042c63f3a",
+  "created_at": "2026-11-11T13:28:52Z",
+  "usd": 0.0
+}
