@@ -112,7 +112,7 @@
         "Проверка одним-двумя прогонами: `factory tool run unity --set mode=open` без `error CS`; EditMode-тесты в `Unity/Assets/Tests/` (логика меню и модели HUD без вызовов UnityEngine, как `MouseInput.cs`): конфигурация меню (duel, соперник smart, бот против бота с smart за участника 0) даёт `Simulation` на duel с 2 участниками и двумя `BotDriver`; скриптованная дуэль бот против бота идёт до первого `knocked_out`, модель HUD показывает ХП жертвы 0 и счёт 1:0; `mode=test` — итог `passed`/`failed` в `.factory/unity/unity-EditMode.xml` без `failed`. Билд `FactoryBuild.Demo` и скриншоты — не критерий (их собирает диспетчер на демо спринта)",
         "`UnityShell/README.md` — пара строк про новые пункты меню и режим бот против бота; в `Game.Core/` после прогона Unity дерево чистое (`.meta` не коммитятся)"
       ],
-      "status": "testing",
+      "status": "review",
       "attempts": 0,
       "budget_tokens": 400000,
       "owner_role": "developer-unity",
@@ -145,7 +145,7 @@
         "Тесты `Game.Core.Tests/Bots/SkillsTests.cs` на арене `duel` (второй участник `idle`, либо скриптованные скорости как в `HitsTests`): `Move` — собака доходит от спавна до точки за кубом (расстояние < 0.5 м) за ≤ 6 с, а прямой курсор в ту же точку за то же время не доходит (застревает у куба); `Spin` — за 3 с скорость хозяина-подростка ≥ `hits.threshold_mps` (5 м/с); `Dodge` — хозяин соперника летит на мою собаку со скоростью 9 м/с: с `Dodge` в `HitsModule.ThisTick` нет удара по мне и расстояние пролёта ≥ `danger_m`, а стоящая собака удар получает; `Brake` — собака с 7 м/с останавливается до < 1 м/с за ≤ 1 с; `Strike` — `Game.Sim --bench swing` на 8 сидах даёт попаданий в минуту у `smart` не меньше, чем до фичи (числа до/после в заметке к ревью)",
         "`dotnet test` зелёный, контрактные тесты не тронуты, `MODULES.md` не меняется (навыки живут в `Bots/`). `design/bots-duel.md` — страница про два слоя бота: пять навыков, их числа и пределы для evolve, какие входы будет взвешивать слой решений (дистанция, скорости своего и чужого хозяина, угроза удара, укрытие, ХП)"
       ],
-      "status": "running",
+      "status": "testing",
       "attempts": 0,
       "budget_tokens": 500000,
       "owner_role": "developer-core",
